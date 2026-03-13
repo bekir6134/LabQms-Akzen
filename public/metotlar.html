@@ -10,15 +10,16 @@
         
         /* Sidebar */
         .sidebar { width: 250px; background: var(--sidebar); color: white; height: 100vh; position: fixed; padding: 20px; box-sizing: border-box; }
-        .nav-link { display: block; color: #cbd5e1; text-decoration: none; padding: 12px; border-radius: 8px; margin-bottom: 5px; transition: 0.3s; font-size: 0.9rem; }
-        .nav-link:hover, .nav-link.active { background: #334155; color: white; }
+        .nav-link { display: block; color: #cbd5e1; text-decoration: none; padding: 12px; border-radius: 8px; margin-bottom: 5px; transition: 0.3s; font-size: 0.9rem; font-weight: 400; }
+        .nav-link:hover { background: #334155; color: white; }
+        .nav-link.active { background: #3b82f6; color: white !important; font-weight: 600; }
 
         .main-content { margin-left: 250px; flex: 1; padding: 30px; }
         .card { background: #fff; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; }
         
         h2 { margin-top: 0; color: var(--primary); font-size: 1.3rem; margin-bottom: 20px; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        label { display: block; font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 8px; }
+        .main-content label { display: block; font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 8px; }
         input[type="text"] { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; box-sizing: border-box; }
 
         /* Arama ve Seçim Kutusu */
