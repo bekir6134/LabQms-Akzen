@@ -570,8 +570,7 @@ app.post('/api/ayarlar', async (req, res) => {
 app.get('/api/is-emirleri-on-veriler', async (req, res) => {
     try {
         const musteriler = await pool.query('SELECT id, firma_adi, sube_adi FROM musteriler ORDER BY firma_adi');
-        const cihazKutuphanesi = await pool.query('SELECT id, cihaz_adi, kategori FROM cihaz_kutuphanesi ORDER BY cihaz_adi');
-        res.json({ musteriler: musteriler.rows, cihazlar: cihazKutuphanesi.rows });
+                res.json({ musteriler: musteriler.rows, cihazlar: cihazKutuphanesi.rows });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

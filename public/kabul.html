@@ -88,7 +88,6 @@
 <body>
 <div id="toast"></div>
 
-<!-- ACCORDION: YENİ KABUL FİŞİ -->
 <div class="accordion">
     <div class="accordion-header" onclick="toggleAcc()">
         <h3 style="margin:0;color:var(--primary);">📥 Yeni Cihaz Kabul Fişi</h3>
@@ -124,7 +123,6 @@
             </div>
         </div>
 
-        <!-- CİHAZLAR -->
         <div style="background:#f8fafc; border-radius:10px; padding:16px; border:1px solid var(--border);">
             <div style="font-weight:700; color:var(--primary); font-size:0.88rem; margin-bottom:12px;">📦 Kabul Edilen Cihazlar</div>
             <table class="cihaz-table">
@@ -149,7 +147,6 @@
     </div>
 </div>
 
-<!-- LİSTE -->
 <div class="card">
     <div class="card-header">
         <div class="card-icon">📋</div>
@@ -219,21 +216,22 @@
         const input = document.getElementById("firmaAramaInput");
         const sonuclar = document.getElementById("firmaSonuclar");
 
+        function filterFirmalar(val) {
+            val = val.trim().toLocaleUpperCase('tr-TR');
+            if (!val) return musteriler;
+            return musteriler.filter(m => 
+                (m.firma_adi || "").toLocaleUpperCase('tr-TR').includes(val) || 
+                (m.sube_adi || "").toLocaleUpperCase('tr-TR').includes(val)
+            );
+        }
+
         input.addEventListener("input", function() {
-            const val = this.value.trim().toUpperCase();
             if (!musteriler.length) { sonuclar.style.display = "none"; return; }
-            const filtered = val
-                ? musteriler.filter(m => m.firma_adi.toUpperCase().includes(val) || (m.sube_adi||"").toUpperCase().includes(val))
-                : musteriler;
-            renderFirmaSonuclar(filtered, sonuclar);
+            renderFirmaSonuclar(filterFirmalar(this.value), sonuclar);
         });
 
         input.addEventListener("focus", function() {
-            const val = this.value.trim().toUpperCase();
-            const filtered = val
-                ? musteriler.filter(m => m.firma_adi.toUpperCase().includes(val) || (m.sube_adi||"").toUpperCase().includes(val))
-                : musteriler;
-            renderFirmaSonuclar(filtered, sonuclar);
+            renderFirmaSonuclar(filterFirmalar(this.value), sonuclar);
         });
 
         document.addEventListener("click", function(e) {
@@ -289,13 +287,17 @@
 
     // ── YÜKLEME ──
     async function yukle() {
-        const res = await fetch("/api/is-emirleri-on-veriler");
-        const d = await res.json();
-        musteriler = d.musteriler || [];
-        document.getElementById("kabul_tarihi").valueAsDate = new Date();
-        satirEkle();
-        listele();
-        firmaAramaKur();
+        try {
+            const res = await fetch("/api/is-emirleri-on-veriler");
+            const d = await res.json();
+            musteriler = d.musteriler || [];
+            document.getElementById("kabul_tarihi").valueAsDate = new Date();
+            satirEkle();
+            listele();
+            firmaAramaKur();
+        } catch(e) {
+            console.error("Veriler yüklenemedi. Server.js güncellendi mi?", e);
+        }
     }
 
     // ── CİHAZ SATIRI ──
@@ -323,7 +325,6 @@
             <td><button class="btn-del-row" onclick="this.closest('tr').remove()">✕</button></td>`;
         tbody.appendChild(tr);
 
-        // Cihaz combo event
         const cihazInput = tr.querySelector(".cihaz-adi-input");
         const cihazList = tr.querySelector(".cihaz-combo-list");
         cihazInput.addEventListener("input", () => cihazComboGoster(cihazInput, cihazList));
@@ -336,9 +337,9 @@
     }
 
     function cihazComboGoster(input, listEl) {
-        const val = input.value.trim().toUpperCase();
+        const val = input.value.trim().toLocaleUpperCase('tr-TR');
         if (!firmaCihazlari.length) { listEl.style.display = "none"; return; }
-        const filtered = val ? firmaCihazlari.filter(c => c.cihaz_adi.toUpperCase().includes(val)) : firmaCihazlari;
+        const filtered = val ? firmaCihazlari.filter(c => (c.cihaz_adi||"").toLocaleUpperCase('tr-TR').includes(val)) : firmaCihazlari;
         if (!filtered.length) { listEl.style.display = "none"; return; }
         listEl.innerHTML = filtered.map(c =>
             `<div class="cihaz-combo-item">
@@ -472,9 +473,9 @@
 
     // ── ARAMA ──
     function ara() {
-        const f = document.getElementById("araInput").value.toUpperCase();
+        const f = document.getElementById("araInput").value.toLocaleUpperCase('tr-TR');
         renderListe(f ? tumKayitlar.filter(r =>
-            (r.ie_no || "").toUpperCase().includes(f) || (r.firma_adi || "").toUpperCase().includes(f)
+            (r.ie_no || "").toLocaleUpperCase('tr-TR').includes(f) || (r.firma_adi || "").toLocaleUpperCase('tr-TR').includes(f)
         ) : tumKayitlar);
     }
 
