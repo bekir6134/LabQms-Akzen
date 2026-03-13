@@ -2,170 +2,162 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LabQMS Pro - Müşteriler (CRM)</title>
+    <title>LabQMS Pro - Gelişmiş CRM</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #1E40AF; --text-main: #334155; --text-muted: #64748b; --border: #e2e8f0; --bg-main: #f8fafc; --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); --success: #10B981; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-main); color: var(--text-main); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .module-container { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 20px; }
-        .card { background-color: #fff; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+        :root { --primary: #1E40AF; --border: #e2e8f0; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); padding: 20px; color: #334155; }
+        .card { background: #fff; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .full-width { grid-column: 1 / -1; }
-        label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; font-family: 'Inter', sans-serif; }
-        input:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
-        .btn-save { background-color: var(--primary); color: #fff; padding: 12px 20px; font-size: 1rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 15px; transition: 0.2s; }
-        .btn-save:hover { background-color: #1e3a8a; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
-        th { background-color: #f1f5f9; padding: 12px; text-align: left; border-bottom: 1px solid var(--border); color: var(--text-muted); }
-        td { padding: 12px; border-bottom: 1px solid var(--border); }
-        .search-bar { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; margin-bottom: 15px; box-sizing: border-box; background-color: #f8fafc; }
-        .badge { background-color: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
+        .full { grid-column: 1 / -1; }
+        .dynamic-row { display: flex; gap: 5px; margin-bottom: 5px; }
+        label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; color: #64748b; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
+        .btn-plus { background: #10B981; color: white; border: none; border-radius: 4px; padding: 0 12px; cursor: pointer; }
+        .btn-save { background: var(--primary); color: white; padding: 15px; border: none; border-radius: 8px; font-weight: 600; width: 100%; cursor: pointer; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 15px; border-bottom: 1px solid var(--border); text-align: left; }
+        .btn-edit { color: var(--primary); font-weight: bold; cursor: pointer; border: 1px solid var(--primary); padding: 5px 10px; border-radius: 4px; background: white; }
     </style>
 </head>
 <body>
 
-<div class="module-container">
-    
+<div style="max-width: 1100px; margin: auto;">
     <div class="card">
-        <h2 style="margin-top: 0; color: var(--primary);">🏢 Yeni Müşteri (Cari) Kartı Oluştur</h2>
-        <form id="musteriForm" onsubmit="musteriKaydet(event)">
+        <h2 id="formTitle">🏢 Müşteri / Şube Kartı Oluştur</h2>
+        <form id="musteriForm" onsubmit="kaydet(event)">
+            <input type="hidden" id="musteriId">
             <div class="form-grid">
-                <div class="full-width">
-                    <label>Firma Resmi Ünvanı *</label>
-                    <input type="text" id="firma_adi" placeholder="Örn: XYZ Makine Sanayi ve Ticaret A.Ş." required>
+                <div class="full">
+                    <label>Firma Resmi Ünvanı * (Fatura Bilgisi)</label>
+                    <input type="text" id="firma_adi" required placeholder="Örn: ABC Endüstri A.Ş.">
+                </div>
+                <div class="full">
+                    <label>Şube / Birim Adı (Sertifikaya Özel - Opsiyonel)</label>
+                    <input type="text" id="sube_adi" placeholder="Örn: Gebze Fabrikası veya Ar-Ge Laboratuvarı">
+                </div>
+                
+                <div>
+                    <label>Yetkili Kişiler <button type="button" class="btn-plus" onclick="addField('yetkiliList')">+</button></label>
+                    <div id="yetkiliList"><div class="dynamic-row"><input type="text" class="yetkili-input"></div></div>
                 </div>
                 <div>
-                    <label>Yetkili Kişi</label>
-                    <input type="text" id="yetkili_kisi" placeholder="Örn: Ahmet Yılmaz">
+                    <label>Telefonlar <button type="button" class="btn-plus" onclick="addField('telList')">+</button></label>
+                    <div id="telList"><div class="dynamic-row"><input type="text" class="tel-input"></div></div>
+                </div>
+
+                <div>
+                    <label>Sertifika Mailleri <button type="button" class="btn-plus" onclick="addField('sMailList')">+</button></label>
+                    <div id="sMailList"><div class="dynamic-row"><input type="email" class="s-mail-input"></div></div>
                 </div>
                 <div>
-                    <label>Telefon Numarası</label>
-                    <input type="text" id="telefon" placeholder="05XX XXX XX XX">
+                    <label>Fatura Mailleri <button type="button" class="btn-plus" onclick="addField('fMailList')">+</button></label>
+                    <div id="fMailList"><div class="dynamic-row"><input type="email" class="f-mail-input"></div></div>
+                </div>
+
+                <div>
+                    <label>İl / İlçe</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="il" placeholder="İl">
+                        <input type="text" id="ilce" placeholder="İlçe">
+                    </div>
                 </div>
                 <div>
-                    <label>E-Posta Adresi</label>
-                    <input type="email" id="email" placeholder="kalite@xyzmakine.com">
+                    <label>Vergi Dairesi / VKN</label>
+                    <input type="text" id="vkn">
                 </div>
-                <div class="full-width">
-                    <label>Firma Adresi</label>
-                    <textarea id="adres" rows="2" placeholder="Örn: Organize Sanayi Bölgesi 2. Cadde No:5"></textarea>
+                <div class="full">
+                    <label>Açık Adres (Sertifikada Yazacak Olan)</label>
+                    <textarea id="adres" rows="2"></textarea>
                 </div>
             </div>
-            <button type="submit" class="btn-save" id="kaydetBtn">+ Müşteriyi Kaydet</button>
+            <button type="submit" class="btn-save">💾 Müşteriyi / Şubeyi Sisteme İşle</button>
         </form>
     </div>
 
     <div class="card">
-        <h2 style="margin-top: 0; color: var(--primary);">📋 Kayıtlı Müşteriler Listesi</h2>
-        <input type="text" id="aramaKutusu" class="search-bar" placeholder="🔍 Firma Adı, Yetkili veya Telefon ara..." onkeyup="musteriAra()">
-        
-        <div style="overflow-x: auto;">
-            <table id="musteriTablosu">
-                <thead>
-                    <tr>
-                        <th>Firma Ünvanı</th>
-                        <th>Yetkili Kişi</th>
-                        <th>Telefon</th>
-                        <th>E-Posta</th>
-                        <th>Durum</th>
-                    </tr>
-                </thead>
-                <tbody id="musteriListesiGövdesi">
-                    </tbody>
-            </table>
-        </div>
+        <h3>📋 Kayıtlı Müşteri ve Lokasyonlar</h3>
+        <table>
+            <thead><tr><th>Ünvan / Şube</th><th>Lokasyon</th><th>İşlem</th></tr></thead>
+            <tbody id="liste"></tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    // 1. SAYFA AÇILDIĞINDA MÜŞTERİLERİ VERİTABANINDAN ÇEK (GET)
-    async function musterileriYukle() {
-        const tbody = document.getElementById('musteriListesiGövdesi');
-        tbody.innerHTML = '<tr><td colspan="5">Yükleniyor...</td></tr>';
-        
-        try {
-            const response = await fetch('/api/musteriler'); // Server.js'deki rotaya gidiyor
-            if (!response.ok) throw new Error('Veriler alınamadı');
-            
-            const musteriler = await response.json();
-            tbody.innerHTML = ''; // Yükleniyor yazısını temizle
-            
-            if(musteriler.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5">Henüz kayıtlı müşteri bulunmuyor.</td></tr>';
-                return;
-            }
-
-            // Gelen her bir müşteri için tabloya yeni bir satır ekle
-            musteriler.forEach(m => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="font-weight: 600;">${m.firma_adi}</td>
-                    <td>${m.yetkili_kisi || '-'}</td>
-                    <td>${m.telefon || '-'}</td>
-                    <td>${m.email || '-'}</td>
-                    <td><span class="badge">Aktif</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        } catch (error) {
-            console.error(error);
-            tbody.innerHTML = '<tr><td colspan="5" style="color:red;">Veriler yüklenirken bir hata oluştu.</td></tr>';
-        }
+    function addField(id, val = '') {
+        const div = document.createElement("div");
+        div.className = "dynamic-row";
+        div.innerHTML = `<input type="${id.includes('Mail')?'email':'text'}" class="${id}-input" value="${val}"><button type="button" onclick="this.parentElement.remove()" style="background:#ef4444; color:white; border:none; border-radius:4px; cursor:pointer;">-</button>`;
+        document.getElementById(id).appendChild(div);
     }
 
-    // 2. YENİ MÜŞTERİYİ VERİTABANINA KAYDET (POST)
-    async function musteriKaydet(event) {
-        event.preventDefault(); // Sayfanın yenilenmesini engelle
-        const btn = document.getElementById('kaydetBtn');
-        btn.innerText = "Kaydediliyor...";
-        btn.disabled = true;
-
-        const yeniMusteri = {
-            firma_adi: document.getElementById('firma_adi').value,
-            yetkili_kisi: document.getElementById('yetkili_kisi').value,
-            telefon: document.getElementById('telefon').value,
-            email: document.getElementById('email').value,
-            adres: document.getElementById('adres').value
-        };
-
-        try {
-            const response = await fetch('/api/musteriler', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(yeniMusteri)
-            });
-
-            if (response.ok) {
-                alert("✅ Müşteri başarıyla kaydedildi!");
-                document.getElementById('musteriForm').reset(); // Formu temizle
-                musterileriYukle(); // Tabloyu anında güncelle
-            } else {
-                alert("❌ Kayıt sırasında bir hata oluştu.");
-            }
-        } catch (error) {
-            console.error(error);
-            alert("Sunucuya ulaşılamıyor.");
-        } finally {
-            btn.innerText = "+ Müşteriyi Kaydet";
-            btn.disabled = false;
-        }
-    }
-
-    // 3. TABLODA ARAMA YAPMA İŞLEMİ
-    function musteriAra() {
-        let input = document.getElementById("aramaKutusu").value.toLowerCase();
-        let rows = document.querySelectorAll("#musteriListesiGövdesi tr");
-        rows.forEach(row => {
-            let text = row.innerText.toLowerCase();
-            row.style.display = text.includes(input) ? "" : "none";
+    async function listeYükle() {
+        const res = await fetch('/api/musteriler');
+        const data = await res.json();
+        const liste = document.getElementById("liste");
+        liste.innerHTML = "";
+        data.forEach(m => {
+            liste.innerHTML += `<tr>
+                <td><strong>${m.firma_adi}</strong><br><small style="color:var(--primary)">${m.sube_adi || ''}</small></td>
+                <td>${m.il || ''} / ${m.ilce || ''}</td>
+                <td><button class="btn-edit" onclick='duzenle(${JSON.stringify(m)})'>Düzenle</button></td>
+            </tr>`;
         });
     }
 
-    // Sayfa açılır açılmaz listeyi yükle
-    window.onload = musterileriYukle;
-</script>
+    function duzenle(m) {
+        document.getElementById("musteriId").value = m.id;
+        document.getElementById("firma_adi").value = m.firma_adi;
+        document.getElementById("sube_adi").value = m.sube_adi || '';
+        document.getElementById("il").value = m.il || '';
+        document.getElementById("ilce").value = m.ilce || '';
+        document.getElementById("adres").value = m.adres || '';
+        document.getElementById("vkn").value = m.vergi_dairesi_vkn || '';
+        
+        // Dinamik alanları doldurma
+        const setFields = (id, data) => {
+            const cont = document.getElementById(id); cont.innerHTML = "";
+            (data || ['']).forEach(v => addField(id, v));
+        };
+        setFields('yetkiliList', m.yetkililer);
+        setFields('telList', m.telefonlar);
+        setFields('sMailList', m.sertifika_mailleri);
+        setFields('fMailList', m.fatura_mailleri);
+        
+        window.scrollTo(0,0);
+        document.getElementById("formTitle").innerText = "📝 Müşteri Düzenleniyor...";
+    }
 
+    async function kaydet(e) {
+        e.preventDefault();
+        const body = {
+            id: document.getElementById("musteriId").value,
+            firma_adi: document.getElementById("firma_adi").value,
+            sube_adi: document.getElementById("sube_adi").value,
+            il: document.getElementById("il").value,
+            ilce: document.getElementById("ilce").value,
+            adres: document.getElementById("adres").value,
+            vergi_dairesi_vkn: document.getElementById("vkn").value,
+            yetkililer: Array.from(document.querySelectorAll(".yetkiliList-input")).map(i => i.value),
+            telefonlar: Array.from(document.querySelectorAll(".telList-input")).map(i => i.value),
+            sertifika_mailleri: Array.from(document.querySelectorAll(".sMailList-input")).map(i => i.value),
+            fatura_mailleri: Array.from(document.querySelectorAll(".fMailList-input")).map(i => i.value)
+        };
+
+        const res = await fetch('/api/musteriler', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body)
+        });
+
+        if(res.ok) { 
+            alert("Başarıyla kaydedildi!"); 
+            location.reload(); 
+        }
+    }
+
+    window.onload = listeYükle;
+</script>
 </body>
 </html>

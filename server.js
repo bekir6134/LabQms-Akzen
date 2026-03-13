@@ -9,58 +9,48 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-// "public" klasöründeki HTML/CSS dosyalarını dışarıya sunar
 app.use(express.static(path.join(__dirname, 'public'))); 
 
-// Neon.tech PostgreSQL Bağlantı Havuzu
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false } // Neon için SSL zorunludur
+    ssl: { rejectUnauthorized: false }
 });
 
-// Veritabanı bağlantı testi (Tarayıcıda /api/test yazarak kontrol edebilirsin)
-app.get('/api/test', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT NOW()');
-        res.json({ success: true, message: "Neon.tech Veritabanı Bağlantısı Başarılı!", time: result.rows[0].now });
-    } catch (err) {
-        res.status(500).json({ error: "Veritabanı Hatası: " + err.message });
-    }
-});
-
-// --- MÜŞTERİLER (CRM) API YOLLARI ---
-
-// 1. Veritabanındaki tüm müşterileri HTML'e gönder (LİSTELEME)
+// MÜŞTERİ LİSTELEME
 app.get('/api/musteriler', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM musteriler ORDER BY id DESC');
         res.json(result.rows);
     } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: "Müşteriler getirilirken hata oluştu." });
+        res.status(500).json({ error: err.message });
     }
 });
 
-// 2. HTML'den gelen yeni müşteri verisini veritabanına yaz (KAYDETME)
+// MÜŞTERİ KAYDET VEYA GÜNCELLE
 app.post('/api/musteriler', async (req, res) => {
     try {
-        // Ön yüzden gelen kutuların içindeki verileri alıyoruz
-        const { firma_adi, yetkili_kisi, telefon, email, adres } = req.body;
+        const { id, firma_adi, sube_adi, yetkililer, telefonlar, sertifika_mailleri, fatura_mailleri, il, ilce, adres, vergi_dairesi_vkn } = req.body;
         
-        // Veritabanına (Neon) yazıyoruz
-        const yeniMusteri = await pool.query(
-            'INSERT INTO musteriler (firma_adi, yetkili_kisi, telefon, email, adres) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [firma_adi, yetkili_kisi, telefon, email, adres]
-        );
-        
-        res.json(yeniMusteri.rows[0]); // Başarı mesajını geri döndür
+        if (id) {
+            // GÜNCELLEME
+            const updateQuery = `
+                UPDATE musteriler SET 
+                firma_adi=$1, sube_adi=$2, yetkililer=$3, telefonlar=$4, sertifika_mailleri=$5, 
+                fatura_mailleri=$6, il=$7, ilce=$8, adres=$9, vergi_dairesi_vkn=$10 
+                WHERE id=$11 RETURNING *`;
+            const result = await pool.query(updateQuery, [firma_adi, sube_adi, JSON.stringify(yetkililer), JSON.stringify(telefonlar), JSON.stringify(sertifika_mailleri), JSON.stringify(fatura_mailleri), il, ilce, adres, vergi_dairesi_vkn, id]);
+            res.json(result.rows[0]);
+        } else {
+            // YENİ KAYIT
+            const insertQuery = `
+                INSERT INTO musteriler (firma_adi, sube_adi, yetkililer, telefonlar, sertifika_mailleri, fatura_mailleri, il, ilce, adres, vergi_dairesi_vkn) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`;
+            const result = await pool.query(insertQuery, [firma_adi, sube_adi, JSON.stringify(yetkililer), JSON.stringify(telefonlar), JSON.stringify(sertifika_mailleri), JSON.stringify(fatura_mailleri), il, ilce, adres, vergi_dairesi_vkn]);
+            res.json(result.rows[0]);
+        }
     } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: "Müşteri kaydedilirken hata oluştu." });
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Sunucuyu Başlat
-app.listen(PORT, () => {
-    console.log(`🚀 LabQMS Sunucusu ${PORT} portunda çalışıyor.`);
-});
+app.listen(PORT, () => console.log(`🚀 LabQMS Pro ${PORT} üzerinde aktif.`));
