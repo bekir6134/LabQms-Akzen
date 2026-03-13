@@ -198,6 +198,22 @@ app.get('/api/teklif-on-veriler', async (req, res) => {
 });
 
 
+// Firmaya göre müşteri cihazlarını getir (teklif için)
+app.get('/api/musteri-cihazlari-firma/:musteri_id', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT mc.id, mc.cihaz_adi, mc.marka, mc.model, mc.seri_no, mc.envanter_no,
+                   ck.fiyat, ck.para_birimi
+            FROM musteri_cihazlari mc
+            LEFT JOIN cihaz_kutuphanesi ck ON LOWER(ck.cihaz_adi) = LOWER(mc.cihaz_adi)
+            WHERE mc.musteri_id = $1
+            ORDER BY mc.cihaz_adi ASC`,
+            [req.params.musteri_id]
+        );
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // --- TALİMATLAR (PROSEDÜR) API ---
 
 app.get('/api/talimatlar', async (req, res) => {

@@ -5,129 +5,372 @@
     <title>LabQMS Pro - Teklif Hazırlama</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #1E40AF; --border: #e2e8f0; --bg: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 20px; }
-        .container { max-width: 1000px; margin: auto; }
-        .card { background: #fff; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        label { display: block; font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 8px; }
-        input, select, datalist { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; outline: none; }
-        .price-box { background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #dcfce7; }
-        .btn-add { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; }
-        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
-        th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: #64748b; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); }
+        :root { --primary: #1E40AF; --primary-light: #3b82f6; --border: #e2e8f0; --bg: #f8fafc; --success: #10B981; --text: #334155; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 24px; color: var(--text); margin: 0; }
+        .container { max-width: 1050px; margin: auto; }
+
+        /* SAYFA BAŞLIĞI */
+        .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .page-title { font-size: 1.4rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        .teklif-no-badge { background: #eff6ff; border: 1px solid #bfdbfe; color: var(--primary); font-size: 0.82rem; font-weight: 700; padding: 6px 14px; border-radius: 20px; letter-spacing: 0.5px; }
+
+        /* KART */
+        .card { background: #fff; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04); margin-bottom: 20px; overflow: hidden; }
+        .card-header { padding: 16px 24px; border-bottom: 1px solid var(--border); background: #f8fafc; display: flex; align-items: center; gap: 10px; }
+        .card-header-icon { width: 32px; height: 32px; border-radius: 8px; background: #dbeafe; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+        .card-header-title { font-weight: 700; color: var(--primary); font-size: 0.95rem; }
+        .card-body { padding: 24px; }
+
+        /* FORM */
+        .form-grid { display: grid; gap: 16px; }
+        .g2 { grid-template-columns: 1fr 1fr; }
+        .g3 { grid-template-columns: 2fr 1fr 1fr; }
+        label { display: block; font-size: 0.78rem; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+        input, select { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-family: inherit; font-size: 0.9rem; color: var(--text); background: #fff; transition: 0.2s; }
+        input:focus, select:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        input[type="date"] { color: var(--text); }
+
+        /* FİYAT KUTUSU */
+        .price-field { background: #f0fdf4; border-radius: 10px; padding: 14px; border: 1px solid #dcfce7; }
+        .price-field label { color: #166534; }
+        .price-field input { background: #fff; border-color: #bbf7d0; }
+        .price-field input:focus { border-color: var(--success); box-shadow: 0 0 0 3px rgba(16,185,129,0.12); }
+
+        /* MIKTAR */
+        .qty-field { background: #fffbeb; border-radius: 10px; padding: 14px; border: 1px solid #fde68a; }
+        .qty-field label { color: #92400e; }
+        .qty-field input { background: #fff; border-color: #fde68a; }
+
+        /* EKLE BUTONU */
+        .btn-add { background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%); color: white; border: none; padding: 13px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; transition: 0.2s; box-shadow: 0 2px 8px rgba(30,64,175,0.25); }
+        .btn-add:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(30,64,175,0.35); }
+        .btn-add:active { transform: translateY(0); }
+
+        /* TABLO */
+        .table-wrapper { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: linear-gradient(to right, #1e3a8a, #1E40AF); }
+        th { padding: 13px 16px; text-align: left; color: rgba(255,255,255,0.85); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        tbody tr { transition: background 0.15s; }
+        tbody tr:hover { background: #f8fafc; }
+        td { padding: 13px 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+        .no-data td { text-align: center; color: #94a3b8; padding: 40px; font-size: 0.9rem; }
+
+        /* SATIR NUMARAsi */
+        .row-num { width: 28px; height: 28px; background: #eff6ff; color: var(--primary); border-radius: 50%; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+
+        /* FİYAT HÜCRESI */
+        .price-cell { font-weight: 700; color: #059669; font-size: 0.95rem; }
+        .price-cell .currency { font-size: 0.75rem; color: #64748b; font-weight: 500; margin-left: 2px; }
+
+        /* SİL BUTONU */
+        .btn-del-row { background: #fee2e2; color: #dc2626; border: none; width: 30px; height: 30px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; transition: 0.15s; }
+        .btn-del-row:hover { background: #dc2626; color: #fff; }
+
+        /* ÖZET */
+        .summary-bar { background: linear-gradient(135deg, #1e3a8a 0%, #1E40AF 100%); border-radius: 12px; padding: 20px 28px; display: flex; justify-content: space-between; align-items: center; color: white; }
+        .summary-bar .label { font-size: 0.82rem; opacity: 0.75; margin-bottom: 4px; }
+        .summary-bar .value { font-size: 1.5rem; font-weight: 800; }
+        .summary-bar .count { font-size: 0.85rem; opacity: 0.7; }
+        .btn-print { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; backdrop-filter: blur(4px); transition: 0.2s; }
+        .btn-print:hover { background: rgba(255,255,255,0.25); }
+
+        /* NOT ALANI */
+        textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-family: inherit; font-size: 0.9rem; resize: vertical; min-height: 80px; }
+        textarea:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+
+        /* İNDİRİM ALANI */
+        .discount-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fffbeb; border-radius: 10px; border: 1px solid #fde68a; }
+        .discount-row label { margin: 0; white-space: nowrap; }
+        .discount-row input { max-width: 100px; }
+        .discount-row span { color: #92400e; font-size: 0.85rem; font-weight: 600; }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <div class="card">
-        <h2 style="color: var(--primary); margin-top:0;">📄 Yeni Teklif Oluştur</h2>
-        
-        <div class="row">
-            <div>
-                <label>Firma Adı (Seçebilir veya Yazabilirsiniz)</label>
-                <input list="musteriListesi" id="firma_adi" placeholder="Firma ara veya yaz...">
-                <datalist id="musteriListesi"></datalist>
-            </div>
-            <div>
-                <label>Teklif Tarihi</label>
-                <input type="date" id="teklif_tarihi">
-            </div>
-        </div>
 
-        <div class="row" style="grid-template-columns: 2fr 1fr 1fr;">
-            <div>
-                <label>Cihaz Tanımı (Kütüphaneden Çeker / El ile Yazılabilir)</label>
-                <input list="cihazListesi" id="cihaz_adi" placeholder="Cihaz ara veya yaz..." oninput="fiyatGetir(this.value)">
-                <datalist id="cihazListesi"></datalist>
-            </div>
-            <div class="price-box">
-                <label>Birim Fiyat</label>
-                <input type="number" id="birim_fiyat" placeholder="0.00">
-            </div>
-            <div>
-                <label>Para Birimi</label>
-                <select id="para_birimi">
-                    <option value="₺">₺ TL</option>
-                    <option value="$">$ USD</option>
-                    <option value="€">€ EUR</option>
-                </select>
-            </div>
-        </div>
-
-        <button class="btn-add" onclick="teklifeEkle()">➕ Teklif Satırına Ekle</button>
-
-        <table id="teklifTablo">
-            <thead>
-                <tr>
-                    <th>Cihaz</th>
-                    <th>Fiyat</th>
-                    <th>İşlem</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+    <!-- BAŞLIK -->
+    <div class="page-header">
+        <div class="page-title">📄 Teklif Hazırlama</div>
+        <div class="teklif-no-badge" id="teklifNoGoster">TKL-<span id="yilGoster"></span>-001</div>
     </div>
+
+    <!-- MÜŞTERİ & TARİH -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon">🏢</div>
+            <div class="card-header-title">Müşteri & Teklif Bilgileri</div>
+        </div>
+        <div class="card-body">
+            <div class="form-grid g2">
+                <div>
+                    <label>Firma Adı</label>
+                    <select id="firma_adi" onchange="firmaSecildi()">
+                        <option value="">-- Firma Seçin --</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Teklif Tarihi</label>
+                    <input type="date" id="teklif_tarihi">
+                </div>
+                <div>
+                    <label>Geçerlilik Süresi</label>
+                    <select id="gecerlilik">
+                        <option value="15">15 Gün</option>
+                        <option value="30" selected>30 Gün</option>
+                        <option value="45">45 Gün</option>
+                        <option value="60">60 Gün</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Teklif Notu</label>
+                    <input type="text" id="teklif_notu" placeholder="Opsiyonel not...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CİHAZ EKLE -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon">🔧</div>
+            <div class="card-header-title">Kalibrasyon Kalemi Ekle</div>
+        </div>
+        <div class="card-body">
+            <div class="form-grid g3" style="align-items:end;">
+                <div>
+                    <label>Cihaz Tanımı</label>
+                    <div style="position:relative;">
+                        <input type="text" id="cihaz_adi" placeholder="Firmaya ait cihazlardan seçin veya yazın..." autocomplete="off"
+                            oninput="cihazComboFiltrele()" onfocus="cihazComboFiltrele()"
+                            onblur="setTimeout(()=>document.getElementById('cihazComboList').style.display='none', 200)">
+                        <div id="cihazComboList" style="display:none; position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid var(--border); border-top:none; border-radius:0 0 8px 8px; max-height:220px; overflow-y:auto; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+                    </div>
+                    <div id="cihazHint" style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">💡 Önce firma seçin, o firmaya ait cihazlar görünür</div>
+                </div>
+                <div class="price-field">
+                    <label>Birim Fiyat</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="number" id="birim_fiyat" placeholder="0.00" style="flex:1;">
+                        <select id="para_birimi" style="width:80px;">
+                            <option value="₺">₺ TL</option>
+                            <option value="$">$ USD</option>
+                            <option value="€">€ EUR</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="qty-field">
+                    <label>Adet</label>
+                    <input type="number" id="adet" value="1" min="1">
+                </div>
+            </div>
+            <div style="margin-top:16px; display:flex; justify-content:flex-end;">
+                <button class="btn-add" onclick="teklifeEkle()">➕ Kaleme Ekle</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEKLIF SATIRLARI -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon">📋</div>
+            <div class="card-header-title">Teklif Kalemleri</div>
+        </div>
+        <div class="card-body" style="padding:0;">
+            <div class="table-wrapper">
+                <table id="teklifTablo">
+                    <thead>
+                        <tr>
+                            <th style="width:48px;">#</th>
+                            <th>Cihaz / Hizmet Tanımı</th>
+                            <th style="width:80px; text-align:center;">Adet</th>
+                            <th style="width:130px;">Birim Fiyat</th>
+                            <th style="width:140px;">Toplam</th>
+                            <th style="width:50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="teklifBody">
+                        <tr class="no-data"><td colspan="6">Henüz kalem eklenmedi. Yukarıdan cihaz ekleyin.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- İNDİRİM -->
+    <div class="discount-row">
+        <label>🏷️ İndirim (%)</label>
+        <input type="number" id="indirim" value="0" min="0" max="100" oninput="toplamHesapla()">
+        <span id="indirimTutar" style="min-width:120px;"></span>
+    </div>
+
+    <!-- ÖZET BAR -->
+    <div class="summary-bar" style="margin-top:16px;">
+        <div>
+            <div class="label">Toplam Kalem</div>
+            <div class="count" id="kalemSayisi">0 kalem</div>
+        </div>
+        <div style="text-align:center;">
+            <div class="label">Ara Toplam</div>
+            <div style="font-size:1rem; font-weight:600;" id="araToplam">0,00 ₺</div>
+        </div>
+        <div style="text-align:right;">
+            <div class="label">Genel Toplam</div>
+            <div class="value" id="genelToplam">0,00 ₺</div>
+        </div>
+        <button class="btn-print" onclick="window.print()">🖨️ Yazdır / PDF</button>
+    </div>
+
 </div>
 
 <script>
-    let cihazVerileri = [];
+    let cihazVerileri = [];       // kütüphane (fiyat için)
+    let firmaCihazlari = [];      // seçili firmanın cihazları
+    let musteriler = [];
+    let satirlar = [];
 
-    // 1. Verileri Yükle
     async function verileriYukle() {
         const res = await fetch('/api/teklif-on-veriler');
         const data = await res.json();
-        
-        // Müşterileri Datalist'e doldur
-        const mList = document.getElementById("musteriListesi");
-        data.musteriler.forEach(m => {
-            let opt = document.createElement("option");
-            opt.value = m.row_firma_adi || m.firma_adi;
-            mList.appendChild(opt);
-        });
-
-        // Cihazları Datalist'e doldur
+        musteriler = data.musteriler;
         cihazVerileri = data.cihazlar;
-        const cList = document.getElementById("cihazListesi");
-        data.cihazlar.forEach(c => {
-            let opt = document.createElement("option");
-            opt.value = c.cihaz_adi;
-            cList.appendChild(opt);
-        });
-        
+
+        // Firma select doldur
+        const fSel = document.getElementById("firma_adi");
+        fSel.innerHTML = '<option value="">-- Firma Seçin --</option>' +
+            musteriler.map(m => `<option value="${m.id}">${m.firma_adi}</option>`).join('');
+
         document.getElementById("teklif_tarihi").valueAsDate = new Date();
+        const yil = new Date().getFullYear();
+        document.getElementById("yilGoster").textContent = yil;
     }
 
-    // 2. Cihaz seçilince fiyatı getir (Değiştirilebilir)
-    function fiyatGetir(secilenAd) {
-        const cihaz = cihazVerileri.find(c => c.cihaz_adi === secilenAd);
-        if(cihaz) {
-            document.getElementById("birim_fiyat").value = cihaz.fiyat;
-            document.getElementById("para_birimi").value = cihaz.para_birimi;
+    async function firmaSecildi() {
+        const musteriId = document.getElementById("firma_adi").value;
+        firmaCihazlari = [];
+        document.getElementById("cihaz_adi").value = "";
+        document.getElementById("birim_fiyat").value = "";
+
+        if (!musteriId) {
+            document.getElementById("cihazHint").textContent = "💡 Önce firma seçin, o firmaya ait cihazlar görünür";
+            return;
+        }
+
+        const res = await fetch(`/api/musteri-cihazlari-firma/${musteriId}`);
+        firmaCihazlari = await res.json();
+
+        const hint = document.getElementById("cihazHint");
+        if (firmaCihazlari.length > 0) {
+            hint.textContent = `✅ Bu firmaya ait ${firmaCihazlari.length} cihaz bulundu`;
+            hint.style.color = "#059669";
+        } else {
+            hint.textContent = "ℹ️ Bu firmaya kayıtlı cihaz yok — el ile yazabilirsiniz";
+            hint.style.color = "#94a3b8";
         }
     }
 
-    // 3. Geçici Listeye Ekle
+    function cihazComboFiltrele() {
+        const val = document.getElementById("cihaz_adi").value.toUpperCase();
+        const list = document.getElementById("cihazComboList");
+
+        // Firma seçiliyse o firmanın cihazları, yoksa kütüphane
+        const kaynak = firmaCihazlari.length > 0 ? firmaCihazlari : cihazVerileri;
+        const filtered = val
+            ? kaynak.filter(c => c.cihaz_adi.toUpperCase().includes(val))
+            : kaynak;
+
+        if (filtered.length === 0) { list.style.display = "none"; return; }
+
+        list.innerHTML = filtered.map(c => {
+            const alt = firmaCihazlari.length > 0
+                ? `<span style="color:#94a3b8; font-size:0.75rem;">${[c.marka, c.model, c.seri_no ? 'S/N:'+c.seri_no : ''].filter(Boolean).join(' · ')}</span>`
+                : `<span style="color:#94a3b8; font-size:0.75rem;">${c.fiyat ? c.fiyat + ' ' + c.para_birimi : ''}</span>`;
+            return `<div onmousedown="cihazSec('${c.cihaz_adi.replace(/'/g,"\\'")}', ${c.fiyat||0}, '${(c.para_birimi||'₺').replace(/'/g,"\\'")}' )"
+                style="padding:10px 14px; cursor:pointer; border-bottom:1px solid #f1f5f9; transition:0.15s;"
+                onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">
+                <div style="font-weight:600; font-size:0.88rem;">${c.cihaz_adi}</div>${alt}
+            </div>`;
+        }).join('');
+        list.style.display = "block";
+    }
+
+    function cihazSec(ad, fiyat, pb) {
+        document.getElementById("cihaz_adi").value = ad;
+        document.getElementById("cihazComboList").style.display = "none";
+        if (fiyat) {
+            document.getElementById("birim_fiyat").value = fiyat;
+            const pbTemiz = pb.includes('₺') ? '₺' : pb.includes('$') ? '$' : '€';
+            document.getElementById("para_birimi").value = pbTemiz;
+        }
+    }
+
+    // fiyatGetir artık cihazSec içinde yönetiliyor
+    function fiyatGetir(ad) {
+        const cihaz = cihazVerileri.find(c => c.cihaz_adi === ad);
+        if (cihaz) {
+            document.getElementById("birim_fiyat").value = cihaz.fiyat;
+            const pb = cihaz.para_birimi.includes('₺') ? '₺' : cihaz.para_birimi.includes('$') ? '$' : '€';
+            document.getElementById("para_birimi").value = pb;
+        }
+    }
+
     function teklifeEkle() {
-        const ad = document.getElementById("cihaz_adi").value;
-        const fiyat = document.getElementById("birim_fiyat").value;
+        const ad = document.getElementById("cihaz_adi").value.trim();
+        const fiyat = parseFloat(document.getElementById("birim_fiyat").value);
         const pb = document.getElementById("para_birimi").value;
+        const adet = parseInt(document.getElementById("adet").value) || 1;
 
-        if(!ad || !fiyat) return alert("Cihaz ve fiyat girmelisiniz!");
+        if (!ad || !fiyat) {
+            document.getElementById("cihaz_adi").style.borderColor = '#ef4444';
+            setTimeout(() => document.getElementById("cihaz_adi").style.borderColor = '', 1500);
+            return;
+        }
 
-        const tbody = document.querySelector("#teklifTablo tbody");
-        tbody.innerHTML += `
-            <tr>
-                <td>${ad}</td>
-                <td><b>${fiyat} ${pb}</b></td>
-                <td><button onclick="this.parentElement.parentElement.remove()" style="color:red; border:none; background:none; cursor:pointer;">❌</button></td>
-            </tr>`;
-        
-        // Alanları temizle
+        satirlar.push({ ad, fiyat, pb, adet });
+        renderSatirlar();
+
         document.getElementById("cihaz_adi").value = "";
         document.getElementById("birim_fiyat").value = "";
+        document.getElementById("adet").value = "1";
+    }
+
+    function satirSil(idx) {
+        satirlar.splice(idx, 1);
+        renderSatirlar();
+    }
+
+    function renderSatirlar() {
+        const tbody = document.getElementById("teklifBody");
+        if (satirlar.length === 0) {
+            tbody.innerHTML = '<tr class="no-data"><td colspan="6">Henüz kalem eklenmedi. Yukarıdan cihaz ekleyin.</td></tr>';
+            toplamHesapla();
+            return;
+        }
+        tbody.innerHTML = satirlar.map((s, i) => `
+            <tr>
+                <td><span class="row-num">${i + 1}</span></td>
+                <td><strong>${s.ad}</strong></td>
+                <td style="text-align:center; color:#475569;">${s.adet}</td>
+                <td class="price-cell">${s.fiyat.toLocaleString('tr-TR', {minimumFractionDigits:2})} <span class="currency">${s.pb}</span></td>
+                <td class="price-cell">${(s.fiyat * s.adet).toLocaleString('tr-TR', {minimumFractionDigits:2})} <span class="currency">${s.pb}</span></td>
+                <td><button class="btn-del-row" onclick="satirSil(${i})">✕</button></td>
+            </tr>`).join('');
+        toplamHesapla();
+    }
+
+    function toplamHesapla() {
+        const indirimOran = parseFloat(document.getElementById("indirim").value) || 0;
+        const ara = satirlar.reduce((sum, s) => sum + s.fiyat * s.adet, 0);
+        const indirimTutar = ara * indirimOran / 100;
+        const genel = ara - indirimTutar;
+        const pb = satirlar.length > 0 ? satirlar[0].pb : '₺';
+
+        document.getElementById("kalemSayisi").textContent = `${satirlar.length} kalem`;
+        document.getElementById("araToplam").textContent = ara.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ' + pb;
+        document.getElementById("genelToplam").textContent = genel.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ' + pb;
+        document.getElementById("indirimTutar").textContent = indirimOran > 0 ? `− ${indirimTutar.toLocaleString('tr-TR', {minimumFractionDigits:2})} ${pb} indirim` : '';
     }
 
     window.onload = verileriYukle;
