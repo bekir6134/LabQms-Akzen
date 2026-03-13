@@ -16,7 +16,7 @@
         .sidebar { width: 260px; min-width: 260px; background-color: var(--sidebar-bg); color: #f8fafc; display: flex; flex-direction: column; z-index: 1000; }
         .sidebar-header { padding: 20px; font-size: 1.5rem; font-weight: 700; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; color: white; }
         .sidebar-menu { list-style: none; padding: 15px 0; margin: 0; flex-grow: 1; overflow-y: auto; }
-        .menu-item { padding: 12px 20px; display: flex; align-items: center; gap: 12px; color: #94a3b8; text-decoration: none; font-weight: 500; transition: 0.2s; }
+        .menu-item { padding: 12px 20px; display: flex; align-items: center; gap: 12px; color: #94a3b8; text-decoration: none; font-weight: 500; transition: 0.2s; cursor: pointer; }
         .menu-item:hover, .menu-item.active { background-color: var(--sidebar-hover); color: #fff; border-left: 4px solid #60A5FA; }
         
         /* ANA İÇERİK */
@@ -34,7 +34,7 @@
         
         .dropdown-content {
             display: none; position: absolute; right: 0; top: 110%; background-color: #fff;
-            min-width: 200px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            min-width: 220px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
             border-radius: 8px; border: 1px solid var(--border); z-index: 2000; overflow: hidden;
         }
         .dropdown-content a {
@@ -44,6 +44,7 @@
         .dropdown-content a:hover { background-color: #f1f5f9; color: var(--primary); }
         .admin-dropdown:hover .dropdown-content { display: block; }
 
+        /* IFRAME EKRANI */
         #ekran { width: 100%; height: 100%; border: none; flex-grow: 1; background-color: var(--bg-main); }
     </style>
 </head>
@@ -54,23 +55,24 @@
         <div class="sidebar-menu">
             <a href="dashboard.html" target="ekran" class="menu-item active" onclick="aktifYap(this)"><span>📊</span> Dashboard</a>
             <a href="musteriler.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🏢</span> Müşteriler (CRM)</a>
+            <a href="teklif.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📄</span> Teklif ve Fiyatlar</a>
             <a href="kabul.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📥</span> Cihaz Kabul</a>
             <a href="operasyon.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🔄</span> Operasyon Merkezi</a>
-            <a href="teklif.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📄</span> Teklif ve Fiyatlar</a>
             <a href="personel.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>👤</span> Personel ve Yetkiler</a>
         </div>
     </aside>
 
     <div class="main-content">
         <header class="topbar">
-            <div style="font-weight: 600; color: var(--primary);">LabQMS Pro Kalibrasyon Yönetimi</div>
+            <div style="font-weight: 600; color: var(--primary);">LabQMS Pro Kalibrasyon Yönetim Sistemi</div>
             
             <div class="admin-dropdown">
                 <button class="admin-btn">👤 Yönetici Paneli ▼</button>
                 <div class="dropdown-content">
                     <a href="kategoriler.html" target="ekran">📁 Kategori Yönetimi</a>
                     <a href="cihaz-kutuphanesi.html" target="ekran">🗂️ Cihaz Kütüphanesi</a>
-                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 0;">
+                    <a href="talimatlar.html" target="ekran">📜 Kalibrasyon Talimatları</a>
+                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 5px 0;">
                     <a href="ayarlar.html" target="ekran">⚙️ Sistem Ayarları</a>
                 </div>
             </div>
@@ -80,6 +82,7 @@
     </div>
 
     <script>
+        // Sol menüde tıklanan öğeyi aktif (mavi) yapar
         function aktifYap(secilen) {
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
             secilen.classList.add('active');
