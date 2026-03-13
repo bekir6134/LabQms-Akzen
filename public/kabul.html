@@ -5,86 +5,357 @@
     <title>Cihaz Kabul</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #334155; padding: 20px; }
-        .card { background: #fff; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .full { grid-column: 1 / -1; }
-        label { display: block; font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; }
-        .btn { background: #1E40AF; color: #fff; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
-        
-        /* Modal Style */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
-        .modal-content { background: #fff; padding: 25px; border-radius: 12px; width: 500px; }
+        :root { --primary:#1E40AF; --primary-light:#3b82f6; --border:#e2e8f0; --bg:#f8fafc; --success:#10B981; --text:#334155; }
+        * { box-sizing: border-box; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); padding:24px; color:var(--text); margin:0; }
+
+        .accordion { background:#fff; border-radius:12px; border:1px solid var(--border); overflow:hidden; margin-bottom:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
+        .accordion-header { padding:15px 25px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:#fff; }
+        .accordion-header.active { border-bottom:1px solid var(--border); background:#f1f5f9; }
+        .accordion-content { padding:25px; display:none; }
+
+        .card { background:#fff; border-radius:12px; border:1px solid var(--border); box-shadow:0 4px 6px rgba(0,0,0,0.05); }
+        .card-header { padding:16px 24px; border-bottom:1px solid var(--border); background:#f8fafc; display:flex; align-items:center; gap:10px; }
+        .card-icon { width:32px; height:32px; border-radius:8px; background:#dbeafe; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+        .card-title { font-weight:700; color:var(--primary); font-size:0.95rem; }
+
+        .form-grid { display:grid; gap:14px; }
+        .g2 { grid-template-columns:1fr 1fr; }
+        .g3 { grid-template-columns:1fr 1fr 1fr; }
+        .full { grid-column:1/-1; }
+        label { display:block; font-size:0.8rem; font-weight:700; color:#64748b; margin-bottom:5px; }
+        input, select, textarea { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; outline:none; font-family:inherit; font-size:0.9rem; transition:0.2s; }
+        input:focus, select:focus, textarea:focus { border-color:var(--primary-light); box-shadow:0 0 0 3px rgba(59,130,246,0.12); }
+        textarea { resize:vertical; min-height:70px; }
+
+        /* CİHAZ TABLOSU */
+        .cihaz-table { width:100%; border-collapse:collapse; margin-top:12px; }
+        .cihaz-table thead { background:var(--primary); }
+        .cihaz-table th { padding:10px 12px; color:rgba(255,255,255,0.9); font-size:0.78rem; font-weight:600; text-align:left; }
+        .cihaz-table td { padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+        .cihaz-table tbody tr:hover { background:#f8fafc; }
+        .cihaz-table input, .cihaz-table select { padding:7px 9px; font-size:0.85rem; }
+
+        .btn-add-row { background:#f0fdf4; color:#166534; border:1px dashed #4ade80; padding:10px; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem; width:100%; margin-top:10px; transition:0.2s; }
+        .btn-add-row:hover { background:#dcfce7; }
+        .btn-del-row { background:#fee2e2; color:#dc2626; border:none; width:28px; height:28px; border-radius:6px; cursor:pointer; font-size:0.85rem; }
+        .btn-del-row:hover { background:#dc2626; color:#fff; }
+
+        .btn-save { background:linear-gradient(135deg,#1e3a8a,var(--primary)); color:white; border:none; padding:13px 28px; border-radius:10px; font-weight:700; cursor:pointer; font-size:0.95rem; transition:0.2s; box-shadow:0 2px 8px rgba(30,64,175,0.25); }
+        .btn-save:hover { transform:translateY(-1px); }
+        .btn-save:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+
+        /* LİSTE */
+        .table-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px; }
+        .search-box input { padding:10px 10px 10px 35px; background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat 10px center; border:1px solid var(--border); border-radius:8px; width:260px; }
+        table { width:100%; border-collapse:collapse; }
+        th { background:#f8fafc; padding:11px 12px; text-align:left; color:#64748b; font-size:0.8rem; border-bottom:2px solid var(--border); }
+        td { padding:11px 12px; border-bottom:1px solid var(--border); font-size:0.88rem; vertical-align:middle; }
+
+        .asama-badge { padding:3px 10px; border-radius:12px; font-size:0.72rem; font-weight:700; white-space:nowrap; }
+        .asama-kabul_edildi { background:#f1f5f9; color:#475569; }
+        .asama-hazırlanıyor { background:#fef9c3; color:#854d0e; }
+        .asama-tamamlandı { background:#dbeafe; color:#1e40af; }
+        .asama-imzalandı { background:#ede9fe; color:#6d28d9; }
+        .asama-onaylandı { background:#d1fae5; color:#065f46; }
+        .asama-sertifika_gönderildi { background:#dcfce7; color:#166534; }
+
+        .btn-edit { background:#e0e7ff; color:#4338ca; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:0.78rem; font-weight:600; margin-right:4px; }
+        .btn-del { background:#fee2e2; color:#dc2626; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:0.78rem; font-weight:600; }
+        .empty-row td { text-align:center; color:#94a3b8; padding:30px; }
+
+        .ie-no { color:var(--primary); font-weight:700; font-size:0.9rem; }
+
+        /* COMBO */
+        .combo-wrapper { position:relative; }
+        .combo-dropdown { display:none; position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid var(--border); border-top:none; border-radius:0 0 8px 8px; max-height:180px; overflow-y:auto; z-index:200; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+        .combo-item { padding:8px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9; font-size:0.85rem; }
+        .combo-item:hover { background:#f1f5f9; }
+
+        #toast { visibility:hidden; min-width:260px; background-color:var(--success); color:#fff; text-align:center; border-radius:8px; padding:16px; position:fixed; z-index:9999; right:30px; top:30px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+        #toast.show { visibility:visible; }
+        #toast.error { background-color:#ef4444; }
     </style>
 </head>
 <body>
-    <div style="max-width: 1000px; margin: 0 auto;">
+<div id="toast"></div>
 
-        
-        <div class="card">
-            <h2>📥 Cihaz Kabul ve İş Emri</h2>
-            <div class="form-grid">
-                <div><label>Kabul Tarihi</label><input type="date" id="tarih"></div>
-                <div class="full"><label>🏢 Fatura Edilecek Firma</label><input type="text" placeholder="Firma seç..."></div>
+<!-- ACCORDION: YENİ KABUL FİŞİ -->
+<div class="accordion">
+    <div class="accordion-header" onclick="toggleAcc()">
+        <h3 style="margin:0;color:var(--primary);">📥 Yeni Cihaz Kabul Fişi</h3>
+        <span id="accIcon">▼</span>
+    </div>
+    <div class="accordion-content" id="accContent">
+        <input type="hidden" id="duzenle_id">
+
+        <div class="form-grid g3" style="margin-bottom:16px;">
+            <div>
+                <label>Firma *</label>
+                <select id="musteri_id" onchange="firmaSecildi()">
+                    <option value="">-- Firma Seçin --</option>
+                </select>
+            </div>
+            <div>
+                <label>Kabul Tarihi *</label>
+                <input type="date" id="kabul_tarihi">
+            </div>
+            <div>
+                <label>Tahmini Teslim Tarihi</label>
+                <input type="date" id="teslim_tarihi">
+            </div>
+            <div class="full">
+                <label>Not / Açıklama</label>
+                <textarea id="notlar" placeholder="Özel talepler, aciliyet durumu vb..."></textarea>
             </div>
         </div>
 
-        <div class="card" id="sertCard">
-            <h2>📜 Sertifika Sahibi (Asıl Kullanıcı)</h2>
-            <label style="display:flex; gap:10px; cursor:pointer;"><input type="checkbox" id="ayniFirma" checked onchange="toggleFirma()"> Sertifika bilgileri fatura firması ile aynı.</label>
-            <div id="sertFirmaAlan" style="display:none; margin-top:15px;">
-                <input type="text" placeholder="Asıl kullanıcı firmayı seç...">
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>📦 Gelen Cihazlar</h2>
-            <table>
-                <tr>
-                    <th style="width: 40%;">Müşteri Cihazını Seç</th>
-                    <th style="width: 20%;">Seri No</th>
-                    <th>Fiziksel Durum</th>
-                </tr>
-                <tbody id="tbody">
+        <!-- CİHAZLAR -->
+        <div style="background:#f8fafc; border-radius:10px; padding:16px; border:1px solid var(--border);">
+            <div style="font-weight:700; color:var(--primary); font-size:0.88rem; margin-bottom:12px;">📦 Kabul Edilen Cihazlar</div>
+            <table class="cihaz-table">
+                <thead>
                     <tr>
-                        <td style="display:flex; gap:5px;">
-                            <select onchange="this.parentElement.nextElementSibling.querySelector('input').value = this.value">
-                                <option value="">-- Seç --</option>
-                                <option value="SN-123">Mikrometre - Mitutoyo</option>
-                            </select>
-                            <button onclick="document.getElementById('modal').style.display='flex'" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:4px; cursor:pointer;">+</button>
-                        </td>
-                        <td><input type="text" readonly style="background:#f8fafc;"></td>
-                        <td><select><option>Sağlam</option><option>Çizik</option></select></td>
+                        <th style="width:35%;">Cihaz Adı</th>
+                        <th style="width:18%;">Marka / Model</th>
+                        <th style="width:15%;">Seri No</th>
+                        <th style="width:15%;">Fiziksel Durum</th>
+                        <th style="width:12%;">Aksesuar</th>
+                        <th style="width:5%;"></th>
                     </tr>
-                </tbody>
+                </thead>
+                <tbody id="cihazBody"></tbody>
             </table>
-            <button class="btn" style="background:#f0fdf4; color:#166534; border:1px dashed #4ade80;">+ Yeni Satır Ekle</button>
-            <button class="btn">💾 Cihazları Kabul Et</button>
+            <button class="btn-add-row" onclick="satirEkle()">➕ Cihaz Satırı Ekle</button>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+            <button class="btn-save" id="kaydetBtn" onclick="kaydet()">💾 Kabul Fişini Kaydet</button>
         </div>
     </div>
+</div>
 
-    <div class="modal" id="modal">
-        <div class="modal-content">
-            <h3 style="margin-top:0;">Müşteriye Yeni Cihaz Ekle</h3>
-            <div class="form-grid">
-                <div class="full"><label>Cihaz Adı</label><input type="text"></div>
-                <div><label>Marka</label><input type="text"></div>
-                <div><label>Seri No</label><input type="text"></div>
-                <div class="full"><button class="btn" onclick="document.getElementById('modal').style.display='none'; alert('Eklendi!');">Kaydet ve Seç</button></div>
+<!-- LİSTE -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-icon">📋</div>
+        <div class="card-title">Kabul Fişleri</div>
+    </div>
+    <div style="padding:20px;">
+        <div class="table-header">
+            <div class="search-box">
+                <input type="text" id="araInput" onkeyup="ara()" placeholder="IE no, firma ara...">
             </div>
         </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>IE No</th>
+                    <th>Firma</th>
+                    <th>Kabul Tarihi</th>
+                    <th>Teslim Tarihi</th>
+                    <th>Cihaz</th>
+                    <th>Aşama</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody id="liste"></tbody>
+        </table>
     </div>
+</div>
 
-    <script>
-        document.getElementById('tarih').valueAsDate = new Date();
-        function toggleFirma() {
-            document.getElementById('sertFirmaAlan').style.display = document.getElementById('ayniFirma').checked ? 'none' : 'block';
-        }
-    </script>
+<script>
+    let musteriler = [], firmaCihazlari = [], tumKayitlar = [];
+    const ASAMA_LABEL = {
+        kabul_edildi:'Kabul Edildi', 'hazırlanıyor':'Hazırlanıyor',
+        'tamamlandı':'Tamamlandı', imzalandı:'İmzalandı',
+        'onaylandı':'Onaylandı', sertifika_gönderildi:'Sertifika Gönderildi'
+    };
+
+    function showToast(msg, err=false) {
+        const t=document.getElementById("toast"); t.textContent=msg;
+        t.className=err?"show error":"show"; setTimeout(()=>t.className="",3000);
+    }
+    function toggleAcc() {
+        const c=document.getElementById("accContent"), h=document.querySelector(".accordion-header"), i=document.getElementById("accIcon");
+        if(c.style.display==="block"){c.style.display="none";h.classList.remove("active");i.innerText="▼";}
+        else{c.style.display="block";h.classList.add("active");i.innerText="▲";}
+    }
+    function accAc(){document.getElementById("accContent").style.display="block";document.querySelector(".accordion-header").classList.add("active");document.getElementById("accIcon").innerText="▲";}
+
+    async function yukle() {
+        const res=await fetch('/api/is-emirleri-on-veriler');
+        const d=await res.json(); musteriler=d.musteriler;
+        const sel=document.getElementById("musteri_id");
+        sel.innerHTML='<option value="">-- Firma Seçin --</option>'+musteriler.map(m=>`<option value="${m.id}">${m.firma_adi}${m.sube_adi?' / '+m.sube_adi:''}</option>`).join('');
+        document.getElementById("kabul_tarihi").valueAsDate=new Date();
+        satirEkle();
+        listele();
+    }
+
+    async function firmaSecildi() {
+        const id=document.getElementById("musteri_id").value;
+        firmaCihazlari=[];
+        if(!id) return;
+        const res=await fetch(`/api/musteri-cihazlari-firma/${id}`);
+        firmaCihazlari=await res.json();
+    }
+
+    function satirEkle(c={}) {
+        const tbody=document.getElementById("cihazBody");
+        const idx=tbody.rows.length;
+        const tr=document.createElement("tr");
+        tr.innerHTML=`
+            <td>
+                <div class="combo-wrapper">
+                    <input type="text" placeholder="Cihaz adı..." value="${c.cihaz_adi||''}" autocomplete="off"
+                        oninput="comboFiltrele(this)" onfocus="comboFiltrele(this)"
+                        onblur="setTimeout(()=>this.nextElementSibling.style.display='none',200)"
+                        class="cihaz-adi-input">
+                    <div class="combo-dropdown"></div>
+                </div>
+            </td>
+            <td><input type="text" placeholder="Marka / Model" value="${c.marka_model||''}"></td>
+            <td><input type="text" placeholder="Seri No" value="${c.seri_no||''}"></td>
+            <td>
+                <select>
+                    <option ${c.durum==='Sağlam'?'selected':''}>Sağlam</option>
+                    <option ${c.durum==='Çizik'?'selected':''}>Çizik</option>
+                    <option ${c.durum==='Hasarlı'?'selected':''}>Hasarlı</option>
+                    <option ${c.durum==='Eksik Parça'?'selected':''}>Eksik Parça</option>
+                </select>
+            </td>
+            <td><input type="text" placeholder="Kablo, kutu..." value="${c.aksesuar||''}"></td>
+            <td><button class="btn-del-row" onclick="this.closest('tr').remove()">✕</button></td>`;
+        tbody.appendChild(tr);
+    }
+
+    function comboFiltrele(input) {
+        const val=input.value.toUpperCase();
+        const dropdown=input.nextElementSibling;
+        const kaynak=firmaCihazlari.length>0?firmaCihazlari:[];
+        const filtered=val?kaynak.filter(c=>c.cihaz_adi.toUpperCase().includes(val)):kaynak;
+        if(!filtered.length){dropdown.style.display="none";return;}
+        dropdown.innerHTML=filtered.map(c=>`
+            <div class="combo-item" onmousedown="cihazSec(this,'${c.cihaz_adi.replace(/'/g,"\\'")}','${(c.marka||'').replace(/'/g,"\\'")}','${(c.seri_no||'').replace(/'/g,"\\'")}')">
+                <strong>${c.cihaz_adi}</strong> ${c.marka?'· '+c.marka:''} ${c.seri_no?'<span style="color:#94a3b8;">S/N:'+c.seri_no+'</span>':''}
+            </div>`).join('');
+        dropdown.style.display="block";
+    }
+
+    function cihazSec(el, ad, marka, seri) {
+        const tr=el.closest('tr');
+        tr.querySelector('.cihaz-adi-input').value=ad;
+        tr.querySelectorAll('td')[1].querySelector('input').value=marka;
+        tr.querySelectorAll('td')[2].querySelector('input').value=seri;
+        el.parentElement.style.display="none";
+    }
+
+    function cihazlariTopla() {
+        const rows=[...document.getElementById("cihazBody").rows];
+        return rows.map(r=>({
+            cihaz_adi: r.querySelectorAll('td')[0].querySelector('input').value.trim(),
+            marka_model: r.querySelectorAll('td')[1].querySelector('input').value.trim(),
+            seri_no: r.querySelectorAll('td')[2].querySelector('input').value.trim(),
+            durum: r.querySelectorAll('td')[3].querySelector('select').value,
+            aksesuar: r.querySelectorAll('td')[4].querySelector('input').value.trim()
+        })).filter(c=>c.cihaz_adi);
+    }
+
+    async function kaydet() {
+        const musteriId=document.getElementById("musteri_id").value;
+        const kabulTarihi=document.getElementById("kabul_tarihi").value;
+        const cihazlar=cihazlariTopla();
+        if(!musteriId) return showToast("❌ Firma seçin!",true);
+        if(!kabulTarihi) return showToast("❌ Kabul tarihi girin!",true);
+        if(!cihazlar.length) return showToast("❌ En az bir cihaz ekleyin!",true);
+        const duzenleId=document.getElementById("duzenle_id").value;
+        const payload={
+            musteri_id:musteriId, kabul_tarihi:kabulTarihi,
+            teslim_tarihi:document.getElementById("teslim_tarihi").value||null,
+            cihazlar, notlar:document.getElementById("notlar").value,
+            asama: duzenleId?(tumKayitlar.find(x=>x.id==duzenleId)?.asama||'kabul_edildi'):'kabul_edildi'
+        };
+        const btn=document.getElementById("kaydetBtn");
+        btn.disabled=true; btn.textContent="Kaydediliyor...";
+        const url=duzenleId?`/api/is-emirleri/${duzenleId}`:'/api/is-emirleri';
+        const method=duzenleId?'PUT':'POST';
+        const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        if(res.ok){showToast(duzenleId?"✅ Güncellendi!":"✅ Kabul fişi oluşturuldu!");formTemizle();listele();}
+        else showToast("❌ Kayıt başarısız!",true);
+        btn.disabled=false; btn.textContent="💾 Kabul Fişini Kaydet";
+    }
+
+    async function listele() {
+        const res=await fetch('/api/is-emirleri');
+        tumKayitlar=await res.json();
+        renderListe(tumKayitlar);
+    }
+
+    function renderListe(data) {
+        const tbody=document.getElementById("liste");
+        if(!data.length){tbody.innerHTML='<tr class="empty-row"><td colspan="7">Henüz kabul fişi yok.</td></tr>';return;}
+        tbody.innerHTML=data.map(r=>{
+            const cihazlar=Array.isArray(r.cihazlar)?r.cihazlar:JSON.parse(r.cihazlar||'[]');
+            const kabul=r.kabul_tarihi?new Date(r.kabul_tarihi).toLocaleDateString('tr-TR'):'-';
+            const teslim=r.teslim_tarihi?new Date(r.teslim_tarihi).toLocaleDateString('tr-TR'):'-';
+            const asama=r.asama||'kabul_edildi';
+            return `<tr>
+                <td class="ie-no">${r.ie_no||'-'}</td>
+                <td>${r.firma_adi}${r.sube_adi?` <span style="color:#94a3b8;font-size:0.78rem;">/ ${r.sube_adi}</span>`:''}</td>
+                <td>${kabul}</td>
+                <td>${teslim}</td>
+                <td><span style="background:#eff6ff;color:var(--primary);padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700;">${cihazlar.length} cihaz</span></td>
+                <td><span class="asama-badge asama-${asama}">${ASAMA_LABEL[asama]||asama}</span></td>
+                <td>
+                    <button class="btn-edit" onclick="duzenle(${r.id})">✏️ Düzenle</button>
+                    <button class="btn-del" onclick="sil(${r.id})">🗑️ Sil</button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function duzenle(id) {
+        const r=tumKayitlar.find(x=>x.id===id); if(!r) return;
+        document.getElementById("duzenle_id").value=r.id;
+        document.getElementById("musteri_id").value=r.musteri_id;
+        document.getElementById("kabul_tarihi").value=r.kabul_tarihi?.substring(0,10)||'';
+        document.getElementById("teslim_tarihi").value=r.teslim_tarihi?.substring(0,10)||'';
+        document.getElementById("notlar").value=r.notlar||'';
+        const cihazlar=Array.isArray(r.cihazlar)?r.cihazlar:JSON.parse(r.cihazlar||'[]');
+        document.getElementById("cihazBody").innerHTML='';
+        cihazlar.forEach(c=>satirEkle(c));
+        if(!cihazlar.length) satirEkle();
+        document.getElementById("kaydetBtn").textContent="💾 Güncelle";
+        firmaSecildi(); accAc();
+        window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    async function sil(id) {
+        if(!confirm("Bu kabul fişini silmek istediğinize emin misiniz?")) return;
+        const res=await fetch(`/api/is-emirleri/${id}`,{method:'DELETE'});
+        if(res.ok){showToast("🗑️ Silindi!");listele();}
+        else showToast("❌ Silinemedi!",true);
+    }
+
+    function formTemizle() {
+        document.getElementById("duzenle_id").value='';
+        document.getElementById("musteri_id").value='';
+        document.getElementById("kabul_tarihi").valueAsDate=new Date();
+        document.getElementById("teslim_tarihi").value='';
+        document.getElementById("notlar").value='';
+        document.getElementById("cihazBody").innerHTML='';
+        satirEkle();
+        document.getElementById("kaydetBtn").textContent="💾 Kabul Fişini Kaydet";
+        firmaCihazlari=[];
+    }
+
+    function ara() {
+        const f=document.getElementById("araInput").value.toUpperCase();
+        renderListe(f?tumKayitlar.filter(r=>(r.ie_no||'').toUpperCase().includes(f)||(r.firma_adi||'').toUpperCase().includes(f)):tumKayitlar);
+    }
+
+    window.onload=yukle;
+</script>
 </body>
 </html>

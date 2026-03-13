@@ -565,3 +565,70 @@ app.post('/api/ayarlar', async (req, res) => {
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
+
+// --- İŞ EMİRLERİ ---
+app.get('/api/is-emirleri-on-veriler', async (req, res) => {
+    try {
+        const musteriler = await pool.query('SELECT id, firma_adi, sube_adi FROM musteriler ORDER BY firma_adi');
+        const cihazKutuphanesi = await pool.query('SELECT id, cihaz_adi, kategori FROM cihaz_kutuphanesi ORDER BY cihaz_adi');
+        res.json({ musteriler: musteriler.rows, cihazlar: cihazKutuphanesi.rows });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/is-emirleri', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT ie.*, m.firma_adi, m.sube_adi
+            FROM is_emirleri ie
+            LEFT JOIN musteriler m ON ie.musteri_id = m.id
+            ORDER BY ie.olusturulma DESC`);
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/is-emirleri', async (req, res) => {
+    try {
+        const { musteri_id, kabul_tarihi, teslim_tarihi, cihazlar, notlar } = req.body;
+        // IE no üret: IE-2026-001
+        const yil = new Date().getFullYear();
+        const sayacRes = await pool.query(
+            `SELECT COUNT(*) FROM is_emirleri WHERE ie_no LIKE $1`, [`IE-${yil}-%`]);
+        const sira = parseInt(sayacRes.rows[0].count) + 1;
+        const ie_no = `IE-${yil}-${String(sira).padStart(3,'0')}`;
+        const result = await pool.query(
+            `INSERT INTO is_emirleri (ie_no, musteri_id, kabul_tarihi, teslim_tarihi, cihazlar, notlar, asama)
+             VALUES ($1,$2,$3,$4,$5,$6,'kabul_edildi') RETURNING *`,
+            [ie_no, musteri_id, kabul_tarihi, teslim_tarihi||null, JSON.stringify(cihazlar), notlar||'']
+        );
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/is-emirleri/:id/asama', async (req, res) => {
+    try {
+        const { asama } = req.body;
+        const result = await pool.query(
+            `UPDATE is_emirleri SET asama=$1 WHERE id=$2 RETURNING *`,
+            [asama, req.params.id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/is-emirleri/:id', async (req, res) => {
+    try {
+        const { musteri_id, kabul_tarihi, teslim_tarihi, cihazlar, notlar, asama } = req.body;
+        const result = await pool.query(
+            `UPDATE is_emirleri SET musteri_id=$1, kabul_tarihi=$2, teslim_tarihi=$3, cihazlar=$4, notlar=$5, asama=$6 WHERE id=$7 RETURNING *`,
+            [musteri_id, kabul_tarihi, teslim_tarihi||null, JSON.stringify(cihazlar), notlar||'', asama, req.params.id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/is-emirleri/:id', async (req, res) => {
+    try {
+        await pool.query('DELETE FROM is_emirleri WHERE id=$1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
