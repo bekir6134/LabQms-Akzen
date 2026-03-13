@@ -134,6 +134,28 @@ app.post('/api/cihaz-kutuphanesi', async (req, res) => {
     }
 });
 
+// TEKLİF HAZIRLAMA API'LERİ
+
+// 1. Teklif için müşteri ve cihaz bilgilerini getiren endpoint
+app.get('/api/teklif-on-veriler', async (req, res) => {
+    try {
+        const musteriler = await pool.query('SELECT id, firma_adi FROM musteriler ORDER BY firma_adi ASC');
+        const cihazlar = await pool.query(`
+            SELECT ck.id, ck.cihaz_adi, ck.fiyat, ck.para_birimi, k.kategori_adi 
+            FROM cihaz_kutuphanesi ck 
+            JOIN kategoriler k ON ck.kategori_id = k.id 
+            ORDER BY ck.cihaz_adi ASC`);
+        
+        res.json({
+            musteriler: musteriler.rows,
+            cihazlar: cihazlar.rows
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
 app.listen(PORT, () => {
     console.log(`🚀 Sunucu ${PORT} portunda başarıyla ayağa kalktı.`);
 });
