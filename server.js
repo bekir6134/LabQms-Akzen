@@ -180,7 +180,9 @@ app.post('/api/talimatlar', async (req, res) => {
     }
 });
 
-// Referans Cihazları Getir (Son kalibrasyon bilgileriyle beraber)
+// --- REFERANS CİHAZLAR API BAŞLANGIÇ ---
+
+// 1. Tüm referans cihazları listele (Son takip verileriyle birlikte)
 app.get('/api/referans-cihazlar', async (req, res) => {
     try {
         const query = `
@@ -190,11 +192,73 @@ app.get('/api/referans-cihazlar', async (req, res) => {
             LEFT JOIN (
                 SELECT DISTINCT ON (referans_id) * FROM referans_takip 
                 ORDER BY referans_id, kal_tarihi DESC
-            ) rt ON rc.id = rt.referans_id`;
+            ) rt ON rc.id = rt.referans_id
+            ORDER BY rc.id DESC`;
         const result = await pool.query(query);
         res.json(result.rows);
-    } catch (err) { res.status(500).send(err.message); }
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    }
 });
+
+// 2. Yeni referans cihaz kaydet (Sabit Veriler)
+app.post('/api/referans-cihazlar', async (req, res) => {
+    try {
+        const { 
+            kategori_id, cihaz_adi, marka, model, 
+            seri_no, envanter_no, olcme_araligi, 
+            kalibrasyon_kriteri, ara_kontrol_kriteri 
+        } = req.body;
+
+        const query = `
+            INSERT INTO referans_cihazlar (
+                kategori_id, cihaz_adi, marka, model, 
+                seri_no, envanter_no, olcme_araligi, 
+                kalibrasyon_kriteri, ara_kontrol_kriteri
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`;
+
+        const result = await pool.query(query, [
+            kategori_id, cihaz_adi, marka, model, 
+            seri_no, envanter_no, olcme_araligi, 
+            kalibrasyon_kriteri, ara_kontrol_kriteri
+        ]);
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. Referans takip/geçmiş verisi ekle (Dinamik Veriler)
+app.post('/api/referans-takip', async (req, res) => {
+    try {
+        const { 
+            referans_id, sertifika_no, izlenebilirlik, 
+            kal_tarihi, sonraki_kal_tarihi, 
+            ara_kontrol_tarihi, sonraki_ara_kontrol_tarihi 
+        } = req.body;
+
+        const query = `
+            INSERT INTO referans_takip (
+                referans_id, sertifika_no, izlenebilirlik, 
+                kal_tarihi, sonraki_kal_tarihi, 
+                ara_kontrol_tarihi, sonraki_ara_kontrol_tarihi
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`;
+
+        const result = await pool.query(query, [
+            referans_id, sertifika_no, izlenebilirlik, 
+            kal_tarihi, sonraki_kal_tarihi, 
+            ara_kontrol_tarihi, sonraki_ara_kontrol_tarihi
+        ]);
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- REFERANS CİHAZLAR API BİTİŞ ---
 
 
 app.listen(PORT, () => {
