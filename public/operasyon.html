@@ -11,10 +11,10 @@
         .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
         h2 { margin:0; color:var(--primary); font-size: 1.5rem; }
 
-        /* YENİ: GELİŞMİŞ ARAMA VE TARİH FİLTRESİ */
-        .advanced-filters { display:flex; gap:15px; margin-bottom: 20px; align-items:flex-end; background:#fff; padding:15px; border-radius:12px; border:1px solid var(--border); box-shadow:0 4px 6px rgba(0,0,0,0.02); }
-        .filter-group { flex:1; }
-        .filter-group.date-group { flex:0 0 150px; }
+        /* GELİŞMİŞ ARAMA VE TARİH FİLTRESİ */
+        .advanced-filters { display:flex; gap:15px; margin-bottom: 20px; align-items:flex-end; background:#fff; padding:15px; border-radius:12px; border:1px solid var(--border); box-shadow:0 4px 6px rgba(0,0,0,0.02); flex-wrap: wrap; }
+        .filter-group { flex:1; min-width: 150px; }
+        .filter-group.date-group { flex:0 0 140px; }
         .filter-label { display:block; font-size:0.8rem; color:#64748b; margin-bottom:5px; font-weight:600; }
         .filter-input { width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); font-family:inherit; box-sizing:border-box; outline:none; transition:0.2s; }
         .filter-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(30,64,175,0.1); }
@@ -66,7 +66,11 @@
     <div class="advanced-filters">
         <div class="filter-group">
             <label class="filter-label">Hızlı Arama</label>
-            <input type="text" id="aramaKutusu" class="filter-input" oninput="uygulaFiltreler()" placeholder="🔍 İş Emri, Firma, Seri No veya Envanter No ara...">
+            <input type="text" id="aramaKutusu" class="filter-input" oninput="uygulaFiltreler()" placeholder="🔍 Cihaz, Firma, S/N, Env No...">
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Marka / Model</label>
+            <input type="text" id="markaModelKutusu" class="filter-input" oninput="uygulaFiltreler()" placeholder="Örn: Fluke, Mitutoyo...">
         </div>
         <div class="filter-group date-group">
             <label class="filter-label">Başlangıç Tarihi</label>
@@ -197,7 +201,7 @@
                                 ie_id: ie.id,
                                 ie_no: ie.ie_no,
                                 firma_adi: ie.firma_adi,
-                                kabul_tarihi: ie.kabul_tarihi, // Tarih filtresi için
+                                kabul_tarihi: ie.kabul_tarihi, 
                                 index: index,
                                 ...c
                             });
@@ -210,7 +214,6 @@
             } catch (err) { console.error("Hata:", err); }
         }
 
-        // AŞAMA BUTONUNA TIKLANDIĞINDA
         function asamaSec(event, asama) {
             seciliAsama = asama;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
@@ -218,9 +221,9 @@
             uygulaFiltreler();
         }
 
-        // TÜM FİLTRELERİ (AŞAMA + ARAMA + TARİH) AYNI ANDA UYGULAYAN ANA FONKSİYON
         function uygulaFiltreler() {
             const aramaMetni = document.getElementById("aramaKutusu").value.toLocaleUpperCase('tr-TR');
+            const markaModelMetni = document.getElementById("markaModelKutusu").value.toLocaleUpperCase('tr-TR'); // YENİ
             const basTarih = document.getElementById("tarihBas").value;
             const bitTarih = document.getElementById("tarihBit").value;
 
@@ -233,14 +236,19 @@
                 else if (seciliAsama === 'Sertifika Gönderildi' && durum === 'Sertifika Mail Gönderildi') asamaUygun = true;
                 else if (durum === seciliAsama) asamaUygun = true;
 
-                // 2. Metin Arama Kontrolü (İş Emri, Firma, S/N, Envanter No)
+                // 2. Genel Metin Arama (Marka/Model buradan çıkarıldı)
                 const aramaUygun = !aramaMetni || 
                     (c.ie_no || "").toLocaleUpperCase('tr-TR').includes(aramaMetni) ||
                     (c.firma_adi || "").toLocaleUpperCase('tr-TR').includes(aramaMetni) ||
+                    (c.cihaz_adi || "").toLocaleUpperCase('tr-TR').includes(aramaMetni) ||
                     (c.seri_no || "").toLocaleUpperCase('tr-TR').includes(aramaMetni) ||
                     (c.envanter_no || "").toLocaleUpperCase('tr-TR').includes(aramaMetni);
 
-                // 3. Tarih Aralığı Kontrolü (İş emrinin kabul tarihine göre)
+                // 3. Marka / Model Kontrolü (YENİ)
+                const markaModelUygun = !markaModelMetni || 
+                    (c.marka_model || "").toLocaleUpperCase('tr-TR').includes(markaModelMetni);
+
+                // 4. Tarih Aralığı Kontrolü
                 let tarihUygun = true;
                 if(c.kabul_tarihi && (basTarih || bitTarih)) {
                     const k_tarih = new Date(c.kabul_tarihi);
@@ -257,22 +265,22 @@
                         if(k_tarih > bit_tarih) tarihUygun = false;
                     }
                 } else if (!c.kabul_tarihi && (basTarih || bitTarih)) {
-                    tarihUygun = false; // Tarihi olmayanlar filtreye takılsın
+                    tarihUygun = false; 
                 }
 
-                return asamaUygun && aramaUygun && tarihUygun;
+                // Hepsini sağlayanlar listede kalır (Arama VE Marka VE Tarih VE Aşama)
+                return asamaUygun && aramaUygun && markaModelUygun && tarihUygun;
             });
 
             tabloyaCiz(filtrelenmis);
         }
 
-        // FİLTRELERİ SIFIRLAMA BUTONU
         function filtreleriTemizle() {
             document.getElementById("aramaKutusu").value = "";
+            document.getElementById("markaModelKutusu").value = ""; // YENİ
             document.getElementById("tarihBas").value = "";
             document.getElementById("tarihBit").value = "";
             
-            // Tümü sekmesine dön
             seciliAsama = 'Tümü';
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector('.filter-btn').classList.add('active');
@@ -370,7 +378,7 @@
 
                 if(res.ok) {
                     modalKapat();
-                    cihazlariListele(); // Güncel veriyi çek ve filtreleri koruyarak ekrana bas
+                    cihazlariListele(); 
                 } else { alert("Kaydedilirken bir hata oluştu."); }
             } catch(e) { console.error(e); }
         }
