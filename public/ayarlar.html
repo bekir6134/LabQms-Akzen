@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>Sistem Ayarları</title>
+
+    <script>
+    // GÜVENLİK KONTROLÜ: Kullanıcı giriş yapmış mı?
+    const aktifKullanici = localStorage.getItem("labqms_user");
+    if (!aktifKullanici) {
+        // Eğer giriş yapmamışsa, anında login sayfasına şutla!
+        window.location.href = "login.html";
+    }
+</script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #1E40AF; --border: #e2e8f0; --bg: #f8fafc; --success: #10B981; }

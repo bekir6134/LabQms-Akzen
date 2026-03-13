@@ -1,5 +1,14 @@
 <!DOCTYPE html>
 <html lang="tr">
+<script>
+    // GÜVENLİK KONTROLÜ: Kullanıcı giriş yapmış mı?
+    const aktifKullanici = localStorage.getItem("labqms_user");
+    if (!aktifKullanici) {
+        // Eğer giriş yapmamışsa, anında login sayfasına şutla!
+        window.location.href = "login.html";
+    }
+</script>
+
 <head>
     <meta charset="UTF-8">
     <title>LabQMS Pro - Cihaz Kütüphanesi</title>

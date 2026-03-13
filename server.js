@@ -718,6 +718,29 @@ app.put('/api/personeller/:id', async (req, res) => {
     }
 });
 
+// --- GİRİŞ (LOGIN) API ---
+app.post('/api/login', async (req, res) => {
+    try {
+        const { kullanici_adi, sifre } = req.body;
+        
+        // Veritabanında bu kullanıcı adı ve şifreyle eşleşen biri var mı bakıyoruz
+        const result = await pool.query(
+            'SELECT id, ad_soyad, kullanici_adi, roller, erisimler FROM personeller WHERE kullanici_adi = $1 AND sifre = $2',
+            [kullanici_adi, sifre]
+        );
+
+        if (result.rows.length > 0) {
+            // Kullanıcı bulundu! Şifre hariç bilgileri frontend'e gönder
+            res.json({ success: true, user: result.rows[0] });
+        } else {
+            // Kullanıcı bulunamadı veya şifre yanlış
+            res.status(401).json({ success: false, error: "Kullanıcı adı veya şifre hatalı!" });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 app.listen(PORT, () => {
     console.log(`🚀 Sunucu ${PORT} portunda başarıyla ayağa kalktı.`);
