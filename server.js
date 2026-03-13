@@ -229,7 +229,11 @@ app.post('/api/referans-takip', async (req, res) => {
 app.get('/api/referans-tarihce/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const query = `SELECT islem_tipi, sertifika_no, kal_tarihi, sonraki_kal_tarihi FROM referans_takip WHERE referans_id = $1 ORDER BY kal_tarihi DESC`;
+        // Sorguya rt.id'yi ekledik
+        const query = `SELECT id, islem_tipi, sertifika_no, izlenebilirlik, kal_tarihi, sonraki_kal_tarihi 
+                       FROM referans_takip 
+                       WHERE referans_id = $1 
+                       ORDER BY kal_tarihi DESC`;
         const result = await pool.query(query, [id]);
         res.json(result.rows);
     } catch (err) {

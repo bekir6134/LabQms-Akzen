@@ -15,7 +15,9 @@
         .btn-primary { background: var(--primary); color: white; width: 100%; }
         .btn-kal { background: var(--success); color: white; font-size: 0.75rem; margin-right: 5px; }
         .btn-ara { background: var(--warning); color: white; font-size: 0.75rem; }
-        
+        .btn-sm { padding: 4px 8px; font-size: 0.7rem; background: #f1f5f9; border: 1px solid var(--border); color: var(--primary); }
+        .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px; }
         label { display: block; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 5px; }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.9rem; }
@@ -25,7 +27,7 @@
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
         
         .history-row { background: #f8fafc; display: none; }
-        .history-container { padding: 15px; border: 1px dashed #cbd5e1; border-radius: 8px; margin: 10px; background: white; }
+        .history-container { padding: 15px; border: 1px dashed #cbd5e1; border-radius: 8px; margin: 10px; background: white; overflow-x: auto; }
         
         .action-panel { display: none; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: #fff; border-left: 6px solid var(--primary); animation: slideDown 0.3s; }
         .status-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
@@ -63,9 +65,9 @@
         <form onsubmit="kaydetDinamik(event, 'KAL')">
             <input type="hidden" id="kal_ref_id">
             <div class="form-grid">
-                <div><label>Sertifika No</label><input type="text" id="kal_sertifika" required></div>
+                <div><label>Kalibrasyon No</label><input type="text" id="kal_sertifika" required></div>
                 <div><label>İzlenebilirlik</label><input type="text" id="izlenebilirlik"></div>
-                <div><label>Kal. Tarihi</label><input type="date" id="kal_tarihi" required></div>
+                <div><label>Kalibrasyon Tarihi</label><input type="date" id="kal_tarihi" required></div>
                 <div><label>Gelecek Kal. Tarihi</label><input type="date" id="kal_sonraki" required></div>
             </div>
             <button type="submit" id="kalSubmitBtn" class="btn btn-kal" style="width:100%; font-size:1rem;">💾 Kalibrasyon Verisini Kaydet</button>
@@ -153,14 +155,8 @@
         async function tarihceGoster(id) {
             const row = document.getElementById(`tarihce-${id}`);
             const detailDiv = document.getElementById(`details-${id}`);
-            
-            if(row.style.display === "table-row") {
-                row.style.display = "none";
-                return;
-            }
-            
+            if(row.style.display === "table-row") { row.style.display = "none"; return; }
             row.style.display = "table-row";
-            detailDiv.innerHTML = "Yükleniyor...";
             
             try {
                 const res = await fetch(`/api/referans-tarihce/${id}`);
@@ -168,28 +164,32 @@
                 
                 if (data.length > 0) {
                     detailDiv.innerHTML = `
-                        <table style="border:1px solid #e2e8f0; background:white;">
-                            <tr style="font-size:0.75rem; background:#f8fafc;">
+                        <table style="border:1px solid #e2e8f0; background:white; width:100%;">
+                            <tr style="font-size:0.75rem; background:#f8fafc; color:#64748b;">
                                 <th>İşlem Tipi</th>
-                                <th>No</th>
-                                <th>İşlem Tarihi</th>
+                                <th>Kalibrasyon No</th>
+                                <th>İzlenebilirlik</th>
+                                <th>Kalibrasyon Tarihi</th>
                                 <th>Gelecek Tarih</th>
+                                <th style="text-align:center;">İşlem</th>
                             </tr>
                             ${data.map(d => `
                                 <tr>
                                     <td><span class="status-badge" style="background:${d.islem_tipi === 'KALİBRASYON' ? '#dcfce7' : '#fef3c7'}">${d.islem_tipi}</span></td>
-                                    <td>${d.sertifika_no}</td>
+                                    <td><b>${d.sertifika_no}</b></td>
+                                    <td><small>${d.izlenebilirlik || '-'}</small></td>
                                     <td>${new Date(d.kal_tarihi).toLocaleDateString('tr-TR')}</td>
                                     <td>${new Date(d.sonraki_kal_tarihi).toLocaleDateString('tr-TR')}</td>
+                                    <td style="text-align:center;">
+                                        <button class="btn btn-sm" onclick="duzenleDinamik(${d.id})">✏️ Düzenle</button>
+                                    </td>
                                 </tr>
                             `).join('')}
                         </table>`;
                 } else {
                     detailDiv.innerHTML = "Geçmiş kaydı bulunamadı.";
                 }
-            } catch(e) {
-                detailDiv.innerHTML = "<span style='color:red'>Veri çekilemedi.</span>";
-            }
+            } catch(e) { detailDiv.innerHTML = "<span style='color:red'>Veri çekilemedi.</span>"; }
         }
 
         async function kaydetReferans(e) {
@@ -210,11 +210,7 @@
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
-            if(res.ok) { 
-                bildirimGoster();
-                document.getElementById("refForm").reset();
-                referansYukle();
-            }
+            if(res.ok) { bildirimGoster(); document.getElementById("refForm").reset(); referansYukle(); }
             btn.disabled = false;
         }
 
@@ -236,7 +232,6 @@
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
-
             if(res.ok) {
                 bildirimGoster();
                 document.getElementById("panelKal").style.display = "none";
@@ -244,6 +239,10 @@
                 referansYukle();
             }
             btn.disabled = false;
+        }
+
+        function duzenleDinamik(id) {
+            alert("Kayıt Düzenleme (ID: " + id + ") özelliği için modal hazırlanıyor...");
         }
 
         function bildirimGoster() {
