@@ -22,6 +22,11 @@
         label { display: block; font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 5px; }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.9rem; }
         
+        /* Arama Çubuğu */
+        .search-container { margin-bottom: 20px; }
+        .search-input { width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 10px; font-size: 0.95rem; outline: none; transition: 0.3s; box-sizing: border-box; }
+        .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1); }
+
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th { background: #f8fafc; text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: #64748b; font-size: 0.85rem; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
@@ -41,7 +46,7 @@
     <div id="success-msg">✅ İşlem başarıyla kaydedildi!</div>
 
     <div class="card">
-        <h2 style="margin-top:0; color: var(--primary);">🛠️ Referans Cihaz Tanımlama</h2>
+        <h2 style="margin-top:0; color: var(--primary);">🛠️ Yeni Referans Cihaz Tanımla</h2>
         <form id="refForm" onsubmit="kaydetReferans(event)">
             <div class="form-grid">
                 <div><label>Kategori</label><select id="kategoriSelect" required><option value="">Yükleniyor...</option></select></div>
@@ -49,9 +54,10 @@
                 <div><label>Marka</label><input type="text" id="marka"></div>
                 <div><label>Model</label><input type="text" id="model"></div>
                 <div><label>Seri No</label><input type="text" id="seri_no" required></div>
-                <div><label>Ölçüm Aralığı</label><input type="text" id="olcme_araligi"></div>
+                <div><label>Envanter No</label><input type="text" id="envanter_no"></div>
             </div>
             <div class="form-grid">
+                <div><label>Ölçüm Aralığı</label><input type="text" id="olcme_araligi"></div>
                 <div style="grid-column: span 2;"><label>Kalibrasyon Kriteri</label><textarea id="kal_kriteri" rows="2"></textarea></div>
                 <div style="grid-column: span 2;"><label>Ara Kontrol Kriteri</label><textarea id="ara_kriteri" rows="2"></textarea></div>
             </div>
@@ -64,7 +70,8 @@
         <p id="kalBaslik" style="font-weight:700;"></p>
         <form onsubmit="kaydetDinamik(event, 'KAL')">
             <input type="hidden" id="kal_ref_id">
-            <input type="hidden" id="kal_record_id"> <div class="form-grid">
+            <input type="hidden" id="kal_record_id">
+            <div class="form-grid">
                 <div><label>Kalibrasyon No</label><input type="text" id="kal_sertifika" required></div>
                 <div><label>İzlenebilirlik</label><input type="text" id="izlenebilirlik"></div>
                 <div><label>Kalibrasyon Tarihi</label><input type="date" id="kal_tarihi" required></div>
@@ -79,7 +86,8 @@
         <p id="araBaslik" style="font-weight:700;"></p>
         <form onsubmit="kaydetDinamik(event, 'ARA')">
             <input type="hidden" id="ara_ref_id">
-            <input type="hidden" id="ara_record_id"> <div class="form-grid">
+            <input type="hidden" id="ara_record_id">
+            <div class="form-grid">
                 <div><label>Ara Kontrol No</label><input type="text" id="ara_no" required></div>
                 <div><label>Kontrol Tarihi</label><input type="date" id="ara_tarihi" required></div>
                 <div><label>Gelecek Kontrol Tarihi</label><input type="date" id="ara_sonraki" required></div>
@@ -90,11 +98,18 @@
 
     <div class="card">
         <h2 style="margin-top:0; color: var(--primary);">📚 Referans Listesi</h2>
+        
+        <div class="search-container">
+            <input type="text" id="cihazAra" class="search-input" placeholder="Cihaz adı, seri no veya envanter no ile ara..." onkeyup="tabloFiltrele()">
+        </div>
+
         <table id="refTablo">
             <thead>
                 <tr>
-                    <th>Seri No</th>
+                    <th>Kategori</th>
                     <th>Cihaz Bilgisi</th>
+                    <th>Seri No</th>
+                    <th>Envanter No</th>
                     <th>Ölçüm Aralığı</th>
                     <th>İşlemler</th>
                 </tr>
@@ -123,8 +138,10 @@
             const tbody = document.getElementById("refListe");
             tbody.innerHTML = data.map(r => `
                 <tr onclick="tarihceGoster(${r.id})" style="cursor:pointer;">
-                    <td><b style="color:var(--accent)">${r.seri_no}</b></td>
-                    <td>${r.cihaz_adi} <br> <small style="color:#64748b">${r.marka || ''} / ${r.model || ''}</small></td>
+                    <td><span class="status-badge" style="background:#e0e7ff; color:#4338ca;">${r.kategori_adi || 'Genel'}</span></td>
+                    <td><b>${r.cihaz_adi}</b><br><small style="color:#64748b">${r.marka || ''} ${r.model || ''}</small></td>
+                    <td>${r.seri_no}</td>
+                    <td>${r.envanter_no || '-'}</td>
                     <td>${r.olcme_araligi || '-'}</td>
                     <td>
                         <button class="btn btn-kal" onclick="event.stopPropagation(); panelAc('KAL', ${r.id}, '${r.cihaz_adi}')">Kalibrasyon</button>
@@ -132,16 +149,30 @@
                     </td>
                 </tr>
                 <tr id="tarihce-${r.id}" class="history-row">
-                    <td colspan="4"><div class="history-container" id="details-${r.id}">Yükleniyor...</div></td>
+                    <td colspan="6"><div class="history-container" id="details-${r.id}">Yükleniyor...</div></td>
                 </tr>
             `).join('');
+        }
+
+        function tabloFiltrele() {
+            const input = document.getElementById("cihazAra");
+            const filter = input.value.toUpperCase();
+            const table = document.getElementById("refTablo");
+            const tr = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < tr.length; i++) {
+                if (tr[i].classList.contains('history-row')) continue;
+                let text = tr[i].innerText.toUpperCase();
+                tr[i].style.display = text.indexOf(filter) > -1 ? "" : "none";
+                const nextRow = tr[i+1];
+                if(nextRow && nextRow.classList.contains('history-row')) nextRow.style.display = "none";
+            }
         }
 
         function panelAc(tip, id, ad) {
             document.getElementById("panelKal").style.display = "none";
             document.getElementById("panelAra").style.display = "none";
             
-            // Inputları temizle (Düzenlemeden sonra yeni kayıt için)
             if(tip === 'KAL') {
                 document.getElementById("panelKal").style.display = "block";
                 document.getElementById("kal_ref_id").value = id;
@@ -223,6 +254,7 @@
                 marka: document.getElementById("marka").value,
                 model: document.getElementById("model").value,
                 seri_no: document.getElementById("seri_no").value,
+                envanter_no: document.getElementById("envanter_no").value,
                 olcme_araligi: document.getElementById("olcme_araligi").value,
                 kalibrasyon_kriteri: document.getElementById("kal_kriteri").value,
                 ara_kontrol_kriteri: document.getElementById("ara_kriteri").value
@@ -231,17 +263,20 @@
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
-            if(res.ok) { bildirimGoster(); document.getElementById("refForm").reset(); referansYukle(); }
+            if(res.ok) { 
+                bildirimGoster(); 
+                document.getElementById("refForm").reset(); 
+                referansYukle(); 
+            }
             btn.disabled = false;
         }
 
         async function kaydetDinamik(e, tip) {
             e.preventDefault();
             const btn = tip === 'KAL' ? document.getElementById("kalSubmitBtn") : document.getElementById("araSubmitBtn");
-            btn.disabled = true;
-
             const recordId = tip === 'KAL' ? document.getElementById("kal_record_id").value : document.getElementById("ara_record_id").value;
-
+            
+            btn.disabled = true;
             const payload = {
                 id: recordId || null,
                 referans_id: tip === 'KAL' ? document.getElementById("kal_ref_id").value : document.getElementById("ara_ref_id").value,
@@ -253,7 +288,6 @@
             };
 
             const url = recordId ? '/api/referans-takip-guncelle' : '/api/referans-takip';
-
             const res = await fetch(url, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
