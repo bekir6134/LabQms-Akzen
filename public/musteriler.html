@@ -2,131 +2,200 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>LabQMS Pro - Gelişmiş CRM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabQMS Pro - Müşteri Yönetimi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #1E40AF; --border: #e2e8f0; --bg: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); padding: 20px; color: #334155; }
+        :root { --primary: #1E40AF; --border: #e2e8f0; --bg: #f8fafc; --success: #10B981; --danger: #ef4444; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); padding: 20px; color: #334155; margin: 0; }
+        .container { max-width: 1100px; margin: auto; }
         .card { background: #fff; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         .full { grid-column: 1 / -1; }
-        .dynamic-row { display: flex; gap: 5px; margin-bottom: 5px; }
+        .dynamic-row { display: flex; gap: 5px; margin-bottom: 8px; }
         label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; color: #64748b; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
-        .btn-plus { background: #10B981; color: white; border: none; border-radius: 4px; padding: 0 12px; cursor: pointer; }
-        .btn-save { background: var(--primary); color: white; padding: 15px; border: none; border-radius: 8px; font-weight: 600; width: 100%; cursor: pointer; margin-top: 20px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-family: inherit; }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
+        .btn-plus { background: var(--success); color: white; border: none; border-radius: 4px; padding: 0 12px; cursor: pointer; font-weight: bold; }
+        .btn-minus { background: var(--danger); color: white; border: none; border-radius: 4px; padding: 0 12px; cursor: pointer; }
+        .btn-save { background: var(--primary); color: white; padding: 15px; border: none; border-radius: 8px; font-weight: 600; width: 100%; cursor: pointer; margin-top: 20px; transition: 0.3s; font-size: 1rem; }
+        .btn-save:hover { opacity: 0.9; transform: translateY(-1px); }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 15px; border-bottom: 1px solid var(--border); text-align: left; }
-        .btn-edit { color: var(--primary); font-weight: bold; cursor: pointer; border: 1px solid var(--primary); padding: 5px 10px; border-radius: 4px; background: white; }
+        th { background: #f1f5f9; padding: 15px; text-align: left; color: #64748b; font-size: 0.85rem; }
+        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        .btn-edit { color: var(--primary); font-weight: bold; cursor: pointer; border: 1px solid var(--primary); padding: 6px 12px; border-radius: 6px; background: white; transition: 0.2s; }
+        .btn-edit:hover { background: var(--primary); color: white; }
+
+        /* Toast Bildirim */
+        #toast { visibility: hidden; min-width: 250px; background-color: var(--success); color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 1000; right: 30px; top: 30px; font-weight: 600; box-shadow: 0 10px 15px rgba(0,0,0,0.1); transition: 0.4s; transform: translateY(-20px); }
+        #toast.show { visibility: visible; transform: translateY(0); }
     </style>
 </head>
 <body>
 
-<div style="max-width: 1100px; margin: auto;">
+<div id="toast">✅ İşlem Başarıyla Tamamlandı!</div>
+
+<div class="container">
     <div class="card">
-        <h2 id="formTitle">🏢 Müşteri / Şube Kartı Oluştur</h2>
+        <h2 id="formTitle" style="margin-top:0; color:var(--primary);">🏢 Müşteri Kayıt Kartı</h2>
         <form id="musteriForm" onsubmit="kaydet(event)">
             <input type="hidden" id="musteriId">
             <div class="form-grid">
                 <div class="full">
-                    <label>Firma Resmi Ünvanı * (Fatura Bilgisi)</label>
-                    <input type="text" id="firma_adi" required placeholder="Örn: ABC Endüstri A.Ş.">
-                </div>
-                <div class="full">
-                    <label>Şube / Birim Adı (Sertifikaya Özel - Opsiyonel)</label>
-                    <input type="text" id="sube_adi" placeholder="Örn: Gebze Fabrikası veya Ar-Ge Laboratuvarı">
+                    <label>Firma Resmi Ünvanı *</label>
+                    <input type="text" id="firma_adi" required placeholder="Örn: XYZ Kalibrasyon Hizmetleri Ltd. Şti.">
                 </div>
                 
                 <div>
                     <label>Yetkili Kişiler <button type="button" class="btn-plus" onclick="addField('yetkiliList')">+</button></label>
-                    <div id="yetkiliList"><div class="dynamic-row"><input type="text" class="yetkili-input"></div></div>
+                    <div id="yetkiliList"><div class="dynamic-row"><input type="text" class="yetkiliList-input"></div></div>
                 </div>
                 <div>
-                    <label>Telefonlar <button type="button" class="btn-plus" onclick="addField('telList')">+</button></label>
-                    <div id="telList"><div class="dynamic-row"><input type="text" class="tel-input"></div></div>
+                    <label>Telefon Numaraları <button type="button" class="btn-plus" onclick="addField('telList')">+</button></label>
+                    <div id="telList"><div class="dynamic-row"><input type="text" class="telList-input"></div></div>
                 </div>
 
                 <div>
                     <label>Sertifika Mailleri <button type="button" class="btn-plus" onclick="addField('sMailList')">+</button></label>
-                    <div id="sMailList"><div class="dynamic-row"><input type="email" class="s-mail-input"></div></div>
+                    <div id="sMailList"><div class="dynamic-row"><input type="email" class="sMailList-input"></div></div>
                 </div>
                 <div>
                     <label>Fatura Mailleri <button type="button" class="btn-plus" onclick="addField('fMailList')">+</button></label>
-                    <div id="fMailList"><div class="dynamic-row"><input type="email" class="f-mail-input"></div></div>
+                    <div id="fMailList"><div class="dynamic-row"><input type="email" class="fMailList-input"></div></div>
                 </div>
 
                 <div>
-                    <label>İl / İlçe</label>
-                    <div style="display:flex; gap:10px;">
-                        <input type="text" id="il" placeholder="İl">
-                        <input type="text" id="ilce" placeholder="İlçe">
-                    </div>
+                    <label>İl (Seçebilir veya Yazabilirsiniz)</label>
+                    <input list="il-listesi" id="il" onchange="ilceGuncelle()" placeholder="İl seçin veya yazın">
+                    <datalist id="il-listesi"></datalist>
                 </div>
                 <div>
-                    <label>Vergi Dairesi / VKN</label>
-                    <input type="text" id="vkn">
+                    <label>İlçe (Seçebilir veya Yazabilirsiniz)</label>
+                    <input list="ilce-listesi" id="ilce" placeholder="İlçe seçin veya yazın">
+                    <datalist id="ilce-listesi"></datalist>
                 </div>
+
+                <div>
+                    <label>Vergi Dairesi</label>
+                    <input type="text" id="vergi_dairesi">
+                </div>
+                <div>
+                    <label>Vergi Numarası</label>
+                    <input type="text" id="vergi_no">
+                </div>
+
                 <div class="full">
                     <label>Açık Adres (Sertifikada Yazacak Olan)</label>
-                    <textarea id="adres" rows="2"></textarea>
+                    <textarea id="adres" rows="2" placeholder="Mahalle, Cadde, Sokak, No, Daire..."></textarea>
                 </div>
             </div>
-            <button type="submit" class="btn-save">💾 Müşteriyi / Şubeyi Sisteme İşle</button>
+            <button type="submit" class="btn-save">💾 Müşteriyi Kaydet / Güncelle</button>
         </form>
     </div>
 
     <div class="card">
-        <h3>📋 Kayıtlı Müşteri ve Lokasyonlar</h3>
-        <table>
-            <thead><tr><th>Ünvan / Şube</th><th>Lokasyon</th><th>İşlem</th></tr></thead>
-            <tbody id="liste"></tbody>
-        </table>
+        <h3 style="margin-top:0;">📋 Kayıtlı Müşteriler</h3>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Firma Ünvanı</th>
+                        <th>Lokasyon</th>
+                        <th>Vergi Bilgisi</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="liste"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    function addField(id, val = '') {
-        const div = document.createElement("div");
-        div.className = "dynamic-row";
-        div.innerHTML = `<input type="${id.includes('Mail')?'email':'text'}" class="${id}-input" value="${val}"><button type="button" onclick="this.parentElement.remove()" style="background:#ef4444; color:white; border:none; border-radius:4px; cursor:pointer;">-</button>`;
-        document.getElementById(id).appendChild(div);
+    let adresVerisi = {};
+
+    // 1. JSON DOSYASINDAN ADRESLERİ ÇEK
+    async function adresYukle() {
+        try {
+            const res = await fetch('/turkiye-il-ilce.json');
+            adresVerisi = await res.json();
+            const ilList = document.getElementById("il-listesi");
+            Object.keys(adresVerisi).forEach(il => {
+                let opt = document.createElement("option");
+                opt.value = il;
+                ilList.appendChild(opt);
+            });
+        } catch (e) { console.error("Adres verisi yüklenemedi:", e); }
     }
 
-    async function listeYükle() {
+    function ilceGuncelle() {
+        const il = document.getElementById("il").value;
+        const ilceList = document.getElementById("ilce-listesi");
+        ilceList.innerHTML = "";
+        if(adresVerisi[il]) {
+            adresVerisi[il].forEach(ilce => {
+                let opt = document.createElement("option");
+                opt.value = ilce;
+                ilceList.appendChild(opt);
+            });
+        }
+    }
+
+    function showToast(msg) {
+        const x = document.getElementById("toast");
+        if(msg) x.innerText = msg;
+        x.className = "show";
+        setTimeout(() => { x.className = ""; }, 3000);
+    }
+
+    function addField(id, val = '') {
+        const container = document.getElementById(id);
+        const div = document.createElement("div");
+        div.className = "dynamic-row";
+        div.innerHTML = `
+            <input type="${id.includes('Mail')?'email':'text'}" class="${id}-input" value="${val}">
+            <button type="button" class="btn-minus" onclick="this.parentElement.remove()">-</button>
+        `;
+        container.appendChild(div);
+    }
+
+    async function listeYukle() {
         const res = await fetch('/api/musteriler');
         const data = await res.json();
         const liste = document.getElementById("liste");
         liste.innerHTML = "";
         data.forEach(m => {
-            liste.innerHTML += `<tr>
-                <td><strong>${m.firma_adi}</strong><br><small style="color:var(--primary)">${m.sube_adi || ''}</small></td>
-                <td>${m.il || ''} / ${m.ilce || ''}</td>
-                <td><button class="btn-edit" onclick='duzenle(${JSON.stringify(m)})'>Düzenle</button></td>
-            </tr>`;
+            liste.innerHTML += `
+                <tr>
+                    <td><strong>${m.firma_adi}</strong></td>
+                    <td>${m.il || ''} / ${m.ilce || ''}</td>
+                    <td style="font-size:0.8rem; color:#64748b;">${m.vergi_dairesi || ''}<br>${m.vergi_no || ''}</td>
+                    <td><button class="btn-edit" onclick='duzenle(${JSON.stringify(m)})'>Düzenle</button></td>
+                </tr>`;
         });
     }
 
     function duzenle(m) {
         document.getElementById("musteriId").value = m.id;
         document.getElementById("firma_adi").value = m.firma_adi;
-        document.getElementById("sube_adi").value = m.sube_adi || '';
         document.getElementById("il").value = m.il || '';
         document.getElementById("ilce").value = m.ilce || '';
+        document.getElementById("vergi_dairesi").value = m.vergi_dairesi || '';
+        document.getElementById("vergi_no").value = m.vergi_no || '';
         document.getElementById("adres").value = m.adres || '';
-        document.getElementById("vkn").value = m.vergi_dairesi_vkn || '';
         
-        // Dinamik alanları doldurma
-        const setFields = (id, data) => {
-            const cont = document.getElementById(id); cont.innerHTML = "";
-            (data || ['']).forEach(v => addField(id, v));
+        const fill = (id, data) => {
+            const c = document.getElementById(id); c.innerHTML = "";
+            (data && data.length > 0 ? data : ['']).forEach(v => addField(id, v));
         };
-        setFields('yetkiliList', m.yetkililer);
-        setFields('telList', m.telefonlar);
-        setFields('sMailList', m.sertifika_mailleri);
-        setFields('fMailList', m.fatura_mailleri);
+        fill('yetkiliList', m.yetkililer);
+        fill('telList', m.telefonlar);
+        fill('sMailList', m.sertifika_mailleri);
+        fill('fMailList', m.fatura_mailleri);
         
-        window.scrollTo(0,0);
-        document.getElementById("formTitle").innerText = "📝 Müşteri Düzenleniyor...";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById("formTitle").innerText = "📝 Müşteri Bilgilerini Güncelle";
     }
 
     async function kaydet(e) {
@@ -134,15 +203,15 @@
         const body = {
             id: document.getElementById("musteriId").value,
             firma_adi: document.getElementById("firma_adi").value,
-            sube_adi: document.getElementById("sube_adi").value,
             il: document.getElementById("il").value,
             ilce: document.getElementById("ilce").value,
+            vergi_dairesi: document.getElementById("vergi_dairesi").value,
+            vergi_no: document.getElementById("vergi_no").value,
             adres: document.getElementById("adres").value,
-            vergi_dairesi_vkn: document.getElementById("vkn").value,
-            yetkililer: Array.from(document.querySelectorAll(".yetkiliList-input")).map(i => i.value),
-            telefonlar: Array.from(document.querySelectorAll(".telList-input")).map(i => i.value),
-            sertifika_mailleri: Array.from(document.querySelectorAll(".sMailList-input")).map(i => i.value),
-            fatura_mailleri: Array.from(document.querySelectorAll(".fMailList-input")).map(i => i.value)
+            yetkililer: Array.from(document.querySelectorAll(".yetkiliList-input")).map(i => i.value).filter(v => v),
+            telefonlar: Array.from(document.querySelectorAll(".telList-input")).map(i => i.value).filter(v => v),
+            sertifika_mailleri: Array.from(document.querySelectorAll(".sMailList-input")).map(i => i.value).filter(v => v),
+            fatura_mailleri: Array.from(document.querySelectorAll(".fMailList-input")).map(i => i.value).filter(v => v)
         };
 
         const res = await fetch('/api/musteriler', {
@@ -152,12 +221,14 @@
         });
 
         if(res.ok) { 
-            alert("Başarıyla kaydedildi!"); 
-            location.reload(); 
+            showToast("✅ Müşteri Başarıyla Kaydedildi!");
+            setTimeout(() => { location.reload(); }, 1200);
+        } else {
+            showToast("❌ Kayıt sırasında hata oluştu!");
         }
     }
 
-    window.onload = listeYükle;
+    window.onload = () => { adresYukle(); listeYukle(); };
 </script>
 </body>
 </html>
