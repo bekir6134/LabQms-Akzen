@@ -634,6 +634,34 @@ app.delete('/api/is-emirleri/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// --- YENİ EKLENEN OPERASYON API: TEKİL CİHAZ İŞLEM KAYDI ---
+app.put('/api/is-emirleri/:id/cihaz-islem', async (req, res) => {
+    try {
+        const { cihaz_index, personel, metot_id, sicaklik, nem, sertifika_asamasi } = req.body;
+        
+        // 1. İş emrini bul
+        const { rows } = await pool.query('SELECT cihazlar FROM is_emirleri WHERE id = $1', [req.params.id]);
+        if (rows.length === 0) return res.status(404).json({ error: "İş emri bulunamadı" });
+        
+        let cihazlar = rows[0].cihazlar;
+        if (typeof cihazlar === 'string') cihazlar = JSON.parse(cihazlar);
+
+        // 2. Sadece ilgili cihazın verilerini güncelle
+        cihazlar[cihaz_index] = {
+            ...cihazlar[cihaz_index],
+            islem_durumu: sertifika_asamasi,
+            kalibrasyon_verileri: { personel, metot_id, sicaklik, nem, islem_tarihi: new Date() }
+        };
+
+        // 3. Güncel listeyi kaydet
+        const result = await pool.query('UPDATE is_emirleri SET cihazlar = $1 WHERE id = $2 RETURNING *', [JSON.stringify(cihazlar), req.params.id]);
+        res.json(result.rows[0]);
+    } catch (err) { 
+        res.status(500).json({ error: err.message }); 
+    }
+});
+
+
 app.listen(PORT, () => {
     console.log(`🚀 Sunucu ${PORT} portunda başarıyla ayağa kalktı.`);
 });

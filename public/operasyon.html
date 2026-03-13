@@ -2,294 +2,269 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Operasyon Merkezi</title>
+    <title>Laboratuvar Operasyon Merkezi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary:#1E40AF; --border:#e2e8f0; --bg:#f8fafc; --text:#334155; }
-        * { box-sizing:border-box; }
-        body { font-family:'Inter',sans-serif; background:var(--bg); padding:24px; color:var(--text); margin:0; }
+        :root { --primary:#1E40AF; --sidebar:#1e293b; --border:#e2e8f0; --bg:#f8fafc; --success:#10B981; --warning:#f59e0b; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); margin:0; display:flex; color:#334155; }
+        
+        .sidebar { width:250px; background:var(--sidebar); color:white; height:100vh; position:fixed; padding:20px; box-sizing:border-box; }
+        .nav-link { display:block; color:#cbd5e1; text-decoration:none; padding:12px; border-radius:8px; margin-bottom:5px; transition:0.3s; font-size:0.9rem; }
+        .nav-link:hover, .nav-link.active { background:#334155; color:white; }
 
-        /* BAŞLIK */
-        .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
-        .page-title { font-size:1.4rem; font-weight:700; color:var(--primary); }
+        .main-content { margin-left:250px; flex:1; padding:30px; }
+        .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+        h2 { margin:0; color:var(--primary); }
 
-        /* FİLTRE */
-        .filter-bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-        .filter-bar select, .filter-bar input { padding:9px 12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.85rem; outline:none; }
-        .filter-bar select:focus, .filter-bar input:focus { border-color:var(--primary); }
-
-        /* KANBAN */
-        .kanban { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:28px; overflow-x:auto; }
-        .kanban-col { background:#fff; border-radius:12px; border:1px solid var(--border); overflow:hidden; min-width:160px; }
-        .kanban-head { padding:10px 14px; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid transparent; }
-        .kh-kabul_edildi  { background:#f1f5f9; color:#475569; border-color:#cbd5e1; }
-        .kh-hazırlanıyor  { background:#fef9c3; color:#854d0e; border-color:#fbbf24; }
-        .kh-tamamlandı    { background:#dbeafe; color:#1e40af; border-color:#60a5fa; }
-        .kh-imzalandı     { background:#ede9fe; color:#6d28d9; border-color:#a78bfa; }
-        .kh-onaylandı     { background:#d1fae5; color:#065f46; border-color:#34d399; }
-        .kh-sertifika_gönderildi { background:#dcfce7; color:#166534; border-color:#4ade80; }
-        .kanban-count { display:inline-block; background:rgba(0,0,0,0.08); border-radius:10px; padding:1px 7px; font-size:0.75rem; margin-left:6px; }
-        .kanban-cards { padding:10px; min-height:80px; }
-        .kanban-card { background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:8px; cursor:pointer; transition:0.15s; font-size:0.82rem; }
-        .kanban-card:hover { background:#eff6ff; border-color:#93c5fd; transform:translateY(-1px); box-shadow:0 2px 8px rgba(30,64,175,0.1); }
-        .kanban-card .ie { font-weight:700; color:var(--primary); font-size:0.8rem; }
-        .kanban-card .firma { color:#475569; margin-top:2px; }
-        .kanban-card .cihaz-cnt { color:#94a3b8; font-size:0.75rem; margin-top:4px; }
-        .kanban-empty { color:#94a3b8; font-size:0.78rem; text-align:center; padding:12px 8px; }
-
-        /* DETAY LİSTE */
-        .card { background:#fff; border-radius:12px; border:1px solid var(--border); box-shadow:0 4px 6px rgba(0,0,0,0.05); }
-        .card-header { padding:16px 24px; border-bottom:1px solid var(--border); background:#f8fafc; display:flex; align-items:center; justify-content:space-between; }
-        .card-title { font-weight:700; color:var(--primary); font-size:0.95rem; }
-        .card-body { padding:20px; }
-
-        .search-box input { padding:10px 10px 10px 35px; background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat 10px center; border:1px solid var(--border); border-radius:8px; width:240px; outline:none; font-size:0.85rem; }
-
+        .card { background:#fff; padding:20px; border-radius:12px; border:1px solid var(--border); box-shadow:0 4px 6px rgba(0,0,0,0.05); }
+        
         table { width:100%; border-collapse:collapse; }
-        th { background:#f8fafc; padding:11px 12px; text-align:left; color:#64748b; font-size:0.8rem; border-bottom:2px solid var(--border); }
-        td { padding:10px 12px; border-bottom:1px solid var(--border); font-size:0.87rem; vertical-align:middle; }
-        tr:hover td { background:#fafbff; }
-        .empty-row td { text-align:center; color:#94a3b8; padding:30px; }
+        th { background:#f8fafc; text-align:left; padding:12px; border-bottom:2px solid var(--border); color:#64748b; font-size:0.85rem; }
+        td { padding:12px; border-bottom:1px solid var(--border); font-size:0.9rem; vertical-align:middle; }
+        
+        .badge { padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:700; }
+        .b-bekliyor { background:#fee2e2; color:#dc2626; }
+        .b-islemde { background:#fef3c7; color:#d97706; }
+        .b-hazir { background:#dcfce7; color:#166534; }
+        .b-onay { background:#e0e7ff; color:#4338ca; }
 
-        .ie-no { color:var(--primary); font-weight:700; }
+        .btn-islem { background:var(--primary); color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem; transition:0.2s; }
+        .btn-islem:hover { background:#1e3a8a; }
 
-        .asama-badge { padding:3px 10px; border-radius:12px; font-size:0.72rem; font-weight:700; white-space:nowrap; }
-        .asama-kabul_edildi       { background:#f1f5f9; color:#475569; }
-        .asama-hazırlanıyor       { background:#fef9c3; color:#854d0e; }
-        .asama-tamamlandı         { background:#dbeafe; color:#1e40af; }
-        .asama-imzalandı          { background:#ede9fe; color:#6d28d9; }
-        .asama-onaylandı          { background:#d1fae5; color:#065f46; }
-        .asama-sertifika_gönderildi { background:#dcfce7; color:#166534; }
-
-        /* AŞAMA SEÇİCİ */
-        .asama-select { padding:5px 8px; border:1px solid var(--border); border-radius:6px; font-size:0.8rem; font-family:inherit; outline:none; cursor:pointer; background:#fff; }
-        .asama-select:focus { border-color:var(--primary); }
-
-        /* MODAL */
-        #modal { display:none; position:fixed; z-index:2000; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; }
-        #modal.open { display:flex; }
-        .modal-box { background:#fff; border-radius:14px; width:92%; max-width:620px; max-height:85vh; overflow-y:auto; padding:28px; position:relative; }
-        .modal-close { position:absolute; right:18px; top:18px; font-size:20px; cursor:pointer; color:#64748b; border:none; background:none; }
-        .modal-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
-        .modal-label { font-size:0.72rem; font-weight:700; color:var(--primary); text-transform:uppercase; margin-bottom:3px; }
-        .modal-value { font-size:0.92rem; color:#1e293b; }
-        .modal-table { width:100%; border-collapse:collapse; margin-top:8px; font-size:0.83rem; }
-        .modal-table th { background:var(--primary); color:white; padding:8px 10px; text-align:left; font-size:0.75rem; }
-        .modal-table td { padding:8px 10px; border-bottom:1px solid var(--border); }
-
-        /* AŞAMA ADIM GÖSTER */
-        .step-bar { display:flex; gap:0; margin:16px 0; }
-        .step { flex:1; text-align:center; padding:7px 4px; font-size:0.7rem; font-weight:700; background:#f1f5f9; color:#94a3b8; border:1px solid var(--border); border-right:none; transition:0.2s; }
-        .step:first-child { border-radius:8px 0 0 8px; }
-        .step:last-child { border-right:1px solid var(--border); border-radius:0 8px 8px 0; }
-        .step.done { background:#dbeafe; color:#1e40af; }
-        .step.current { background:var(--primary); color:#fff; }
-
-        #toast { visibility:hidden; min-width:260px; background-color:#10B981; color:#fff; text-align:center; border-radius:8px; padding:16px; position:fixed; z-index:9999; right:30px; top:30px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
-        #toast.show { visibility:visible; }
-        #toast.error { background-color:#ef4444; }
+        /* MODAL TASARIMI */
+        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; }
+        .modal { background:#fff; width:500px; border-radius:12px; padding:25px; box-shadow:0 10px 25px rgba(0,0,0,0.2); }
+        .modal-header { font-size:1.2rem; font-weight:700; color:var(--primary); margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:10px; }
+        .form-group { margin-bottom:15px; }
+        label { display:block; font-size:0.85rem; font-weight:600; color:#64748b; margin-bottom:5px; }
+        input, select { width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; box-sizing:border-box; font-family:inherit; }
+        
+        .btn-group { display:flex; gap:10px; margin-top:20px; }
+        .btn-save { flex:1; background:var(--success); color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer; }
+        .btn-cancel { flex:1; background:#f1f5f9; color:#475569; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer; }
+        
+        .cihaz-info { background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:15px; font-size:0.85rem; border:1px dashed #cbd5e1; }
     </style>
 </head>
 <body>
-<div id="toast"></div>
 
-<!-- MODAL -->
-<div id="modal">
-    <div class="modal-box">
-        <button class="modal-close" onclick="modalKapat()">✕</button>
-        <div id="modalIcerik"></div>
+    <div class="sidebar">
+        <h2 style="color: white; text-align: center; margin-bottom: 30px;">LabQMS Pro</h2>
+        <nav>
+            <a href="dashboard.html" class="nav-link">🏠 Dashboard</a>
+            <a href="kabul.html" class="nav-link">📥 Cihaz Kabul</a>
+            <a href="operasyon.html" class="nav-link active">🔬 Operasyon</a>
+            <a href="metotlar.html" class="nav-link">🧪 Metotlar</a>
+        </nav>
     </div>
-</div>
 
-<!-- BAŞLIK & FİLTRE -->
-<div class="page-header">
-    <div class="page-title">🔄 Operasyon Merkezi</div>
-    <div class="filter-bar">
-        <select id="filtreFirma" onchange="filtrele()">
-            <option value="">Tüm Firmalar</option>
-        </select>
-        <select id="filtreAsama" onchange="filtrele()">
-            <option value="">Tüm Aşamalar</option>
-            <option value="kabul_edildi">Kabul Edildi</option>
-            <option value="hazırlanıyor">Hazırlanıyor</option>
-            <option value="tamamlandı">Tamamlandı</option>
-            <option value="imzalandı">İmzalandı</option>
-            <option value="onaylandı">Onaylandı</option>
-            <option value="sertifika_gönderildi">Sertifika Gönderildi</option>
-        </select>
-    </div>
-</div>
+    <div class="main-content">
+        <div class="header">
+            <h2>🔬 Laboratuvar İş Listesi (Cihaz Bazlı)</h2>
+        </div>
 
-<!-- KANBAN -->
-<div class="kanban" id="kanban"></div>
-
-<!-- DETAY LİSTE -->
-<div class="card">
-    <div class="card-header">
-        <div class="card-title">📋 İş Emirleri Detay Listesi</div>
-        <div class="search-box">
-            <input type="text" id="araInput" onkeyup="filtrele()" placeholder="IE no, firma ara...">
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>İş Emri</th>
+                        <th>Firma Adı</th>
+                        <th>Cihaz Bilgisi</th>
+                        <th>S/N</th>
+                        <th>Aşama</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="cihazListesi">
+                    <tr><td colspan="6" style="text-align:center;">Veriler yükleniyor...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
-    <div class="card-body">
-        <table>
-            <thead>
-                <tr>
-                    <th>IE No</th>
-                    <th>Firma</th>
-                    <th>Kabul Tarihi</th>
-                    <th>Teslim Tarihi</th>
-                    <th>Cihaz</th>
-                    <th>Aşama Değiştir</th>
-                    <th>İşlem</th>
-                </tr>
-            </thead>
-            <tbody id="detayListe"></tbody>
-        </table>
-    </div>
-</div>
 
-<script>
-    const ASAMALAR = ['kabul_edildi','hazırlanıyor','tamamlandı','imzalandı','onaylandı','sertifika_gönderildi'];
-    const ASAMA_LABEL = {
-        kabul_edildi:'Kabul Edildi', 'hazırlanıyor':'Hazırlanıyor',
-        'tamamlandı':'Tamamlandı', imzalandı:'İmzalandı',
-        'onaylandı':'Onaylandı', sertifika_gönderildi:'Sertifika Gönderildi'
-    };
-
-    let tumKayitlar = [], filtreli = [];
-
-    function showToast(msg, err=false) {
-        const t=document.getElementById("toast"); t.textContent=msg;
-        t.className=err?"show error":"show"; setTimeout(()=>t.className="",3000);
-    }
-
-    async function yukle() {
-        const res = await fetch('/api/is-emirleri');
-        tumKayitlar = await res.json();
-        // Firma filtresi doldur
-        const firmalar = [...new Map(tumKayitlar.map(r=>[r.musteri_id,r])).values()];
-        const sel = document.getElementById("filtreFirma");
-        sel.innerHTML='<option value="">Tüm Firmalar</option>'+firmalar.map(r=>`<option value="${r.musteri_id}">${r.firma_adi}</option>`).join('');
-        filtrele();
-    }
-
-    function filtrele() {
-        const firma = document.getElementById("filtreFirma").value;
-        const asama = document.getElementById("filtreAsama").value;
-        const ara   = document.getElementById("araInput").value.toUpperCase();
-        filtreli = tumKayitlar.filter(r =>
-            (!firma || r.musteri_id == firma) &&
-            (!asama || r.asama === asama) &&
-            (!ara   || (r.ie_no||'').toUpperCase().includes(ara) || (r.firma_adi||'').toUpperCase().includes(ara))
-        );
-        renderKanban(filtreli);
-        renderListe(filtreli);
-    }
-
-    function renderKanban(data) {
-        const kanban = document.getElementById("kanban");
-        kanban.innerHTML = ASAMALAR.map(asama => {
-            const kartlar = data.filter(r=>r.asama===asama);
-            const cihazlar_data = kartlar.map(r=>Array.isArray(r.cihazlar)?r.cihazlar:JSON.parse(r.cihazlar||'[]'));
-            return `<div class="kanban-col">
-                <div class="kanban-head kh-${asama}">
-                    ${ASAMA_LABEL[asama]} <span class="kanban-count">${kartlar.length}</span>
+    <div class="modal-overlay" id="islemModal">
+        <div class="modal">
+            <div class="modal-header">⚙️ Kalibrasyon Veri Girişi</div>
+            
+            <div class="cihaz-info" id="modalCihazInfo">
                 </div>
-                <div class="kanban-cards">
-                    ${kartlar.length===0?`<div class="kanban-empty">Boş</div>`:
-                    kartlar.map((r,i)=>`
-                        <div class="kanban-card" onclick="goruntule(${r.id})">
-                            <div class="ie">${r.ie_no||'-'}</div>
-                            <div class="firma">${r.firma_adi}</div>
-                            <div class="cihaz-cnt">📦 ${cihazlar_data[i].length} cihaz</div>
-                            ${r.teslim_tarihi?`<div class="cihaz-cnt">📅 ${new Date(r.teslim_tarihi).toLocaleDateString('tr-TR')}</div>`:''}
-                        </div>`).join('')}
-                </div>
-            </div>`;
-        }).join('');
-    }
 
-    function renderListe(data) {
-        const tbody = document.getElementById("detayListe");
-        if(!data.length){tbody.innerHTML='<tr class="empty-row"><td colspan="7">Kayıt bulunamadı.</td></tr>';return;}
-        tbody.innerHTML = data.map(r=>{
-            const cihazlar=Array.isArray(r.cihazlar)?r.cihazlar:JSON.parse(r.cihazlar||'[]');
-            const kabul=r.kabul_tarihi?new Date(r.kabul_tarihi).toLocaleDateString('tr-TR'):'-';
-            const teslim=r.teslim_tarihi?new Date(r.teslim_tarihi).toLocaleDateString('tr-TR'):'-';
-            const asama=r.asama||'kabul_edildi';
-            const options=ASAMALAR.map(a=>`<option value="${a}" ${a===asama?'selected':''}>${ASAMA_LABEL[a]}</option>`).join('');
-            return `<tr>
-                <td class="ie-no">${r.ie_no||'-'}</td>
-                <td>${r.firma_adi}${r.sube_adi?` <span style="color:#94a3b8;font-size:0.78rem;">/ ${r.sube_adi}</span>`:''}</td>
-                <td>${kabul}</td>
-                <td>${teslim}</td>
-                <td><span style="background:#eff6ff;color:var(--primary);padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700;">${cihazlar.length} cihaz</span></td>
-                <td>
-                    <select class="asama-select" onchange="asamaGuncelle(${r.id},this.value)">
-                        ${options}
-                    </select>
-                </td>
-                <td>
-                    <button style="background:#dcfce7;color:#059669;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:0.78rem;font-weight:600;" onclick="goruntule(${r.id})">👁️ Detay</button>
-                </td>
-            </tr>`;
-        }).join('');
-    }
+            <input type="hidden" id="is_emri_id">
+            <input type="hidden" id="cihaz_index">
 
-    async function asamaGuncelle(id, asama) {
-        const res = await fetch(`/api/is-emirleri/${id}/asama`,{
-            method:'PUT', headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({asama})
-        });
-        if(res.ok){ showToast(`✅ Aşama → ${ASAMA_LABEL[asama]}`); await yukle(); }
-        else showToast("❌ Güncellenemedi!",true);
-    }
-
-    function goruntule(id) {
-        const r = tumKayitlar.find(x=>x.id===id); if(!r) return;
-        const cihazlar=Array.isArray(r.cihazlar)?r.cihazlar:JSON.parse(r.cihazlar||'[]');
-        const kabul=r.kabul_tarihi?new Date(r.kabul_tarihi).toLocaleDateString('tr-TR'):'-';
-        const teslim=r.teslim_tarihi?new Date(r.teslim_tarihi).toLocaleDateString('tr-TR'):'-';
-        const asama=r.asama||'kabul_edildi';
-        const asamaIdx=ASAMALAR.indexOf(asama);
-        const stepBar=ASAMALAR.map((a,i)=>
-            `<div class="step ${i<asamaIdx?'done':i===asamaIdx?'current':''}">${ASAMA_LABEL[a]}</div>`).join('');
-
-        document.getElementById("modalIcerik").innerHTML=`
-            <h2 style="margin:0 0 6px;color:var(--primary);">📋 ${r.ie_no}</h2>
-            <div class="step-bar">${stepBar}</div>
-            <div class="modal-row">
-                <div><div class="modal-label">Firma</div><div class="modal-value">${r.firma_adi}${r.sube_adi?' / '+r.sube_adi:''}</div></div>
-                <div><div class="modal-label">Mevcut Aşama</div><div class="modal-value"><span class="asama-badge asama-${asama}">${ASAMA_LABEL[asama]}</span></div></div>
-                <div><div class="modal-label">Kabul Tarihi</div><div class="modal-value">${kabul}</div></div>
-                <div><div class="modal-label">Teslim Tarihi</div><div class="modal-value">${teslim}</div></div>
+            <div class="form-group">
+                <label>İşlemi Yapan Personel</label>
+                <input type="text" id="personel" placeholder="Ad Soyad giriniz..." required>
             </div>
-            ${r.notlar?`<div style="background:#fef9c3;border-radius:8px;padding:10px 14px;font-size:0.85rem;margin-bottom:16px;">📝 ${r.notlar}</div>`:''}
-            <div class="modal-label" style="margin-bottom:8px;">Cihazlar</div>
-            <table class="modal-table">
-                <thead><tr><th>#</th><th>Cihaz Adı</th><th>Marka/Model</th><th>Seri No</th><th>Durum</th><th>Aksesuar</th></tr></thead>
-                <tbody>${cihazlar.map((c,i)=>`<tr>
-                    <td>${i+1}</td><td><strong>${c.cihaz_adi}</strong></td>
-                    <td>${c.marka_model||'-'}</td><td>${c.seri_no||'-'}</td>
-                    <td>${c.durum||'-'}</td><td>${c.aksesuar||'-'}</td>
-                </tr>`).join('')}</tbody>
-            </table>
-            <div style="margin-top:20px;">
-                <div class="modal-label" style="margin-bottom:8px;">Aşamayı Güncelle</div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    ${ASAMALAR.map(a=>`<button onclick="asamaGuncelle(${r.id},'${a}');modalKapat();" 
-                        style="padding:7px 14px;border-radius:8px;border:none;cursor:pointer;font-size:0.8rem;font-weight:700;
-                        background:${a===asama?'var(--primary)':'#f1f5f9'};color:${a===asama?'#fff':'#475569'};">
-                        ${ASAMA_LABEL[a]}</button>`).join('')}
+
+            <div class="form-group">
+                <label>Kullanılacak Kalibrasyon Metodu</label>
+                <select id="metot_id" required>
+                    <option value="">Seçiniz...</option>
+                </select>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                    <label>Sıcaklık (°C)</label>
+                    <input type="number" step="0.1" id="sicaklik" placeholder="Örn: 22.5" required>
                 </div>
-            </div>`;
-        document.getElementById("modal").classList.add("open");
-    }
+                <div class="form-group" style="flex:1;">
+                    <label>Nem (%RH)</label>
+                    <input type="number" step="1" id="nem" placeholder="Örn: 45" required>
+                </div>
+            </div>
 
-    function modalKapat(){ document.getElementById("modal").classList.remove("open"); }
+            <div class="form-group" style="margin-top:10px;">
+                <label style="color:var(--primary);">Sertifika Aşaması (Sonraki Adım)</label>
+                <select id="sertifika_asamasi" required style="border-color:var(--primary); background:#eff6ff;">
+                    <option value="Veri Girişi Bekliyor">📝 Veri Girişi Bekliyor</option>
+                    <option value="Taslak Hazırlandı">📄 Taslak Hazırlandı</option>
+                    <option value="Onaya Gönderildi">⏳ Onaya Gönderildi</option>
+                    <option value="Sertifika Onaylandı">✅ Sertifika Onaylandı</option>
+                </select>
+            </div>
 
-    window.onload = yukle;
-</script>
+            <div class="btn-group">
+                <button class="btn-cancel" onclick="modalKapat()">İptal</button>
+                <button class="btn-save" onclick="islemKaydet()">💾 Kaydet ve Aşamayı Güncelle</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let metotlar = [];
+
+        async function sayfaYukle() {
+            await metotlariCek();
+            await cihazlariListele();
+        }
+
+        async function metotlariCek() {
+            try {
+                const res = await fetch('/api/metotlar');
+                metotlar = await res.json();
+                const select = document.getElementById("metot_id");
+                metotlar.forEach(m => {
+                    select.innerHTML += `<option value="${m.id}">${m.metot_kodu} - ${m.metot_adi}</option>`;
+                });
+            } catch(e) { console.error("Metotlar çekilemedi."); }
+        }
+
+        async function cihazlariListele() {
+            try {
+                const res = await fetch('/api/is-emirleri');
+                const isEmirleri = await res.json();
+                
+                const tbody = document.getElementById("cihazListesi");
+                tbody.innerHTML = "";
+
+                let cihazBulundu = false;
+
+                // İş emirlerini dön, içindeki cihazları düz (flat) bir liste haline getir
+                isEmirleri.forEach(ie => {
+                    const cihazlar = typeof ie.cihazlar === 'string' ? JSON.parse(ie.cihazlar) : ie.cihazlar;
+                    
+                    if(cihazlar && cihazlar.length > 0) {
+                        cihazlar.forEach((c, index) => {
+                            cihazBulundu = true;
+                            // Durum belirleme (Eğer atanmamışsa 'İşlem Bekliyor' varsay)
+                            const durum = c.islem_durumu || "İşlem Bekliyor";
+                            let badgeClass = "b-bekliyor";
+                            if(durum.includes("Veri")) badgeClass = "b-islemde";
+                            else if(durum.includes("Onay")) badgeClass = "b-onay";
+                            else if(durum.includes("Onaylandı")) badgeClass = "b-hazir";
+
+                            const tr = document.createElement("tr");
+                            tr.innerHTML = `
+                                <td><b>${ie.ie_no}</b></td>
+                                <td>${ie.firma_adi}</td>
+                                <td><b>${c.cihaz_adi}</b><br><small style="color:#64748b">${c.marka_model || '-'}</small></td>
+                                <td>${c.seri_no || '-'}</td>
+                                <td><span class="badge ${badgeClass}">${durum}</span></td>
+                                <td>
+                                    <button class="btn-islem" onclick='modalAc(${ie.id}, ${index}, ${JSON.stringify(c).replace(/'/g, "&apos;")})'>
+                                        🔬 İşlem Yap
+                                    </button>
+                                </td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+                });
+
+                if(!cihazBulundu) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">Bekleyen cihaz bulunmuyor.</td></tr>`;
+                }
+
+            } catch (err) {
+                console.error("Hata:", err);
+            }
+        }
+
+        function modalAc(ie_id, index, cihaz) {
+            document.getElementById("is_emri_id").value = ie_id;
+            document.getElementById("cihaz_index").value = index;
+            
+            document.getElementById("modalCihazInfo").innerHTML = `
+                <b>Cihaz:</b> ${cihaz.cihaz_adi} (${cihaz.marka_model || 'Markasız'}) <br>
+                <b>Seri No:</b> ${cihaz.seri_no || '-'}
+            `;
+
+            // Varsa eski verileri doldur
+            if(cihaz.kalibrasyon_verileri) {
+                document.getElementById("personel").value = cihaz.kalibrasyon_verileri.personel || '';
+                document.getElementById("metot_id").value = cihaz.kalibrasyon_verileri.metot_id || '';
+                document.getElementById("sicaklik").value = cihaz.kalibrasyon_verileri.sicaklik || '';
+                document.getElementById("nem").value = cihaz.kalibrasyon_verileri.nem || '';
+            } else {
+                // Formu temizle
+                document.getElementById("personel").value = '';
+                document.getElementById("metot_id").value = '';
+                document.getElementById("sicaklik").value = '';
+                document.getElementById("nem").value = '';
+            }
+
+            document.getElementById("sertifika_asamasi").value = cihaz.islem_durumu || "Veri Girişi Bekliyor";
+            document.getElementById("islemModal").style.display = "flex";
+        }
+
+        function modalKapat() {
+            document.getElementById("islemModal").style.display = "none";
+        }
+
+        async function islemKaydet() {
+            const ie_id = document.getElementById("is_emri_id").value;
+            const payload = {
+                cihaz_index: document.getElementById("cihaz_index").value,
+                personel: document.getElementById("personel").value,
+                metot_id: document.getElementById("metot_id").value,
+                sicaklik: document.getElementById("sicaklik").value,
+                nem: document.getElementById("nem").value,
+                sertifika_asamasi: document.getElementById("sertifika_asamasi").value
+            };
+
+            if(!payload.personel || !payload.metot_id || !payload.sicaklik || !payload.nem) {
+                return alert("Lütfen tüm alanları doldurun!");
+            }
+
+            try {
+                const res = await fetch(`/api/is-emirleri/${ie_id}/cihaz-islem`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+
+                if(res.ok) {
+                    modalKapat();
+                    cihazlariListele(); // Tabloyu yenile
+                } else {
+                    alert("Kaydedilirken bir hata oluştu.");
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        window.onload = sayfaYukle;
+    </script>
 </body>
 </html>
