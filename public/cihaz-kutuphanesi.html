@@ -17,21 +17,28 @@
         input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
         .btn { background: var(--primary); color: #fff; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; transition: 0.2s; }
         .btn:hover { background: #1e3a8a; transform: translateY(-1px); }
-        .btn:active { transform: translateY(0); }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+        
+        /* Arama ve Tablo Stilleri */
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; }
+        .search-box { width: 250px; position: relative; }
+        .search-box input { padding-left: 35px; background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat 10px center; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
         th { background: #f1f5f9; padding: 12px; text-align: left; color: #64748b; font-weight: 600; border-bottom: 2px solid var(--border); }
         td { padding: 12px; border-bottom: 1px solid var(--border); }
         .price { color: var(--success); font-weight: bold; }
         .badge { background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-        #loading { text-align: center; color: var(--primary); font-weight: 500; display: none; padding: 10px; }
+        
+        /* Başarılı Mesajı Animasyonu */
+        #success-msg { display: none; background: #dcfce7; color: #166534; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-weight: 600; border: 1px solid #bbf7d0; }
     </style>
 </head>
 <body>
     <div class="container">
+        <div id="success-msg">✅ Cihaz kütüphaneye başarıyla eklendi!</div>
+
         <div class="card">
-            <h2 style="margin-top:0; color: var(--primary); display: flex; align-items: center; gap: 10px;">
-                🗂️ Yeni Cihaz Tipi Ekle
-            </h2>
+            <h2 style="margin-top:0; color: var(--primary);">🗂️ Yeni Cihaz Tipi Ekle</h2>
             <form id="cihazForm" onsubmit="cihazKaydet(event)">
                 <div class="form-grid">
                     <div class="full">
@@ -72,9 +79,14 @@
         </div>
 
         <div class="card">
-            <h2 style="margin-top:0; color: var(--primary);">📚 Kayıtlı Cihaz Kütüphanesi</h2>
-            <div id="loading">Veriler güncelleniyor...</div>
-            <table>
+            <div class="table-header">
+                <h2 style="margin:0; color: var(--primary);">📚 Kayıtlı Cihazlar</h2>
+                <div class="search-box">
+                    <input type="text" id="cihazAra" onkeyup="tabloAra()" placeholder="Cihaz veya kategori ara...">
+                </div>
+            </div>
+            
+            <table id="kutuphaneTablo">
                 <thead>
                     <tr>
                         <th>Cihaz Tipi</th>
@@ -90,36 +102,24 @@
     </div>
 
     <script>
-        // 1. KATEGORİLERİ VERİTABANINDAN ÇEK
+        // 1. KATEGORİLERİ ÇEK
         async function kategorileriGetir() {
             try {
                 const res = await fetch('/api/kategoriler');
                 const kategoriler = await res.json();
                 const select = document.getElementById("kategoriSelect");
-                
                 select.innerHTML = '<option value="">-- Kategori Seçin --</option>';
-                
-                if (kategoriler.length === 0) {
-                    select.innerHTML = '<option value="">Önce Kategori Ekleyin!</option>';
-                    return;
-                }
-
                 kategoriler.forEach(k => {
                     const opt = document.createElement("option");
                     opt.value = k.id;
                     opt.innerText = k.kategori_adi;
                     select.appendChild(opt);
                 });
-            } catch (err) {
-                console.error("Kategoriler yüklenirken hata:", err);
-                document.getElementById("kategoriSelect").innerHTML = '<option value="">Hata!</option>';
-            }
+            } catch (err) { console.error("Kategori hatası:", err); }
         }
 
-        // 2. KÜTÜPHANE LİSTESİNİ YÜKLE
+        // 2. LİSTEYİ YÜKLE
         async function kütüphaneYukle() {
-            const loading = document.getElementById("loading");
-            loading.style.display = "block";
             try {
                 const res = await fetch('/api/cihaz-kutuphanesi');
                 const cihazlar = await res.json();
@@ -127,30 +127,28 @@
                 tbody.innerHTML = "";
                 
                 if (cihazlar.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Kütüphane henüz boş.</td></tr>';
-                } else {
-                    cihazlar.forEach(c => {
-                        tbody.innerHTML += `
-                            <tr>
-                                <td><strong>${c.cihaz_adi}</strong></td>
-                                <td><span class="badge">${c.kategori_adi}</span></td>
-                                <td>${c.periyot}</td>
-                                <td class="price">${c.fiyat} ${c.para_birimi}</td>
-                            </tr>`;
-                    });
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Kütüphane boş.</td></tr>';
+                    return;
                 }
-            } catch (err) {
-                console.error("Liste yükleme hatası:", err);
-            } finally {
-                loading.style.display = "none";
-            }
+
+                cihazlar.forEach(c => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${c.cihaz_adi}</strong></td>
+                            <td><span class="badge">${c.kategori_adi}</span></td>
+                            <td>${c.periyot}</td>
+                            <td class="price">${c.fiyat} ${c.para_birimi}</td>
+                        </tr>`;
+                });
+            } catch (err) { console.error("Liste hatası:", err); }
         }
 
-        // 3. YENİ CİHAZ KAYDET
+        // 3. KAYDETME VE MESAJ GÖSTERME
         async function cihazKaydet(e) {
             e.preventDefault();
-            
             const btn = document.getElementById("submitBtn");
+            const successMsg = document.getElementById("success-msg");
+            
             btn.disabled = true;
             btn.innerText = "Kaydediliyor...";
 
@@ -170,22 +168,37 @@
                 });
 
                 if(res.ok) {
+                    // Formu sıfırla ve mesajı göster
                     document.getElementById("cihazForm").reset();
+                    successMsg.style.display = "block";
+                    setTimeout(() => { successMsg.style.display = "none"; }, 3000);
+                    
                     await kütüphaneYukle();
-                } else {
-                    const errorData = await res.json();
-                    alert("Hata: " + (errorData.error || "Kayıt yapılamadı"));
-                }
-            } catch (err) {
-                console.error("Sunucu hatası:", err);
-                alert("Sunucuya bağlanılamadı.");
-            } finally {
+                } else { alert("Kayıt sırasında bir hata oluştu."); }
+            } catch (err) { console.error("Bağlantı hatası:", err); } 
+            finally {
                 btn.disabled = false;
                 btn.innerText = "🚀 Kütüphaneye Ekle";
             }
         }
 
-        // SAYFA AÇILDIĞINDA ÇALIŞACAKLAR
+        // 4. ANLIK ARAMA (TABLO FİLTRELEME)
+        function tabloAra() {
+            const filter = document.getElementById("cihazAra").value.toUpperCase();
+            const rows = document.getElementById("cihazListe").getElementsByTagName("tr");
+
+            for (let i = 0; i < rows.length; i++) {
+                const txtAdi = rows[i].cells[0].textContent || rows[i].cells[0].innerText;
+                const txtKat = rows[i].cells[1].textContent || rows[i].cells[1].innerText;
+                
+                if (txtAdi.toUpperCase().indexOf(filter) > -1 || txtKat.toUpperCase().indexOf(filter) > -1) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+
         window.onload = () => {
             kategorileriGetir();
             kütüphaneYukle();
