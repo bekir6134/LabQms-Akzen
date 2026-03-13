@@ -636,12 +636,13 @@ app.delete('/api/is-emirleri/:id', async (req, res) => {
 // --- DASHBOARD İSTATİSTİKLERİ ---
 app.get('/api/dashboard', async (req, res) => {
     try {
-        const [kabulEdilenler, hazırlananlar, tamamlananlar, buYil, musteriler, referanslar] = await Promise.all([
+        const [kabulEdilenler, hazırlananlar, tamamlananlar, buYil, musteriler, referanslar, takvimleri] = await Promise.all([
             pool.query(`SELECT COUNT(*) FROM is_emirleri WHERE asama='kabul_edildi'`),
             pool.query(`SELECT COUNT(*) FROM is_emirleri WHERE asama IN ('hazırlanıyor','tamamlandı','imzalandı')`),
             pool.query(`SELECT COUNT(*) FROM is_emirleri WHERE asama='onaylandı' OR asama='sertifika_gönderildi'`),
             pool.query(`SELECT COUNT(*) FROM is_emirleri WHERE EXTRACT(YEAR FROM olusturulma)=EXTRACT(YEAR FROM NOW()) AND asama='sertifika_gönderildi'`),
             pool.query(`SELECT COUNT(*) FROM musteriler`),
+            // Referans cihazlar: KALİBRASYON için 30 gün, ARA_KONTROL için 30 gün eşiği
             pool.query(`
                 SELECT rc.cihaz_adi, rc.seri_no, rt.sonraki_kal_tarihi, rt.islem_tipi,
                     (rt.sonraki_kal_tarihi - CURRENT_DATE) as kalan_gun
@@ -650,9 +651,16 @@ app.get('/api/dashboard', async (req, res) => {
                     SELECT DISTINCT ON (referans_id) referans_id, sonraki_kal_tarihi, islem_tipi
                     FROM referans_takip ORDER BY referans_id, kal_tarihi DESC
                 ) rt ON rc.id = rt.referans_id
-                WHERE rt.sonraki_kal_tarihi <= CURRENT_DATE + INTERVAL '60 days'
+                WHERE rt.sonraki_kal_tarihi <= CURRENT_DATE + INTERVAL '30 days'
                 ORDER BY rt.sonraki_kal_tarihi ASC
-                LIMIT 10`)
+                LIMIT 15`),
+            // Takvim: yarın başlayacak etkinlikler (1 gün kala bildirimi)
+            pool.query(`
+                SELECT t.*, p.ad_soyad as atanan_adi
+                FROM takvim t
+                LEFT JOIN personeller p ON t.atanan_id = p.id
+                WHERE t.baslangic = CURRENT_DATE + INTERVAL '1 day'
+                ORDER BY t.baslangic ASC`)
         ]);
         res.json({
             kabul_edildi: parseInt(kabulEdilenler.rows[0].count),
@@ -660,7 +668,8 @@ app.get('/api/dashboard', async (req, res) => {
             onay_bekleyen: parseInt(tamamlananlar.rows[0].count),
             bu_yil: parseInt(buYil.rows[0].count),
             musteri_sayisi: parseInt(musteriler.rows[0].count),
-            yaklasan_aktiviteler: referanslar.rows
+            yaklasan_aktiviteler: referanslar.rows,
+            yaklasan_etkinlikler: takvimleri.rows
         });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });

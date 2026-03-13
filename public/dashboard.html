@@ -79,6 +79,12 @@
         .renk-btn.secili { border-color:#334155; transform:scale(1.15); }
         .btn-kaydet { background:var(--primary); color:#fff; border:none; padding:11px 24px; border-radius:8px; font-weight:700; cursor:pointer; width:100%; font-size:0.92rem; }
 
+        /* BİLDİRİM BANNER */
+        .bildirim-banner { background:#fef9c3; border:1px solid #fbbf24; border-radius:10px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:flex-start; gap:10px; }
+        .bildirim-banner.kritik { background:#fee2e2; border-color:#f87171; }
+        .bildirim-item { font-size:0.83rem; color:#334155; padding:3px 0; border-bottom:1px dashed rgba(0,0,0,0.08); }
+        .bildirim-item:last-child { border-bottom:none; }
+
         #toast { visibility:hidden; min-width:240px; background:#10B981; color:#fff; text-align:center; border-radius:8px; padding:14px; position:fixed; z-index:9999; right:24px; top:24px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
         #toast.show { visibility:visible; }
         #toast.error { background:#ef4444; }
@@ -135,6 +141,9 @@
     </div>
 </div>
 
+<!-- BİLDİRİM BANNER -->
+<div id="bildirimBanner" style="display:none;"></div>
+
 <!-- KPI -->
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
     <h2 style="margin:0;color:var(--primary);">📊 Dashboard</h2>
@@ -170,7 +179,7 @@
     <!-- YAKLAŞAN AKTİVİTELER -->
     <div class="card">
         <div class="card-head">
-            <div class="card-title">⚠️ Yaklaşan Aktiviteler (60 Gün)</div>
+            <div class="card-title">⚠️ Yaklaşan Aktiviteler (30 Gün)</div>
         </div>
         <div class="card-body" id="yaklasanListesi">
             <div style="color:#94a3b8;font-size:0.85rem;text-align:center;padding:10px;">Yükleniyor...</div>
@@ -261,7 +270,51 @@
             document.getElementById("k4").textContent = d.bu_yil;
             document.getElementById("k5").textContent = d.musteri_sayisi;
             renderYaklasan(d.yaklasan_aktiviteler || []);
+            renderBildirimler(d.yaklasan_aktiviteler || [], d.yaklasan_etkinlikler || []);
         } catch(e) { console.error(e); }
+    }
+
+    // ── BİLDİRİM BANNER ──
+    function renderBildirimler(aktiviteler, etkinlikler) {
+        const banner = document.getElementById("bildirimBanner");
+        const items = [];
+
+        // Referans cihaz: 30 gün veya geçmiş
+        aktiviteler.forEach(r => {
+            const gun = parseInt(r.kalan_gun);
+            const tip = r.islem_tipi === 'KALİBRASYON' ? '🔬 Kalibrasyon' : '🔍 Ara Kontrol';
+            const tarih = new Date(r.sonraki_kal_tarihi).toLocaleDateString('tr-TR');
+            if (gun < 0) {
+                items.push({ kritik: true, text: `${tip} VADESİ GEÇTİ! → ${r.cihaz_adi} (S/N: ${r.seri_no}) — ${tarih}` });
+            } else if (gun === 0) {
+                items.push({ kritik: true, text: `${tip} BUGÜN! → ${r.cihaz_adi} (S/N: ${r.seri_no})` });
+            } else if (gun <= 30) {
+                items.push({ kritik: gun <= 7, text: `${tip} yaklaşıyor → ${r.cihaz_adi} (S/N: ${r.seri_no}) — ${gun} gün kaldı (${tarih})` });
+            }
+        });
+
+        // Takvim: yarın başlayacak etkinlikler
+        etkinlikler.forEach(e => {
+            const atanan = e.atanan_adi ? ` — Atanan: ${e.atanan_adi}` : '';
+            items.push({ kritik: false, text: `📅 Yarın başlıyor: "${e.baslik}"${atanan}` });
+        });
+
+        if (!items.length) { banner.style.display = 'none'; return; }
+
+        const kritikVar = items.some(i => i.kritik);
+        banner.className = kritikVar ? 'bildirim-banner kritik' : 'bildirim-banner';
+        banner.style.display = 'flex';
+        banner.innerHTML = `
+            <div style="font-size:1.3rem;flex-shrink:0;">${kritikVar ? '🚨' : '⚠️'}</div>
+            <div style="flex:1;">
+                <div style="font-weight:700;margin-bottom:6px;font-size:0.88rem;color:${kritikVar?'#dc2626':'#854d0e'};">
+                    ${kritikVar ? 'Kritik Bildirimler' : 'Yaklaşan Aktiviteler'} (${items.length})
+                </div>
+                ${items.map(i => `<div class="bildirim-item" style="${i.kritik?'font-weight:600;color:#dc2626;':''}">
+                    ${i.kritik ? '🔴' : '🟡'} ${i.text}
+                </div>`).join('')}
+            </div>
+            <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:1rem;flex-shrink:0;align-self:flex-start;">✕</button>`;
     }
 
     function renderYaklasan(liste) {
