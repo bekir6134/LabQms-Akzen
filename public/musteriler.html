@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabQMS Pro - Müşteriler (CRM)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #1E40AF; --text-main: #334155; --text-muted: #64748b; --border: #e2e8f0; --bg-main: #f8fafc; --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); --success: #10B981; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-main); color: var(--text-main); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .module-container { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 20px; }
+        .card { background-color: #fff; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .full-width { grid-column: 1 / -1; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; font-family: 'Inter', sans-serif; }
+        input:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
+        .btn-save { background-color: var(--primary); color: #fff; padding: 12px 20px; font-size: 1rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+        th { background-color: #f1f5f9; padding: 12px; text-align: left; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+        td { padding: 12px; border-bottom: 1px solid var(--border); }
+        .search-bar { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; margin-bottom: 15px; box-sizing: border-box; background-color: #f8fafc; }
+        .badge { background-color: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+<div class="module-container">
+    <div style="margin-bottom: 5px;"><a href="index.html" style="text-decoration:none; color:var(--primary); font-weight:bold;">⬅️ Ana Panele Dön</a></div>
+    
+    <div class="card">
+        <h2 style="margin-top: 0; color: var(--primary);">🏢 Yeni Müşteri (Cari) Kartı Oluştur</h2>
+        <form onsubmit="event.preventDefault(); alert('Yeni Müşteri Sisteme Kaydedildi!');">
+            <div class="form-grid">
+                <div class="full-width">
+                    <label>Firma Resmi Ünvanı *</label>
+                    <input type="text" placeholder="Örn: XYZ Makine Sanayi ve Ticaret A.Ş." required>
+                </div>
+                <div>
+                    <label>Yetkili Kişi</label>
+                    <input type="text" placeholder="Örn: Ahmet Yılmaz">
+                </div>
+                <div>
+                    <label>Telefon Numarası</label>
+                    <input type="text" placeholder="05XX XXX XX XX">
+                </div>
+                <div>
+                    <label>E-Posta Adresi (Sertifika Gönderimi İçin)</label>
+                    <input type="email" placeholder="kalite@xyzmakine.com">
+                </div>
+                <div>
+                    <label>Vergi Dairesi ve VKN</label>
+                    <input type="text" placeholder="Örn: Maslak VD / 1234567890">
+                </div>
+                <div class="full-width">
+                    <label>Firma Adresi (Sertifikada Basılacak)</label>
+                    <textarea rows="2" placeholder="Örn: Organize Sanayi Bölgesi 2. Cadde No:5"></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn-save">+ Müşteriyi Kaydet</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-top: 0; color: var(--primary);">📋 Kayıtlı Müşteriler Listesi</h2>
+        <input type="text" id="aramaKutusu" class="search-bar" placeholder="🔍 Firma Adı, Yetkili veya Telefon ara..." onkeyup="musteriAra()">
+        
+        <div style="overflow-x: auto;">
+            <table id="musteriTablosu">
+                <thead>
+                    <tr>
+                        <th>Firma Ünvanı</th>
+                        <th>Yetkili Kişi</th>
+                        <th>Telefon</th>
+                        <th>E-Posta</th>
+                        <th>Durum</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight: 600;">XYZ Makine Sanayi A.Ş.</td>
+                        <td>Ahmet Yılmaz</td>
+                        <td>0532 123 45 67</td>
+                        <td>kalite@xyz.com</td>
+                        <td><span class="badge">Aktif</span></td>
+                        <td><button style="border:none; background:none; color:var(--primary); cursor:pointer; font-weight:bold;">Düzenle</button></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600;">ABC Medikal Ürünleri Ltd. Şti.</td>
+                        <td>Ayşe Demir</td>
+                        <td>0212 987 65 43</td>
+                        <td>info@abcmedikal.com</td>
+                        <td><span class="badge">Aktif</span></td>
+                        <td><button style="border:none; background:none; color:var(--primary); cursor:pointer; font-weight:bold;">Düzenle</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function musteriAra() {
+        let input = document.getElementById("aramaKutusu").value.toLowerCase();
+        let rows = document.querySelectorAll("#musteriTablosu tbody tr");
+        rows.forEach(row => {
+            let text = row.innerText.toLowerCase();
+            row.style.display = text.includes(input) ? "" : "none";
+        });
+    }
+</script>
+
+</body>
+</html>

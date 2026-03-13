@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Teklif ve İş Emri</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #334155; padding: 20px; }
+        .card { background: #fff; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; }
+        td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
+        .summary { float: right; width: 300px; background: #f8fafc; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #e2e8f0; }
+        .sum-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 600; }
+        .btn { background: #1E40AF; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div style="max-width: 1000px; margin: 0 auto;">
+        <div style="margin-bottom: 15px;"><a href="index.html" style="text-decoration:none; color:#1E40AF; font-weight:bold;">⬅️ Ana Panele Dön</a></div>
+        
+        <div class="card">
+            <h2>📄 Yeni Teklif Oluştur</h2>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+                <div><label>Firma Seçimi</label><input type="text" placeholder="Müşteri Ara..."></div>
+                <div><label>Tarih</label><input type="date" id="tarih"></div>
+            </div>
+
+            <table id="kalemler">
+                <thead><tr><th style="width:40%">Cihaz</th><th>Adet</th><th>Birim Fiyat</th><th>İskonto (%)</th><th>Tutar</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><select onchange="fiyatGetir(this)"><option value="0">Seçiniz...</option><option value="850">Dış Çap Mikrometresi</option><option value="3200">Etüv</option></select></td>
+                        <td><input type="number" value="1" class="adet" oninput="hesapla()"></td>
+                        <td><input type="number" value="0" class="fiyat" oninput="hesapla()"></td>
+                        <td><input type="number" value="0" class="isk" oninput="hesapla()"></td>
+                        <td><input type="text" value="0.00" class="tutar" readonly style="background:#f1f5f9;"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button onclick="satirEkle()" style="margin-top:10px; padding:10px; background:#f0fdf4; border:1px dashed #4ade80; color:#166534; cursor:pointer; width:100%; font-weight:bold;">+ Yeni Cihaz Ekle</button>
+
+            <div class="summary">
+                <div class="sum-row"><span>Ara Toplam:</span><span id="ara">0.00 ₺</span></div>
+                <div class="sum-row"><span>KDV (%20):</span><span id="kdv">0.00 ₺</span></div>
+                <div class="sum-row" style="color:#1E40AF; font-size:1.2rem; border-top:2px solid #e2e8f0; padding-top:10px;"><span>Genel Toplam:</span><span id="genel">0.00 ₺</span></div>
+            </div>
+            <div style="clear: both;"></div>
+            <button class="btn" onclick="alert('Teklif Kaydedildi!')">💾 Teklifi Kaydet</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('tarih').valueAsDate = new Date();
+        function fiyatGetir(sel) {
+            sel.closest('tr').querySelector('.fiyat').value = sel.value;
+            hesapla();
+        }
+        function hesapla() {
+            let ara = 0;
+            document.querySelectorAll('#kalemler tbody tr').forEach(tr => {
+                let a = parseFloat(tr.querySelector('.adet').value) || 0;
+                let f = parseFloat(tr.querySelector('.fiyat').value) || 0;
+                let i = parseFloat(tr.querySelector('.isk').value) || 0;
+                let net = (a * f) * (1 - (i/100));
+                tr.querySelector('.tutar').value = net.toFixed(2);
+                ara += net;
+            });
+            document.getElementById('ara').innerText = ara.toFixed(2) + ' ₺';
+            document.getElementById('kdv').innerText = (ara * 0.20).toFixed(2) + ' ₺';
+            document.getElementById('genel').innerText = (ara * 1.20).toFixed(2) + ' ₺';
+        }
+        function satirEkle() {
+            let tr = document.querySelector('#kalemler tbody tr').cloneNode(true);
+            tr.querySelectorAll('input').forEach(inp => inp.value = inp.className=='adet' ? '1' : '0');
+            document.querySelector('#kalemler tbody').appendChild(tr);
+        }
+    </script>
+</body>
+</html>

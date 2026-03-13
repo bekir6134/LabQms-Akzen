@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard İstatistikleri</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #1E40AF; --text-main: #334155; --text-muted: #64748b; --border: #e2e8f0; --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); --danger: #ef4444; --success: #10B981; --warning: #f59e0b; }
+        body { font-family: 'Inter', sans-serif; background-color: transparent; color: var(--text-main); margin: 0; padding: 20px; }
+        .dash-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .dash-card { background: #fff; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+        .dash-value { font-size: 2rem; font-weight: 700; color: var(--primary); }
+        .info-card { background: #fff; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 20px; }
+        .info-card h3 { margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .activity-item { padding: 10px 0; border-bottom: 1px dashed var(--border); font-size: 0.9rem; color: var(--text-main); }
+        .activity-item:last-child { border-bottom: none; }
+        .time-text { color: var(--text-muted); font-size: 0.8rem; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h2 style="margin-top:0;">Sisteme Hoş Geldiniz</h2>
+    
+    <div class="dash-grid">
+        <div class="dash-card">
+            <div class="dash-value">12</div><div style="color:var(--text-muted); font-weight:600;">Kabul Bekleyen</div>
+        </div>
+        <div class="dash-card">
+            <div class="dash-value" style="color:var(--warning);">45</div><div style="color:var(--text-muted); font-weight:600;">Kalibrasyonda</div>
+        </div>
+        <div class="dash-card">
+            <div class="dash-value" style="color:var(--danger);">8</div><div style="color:var(--text-muted); font-weight:600;">Onay Bekleyen</div>
+        </div>
+        <div class="dash-card">
+            <div class="dash-value" style="color:var(--success);">1,240</div><div style="color:var(--text-muted); font-weight:600;">Tamamlanan (Bu Yıl)</div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+        <div class="info-card">
+            <h3>🔔 Son Sistem Aktiviteleri</h3>
+            <div class="activity-item">✅ <strong>Mustafa Öztürk</strong>, SRT-26-095 numaralı sertifikayı onayladı. <span class="time-text">10 dk önce</span></div>
+            <div class="activity-item">📥 <strong>Ahmet Yılmaz</strong>, XYZ Makine'den 5 adet cihazın kabulünü yaptı. <span class="time-text">45 dk önce</span></div>
+            <div class="activity-item">🏢 <strong>Zeta Kalıp A.Ş.</strong> isimli yeni müşteri sisteme eklendi. <span class="time-text">Dün</span></div>
+        </div>
+        
+        <div class="info-card" style="background-color: #eff6ff; border-color: #bfdbfe;">
+            <h3 style="color: #1e40af; border-bottom-color: #bfdbfe;">💡 Hızlı İşlemler</h3>
+            <a href="kabul.html" style="display:block; padding:10px; background:#fff; margin-bottom:10px; border-radius:6px; text-decoration:none; color:var(--primary); font-weight:600; text-align:center; border:1px solid #bfdbfe;">+ Yeni Kabul Fişi Aç</a>
+            <a href="teklif.html" style="display:block; padding:10px; background:#fff; margin-bottom:10px; border-radius:6px; text-decoration:none; color:var(--primary); font-weight:600; text-align:center; border:1px solid #bfdbfe;">+ Yeni Teklif Hazırla</a>
+            <a href="musteriler.html" style="display:block; padding:10px; background:#fff; border-radius:6px; text-decoration:none; color:var(--primary); font-weight:600; text-align:center; border:1px solid #bfdbfe;">+ Yeni Müşteri (Firma) Ekle</a>
+        </div>
+    </div>
+</body>
+</html>

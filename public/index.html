@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabQMS Pro - Laboratuvar Yönetim Sistemi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --primary: #1E40AF; --sidebar-bg: #0f172a; --sidebar-hover: #1e293b; 
+            --text-main: #334155; --border: #e2e8f0; --bg-main: #f1f5f9; 
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* SABİT YAN MENÜ */
+        .sidebar { 
+            width: 260px; 
+            min-width: 260px; 
+            flex-shrink: 0;   
+            background-color: var(--sidebar-bg); 
+            color: #f8fafc; 
+            display: flex; 
+            flex-direction: column; 
+            z-index: 1000; 
+        }
+        .sidebar-header { padding: 20px; font-size: 1.5rem; font-weight: 700; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; color: white; }
+        .sidebar-menu { list-style: none; padding: 15px 0; margin: 0; flex-grow: 1; overflow-y: auto; }
+        .menu-item { padding: 12px 20px; display: flex; align-items: center; gap: 12px; color: #94a3b8; text-decoration: none; font-weight: 500; transition: 0.2s; }
+        .menu-item:hover, .menu-item.active { background-color: var(--sidebar-hover); color: #fff; border-left: 4px solid #60A5FA; }
+        
+        /* ANA İÇERİK KABUĞU */
+        .main-content { 
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            width: calc(100% - 260px); 
+        }
+        .topbar { background-color: #fff; height: 60px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+        
+        /* DEĞİŞEN EKRAN (IFRAME) */
+        #ekran { width: 100%; height: 100%; border: none; flex-grow: 1; background-color: var(--bg-main); display: block; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">🔬 LabQMS<span style="color: #60A5FA;">Pro</span></div>
+        <div class="sidebar-menu">
+            <a href="dashboard.html" target="ekran" class="menu-item active" onclick="aktifYap(this)"><span>📊</span> Dashboard</a>
+            <a href="musteriler.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🏢</span> Müşteriler (CRM)</a>
+            <a href="kabul.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📥</span> Cihaz Kabul</a>
+            <a href="operasyon.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🔄</span> Operasyon Merkezi</a>
+            <a href="teklif.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📄</span> Teklif ve Fiyatlar</a>
+            <a href="cihaz-tipleri.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🗂️</span> Cihaz Kütüphanesi</a>
+            <a href="personel.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>👤</span> Personel ve Yetkiler</a>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div style="font-weight: 600; color: var(--primary);">Türkiye'nin En Hızlı LIMS Altyapısı</div>
+            <div style="font-weight: 600; font-size: 0.9rem;">👤 Yönetici Paneli</div>
+        </header>
+
+        <iframe name="ekran" id="ekran" src="dashboard.html"></iframe>
+    </div>
+
+    <script>
+        // Tıklanan menüyü mavi (aktif) yapar
+        function aktifYap(secilen) {
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            secilen.classList.add('active');
+        }
+    </script>
+</body>
+</html>
