@@ -412,3 +412,61 @@ app.delete('/api/metotlar/:id', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 Sunucu ${PORT} portunda başarıyla ayağa kalktı.`);
 });
+// --- MÜŞTERİ CİHAZLARI API ---
+
+app.get('/api/musteri-cihazlari-on-veriler', async (req, res) => {
+    try {
+        const musteriler = await pool.query('SELECT id, firma_adi FROM musteriler ORDER BY firma_adi ASC');
+        const kategoriler = await pool.query('SELECT id, kategori_adi FROM kategoriler ORDER BY kategori_adi ASC');
+        const cihazlar = await pool.query('SELECT id, cihaz_adi FROM cihaz_kutuphanesi ORDER BY cihaz_adi ASC');
+        const metotlar = await pool.query('SELECT id, metot_adi, metot_kodu FROM kalibrasyon_metotlari ORDER BY metot_kodu ASC');
+        res.json({ musteriler: musteriler.rows, kategoriler: kategoriler.rows, cihazlar: cihazlar.rows, metotlar: metotlar.rows });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/musteri-cihazlari', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT mc.*, 
+                m.firma_adi, 
+                k.kategori_adi,
+                km.metot_kodu, km.metot_adi as metot_adi_full
+            FROM musteri_cihazlari mc
+            LEFT JOIN musteriler m ON mc.musteri_id = m.id
+            LEFT JOIN kategoriler k ON mc.kategori_id = k.id
+            LEFT JOIN kalibrasyon_metotlari km ON mc.metot_id = km.id
+            ORDER BY mc.id DESC
+        `);
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/musteri-cihazlari', async (req, res) => {
+    try {
+        const { musteri_id, kategori_id, cihaz_adi, marka, model, seri_no, envanter_no, olcum_araligi, cozunurluk, metot_id, degerlendirme_kriteri, kalibrasyon_yeri } = req.body;
+        const result = await pool.query(
+            `INSERT INTO musteri_cihazlari (musteri_id, kategori_id, cihaz_adi, marka, model, seri_no, envanter_no, olcum_araligi, cozunurluk, metot_id, degerlendirme_kriteri, kalibrasyon_yeri)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+            [musteri_id, kategori_id||null, cihaz_adi, marka, model, seri_no||null, envanter_no||null, olcum_araligi, cozunurluk, metot_id||null, degerlendirme_kriteri, kalibrasyon_yeri]
+        );
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/musteri-cihazlari/:id', async (req, res) => {
+    try {
+        const { musteri_id, kategori_id, cihaz_adi, marka, model, seri_no, envanter_no, olcum_araligi, cozunurluk, metot_id, degerlendirme_kriteri, kalibrasyon_yeri } = req.body;
+        const result = await pool.query(
+            `UPDATE musteri_cihazlari SET musteri_id=$1, kategori_id=$2, cihaz_adi=$3, marka=$4, model=$5, seri_no=$6, envanter_no=$7, olcum_araligi=$8, cozunurluk=$9, metot_id=$10, degerlendirme_kriteri=$11, kalibrasyon_yeri=$12 WHERE id=$13 RETURNING *`,
+            [musteri_id, kategori_id||null, cihaz_adi, marka, model, seri_no||null, envanter_no||null, olcum_araligi, cozunurluk, metot_id||null, degerlendirme_kriteri, kalibrasyon_yeri, req.params.id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/musteri-cihazlari/:id', async (req, res) => {
+    try {
+        await pool.query('DELETE FROM musteri_cihazlari WHERE id=$1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
