@@ -49,10 +49,11 @@
         <div class="sidebar-menu">
             <a href="dashboard.html" target="ekran" class="menu-item active" onclick="aktifYap(this)"><span>📊</span> Dashboard</a>
             <a href="musteriler.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🏢</span> Müşteriler (CRM)</a>
+            <a href="kategoriler.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📁</span> Kategori Yönetimi</a>
+            <a href="cihaz-kutuphanesi.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🗂️</span> Cihaz Kütüphanesi</a>
             <a href="kabul.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📥</span> Cihaz Kabul</a>
             <a href="operasyon.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🔄</span> Operasyon Merkezi</a>
             <a href="teklif.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📄</span> Teklif ve Fiyatlar</a>
-            <a href="cihaz-tipleri.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🗂️</span> Cihaz Kütüphanesi</a>
             <a href="personel.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>👤</span> Personel ve Yetkiler</a>
         </div>
     </aside>
@@ -67,7 +68,6 @@
     </div>
 
     <script>
-        // Tıklanan menüyü mavi (aktif) yapar
         function aktifYap(secilen) {
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
             secilen.classList.add('active');

@@ -2,81 +2,125 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LabQMS Pro - Laboratuvar Yönetim Sistemi</title>
+    <title>LabQMS Pro - Kategori Yönetimi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --primary: #1E40AF; --sidebar-bg: #0f172a; --sidebar-hover: #1e293b; 
-            --text-main: #334155; --border: #e2e8f0; --bg-main: #f1f5f9; 
-        }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        :root { --primary: #1E40AF; --border: #e2e8f0; --bg: #f8fafc; --success: #10B981; --danger: #ef4444; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); padding: 20px; color: #334155; }
+        .container { max-width: 800px; margin: auto; }
+        .card { background: #fff; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; color: var(--primary); font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
         
-        /* SABİT YAN MENÜ */
-        .sidebar { 
-            width: 260px; 
-            min-width: 260px; 
-            flex-shrink: 0;   
-            background-color: var(--sidebar-bg); 
-            color: #f8fafc; 
-            display: flex; 
-            flex-direction: column; 
-            z-index: 1000;
-        }
-        .sidebar-header { padding: 25px; font-size: 1.4rem; font-weight: 700; border-bottom: 1px solid #1e293b; color: #fff; }
-        .sidebar-menu { flex: 1; padding: 15px 0; overflow-y: auto; }
-        .menu-item { 
-            display: flex; align-items: center; padding: 12px 25px; color: #94a3b8; 
-            text-decoration: none; transition: 0.2s; font-size: 0.95rem; font-weight: 500;
-        }
-        .menu-item:hover, .menu-item.active { background-color: var(--sidebar-hover); color: #fff; }
-        .menu-item span { margin-right: 12px; font-size: 1.2rem; }
+        .form-row { display: flex; gap: 10px; margin-bottom: 25px; margin-top: 20px; }
+        input { flex: 1; padding: 12px 15px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; outline: none; transition: 0.2s; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
+        
+        .btn-add { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 0 25px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-add:hover { opacity: 0.9; transform: translateY(-1px); }
 
-        /* ANA İÇERİK ALANI */
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background-color: var(--bg-main); }
-        .topbar { 
-            height: 65px; background: #fff; border-bottom: 1px solid var(--border); 
-            display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
+        .list-group { list-style: none; padding: 0; margin: 0; }
+        .list-item { 
+            background: #fff; padding: 15px 20px; border: 1px solid var(--border); 
+            border-radius: 10px; margin-bottom: 10px; display: flex; 
+            justify-content: space-between; align-items: center; transition: 0.2s;
         }
-        #ekran { flex: 1; border: none; width: 100%; height: 100%; background: var(--bg-main); }
+        .list-item:hover { border-color: var(--primary); background: #f1f5f9; }
+        .kategori-ad { font-weight: 600; color: #1e293b; }
+        
+        .btn-delete { 
+            color: var(--danger); background: #fff; border: 1px solid var(--danger); 
+            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; 
+            font-weight: 600; transition: 0.2s; 
+        }
+        .btn-delete:hover { background: var(--danger); color: white; }
+
+        #toast { 
+            visibility: hidden; min-width: 200px; background-color: var(--success); 
+            color: #fff; text-align: center; border-radius: 8px; padding: 16px; 
+            position: fixed; z-index: 1000; right: 30px; top: 30px; font-weight: 600; 
+        }
+        #toast.show { visibility: visible; }
     </style>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div class="sidebar-header">LabQMS <span style="color: var(--primary);">PRO</span></div>
-        <div class="sidebar-menu">
-            <a href="dashboard.html" target="ekran" class="menu-item active" onclick="aktifYap(this)"><span>📊</span> Dashboard</a>
-            <a href="musteriler.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🏢</span> Müşteriler (CRM)</a>
-            <a href="kategoriler.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📁</span> Kategori Yönetimi</a>
-            <a href="cihaz-kutuphanesi.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🗂️</span> Cihaz Kütüphanesi</a>
-            <a href="kabul.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📥</span> Cihaz Kabul</a>
-            <a href="operasyon.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🔄</span> Operasyon Merkezi</a>
-            <a href="teklif.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📄</span> Teklif ve Fiyatlar</a>
-            <a href="personel.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>👤</span> Personel ve Yetkiler</a>
+<div id="toast">✅ Kategori Eklendi</div>
+
+<div class="container">
+    <div class="card">
+        <h2>📁 Cihaz Kategorileri</h2>
+        <p style="color: #64748b; font-size: 0.9rem;">Cihaz kütüphanesinde kullanacağınız ana grupları (Terazi, Kumpas vb.) buradan yönetebilirsiniz.</p>
+        
+        <div class="form-row">
+            <input type="text" id="kategoriInput" placeholder="Örn: Basınç Ölçerler, Elektriksel Cihazlar...">
+            <button class="btn-add" onclick="kategoriEkle()">➕ Kategori Ekle</button>
         </div>
-    </aside>
 
-    <div class="main-content">
-        <header class="topbar">
-            <div style="font-weight: 600; color: var(--primary);">Laboratuvar Yönetim Sistemi</div>
-            <div style="font-weight: 600; font-size: 0.9rem;">👤 Yönetici Paneli</div>
-        </header>
-
-        <iframe name="ekran" id="ekran" src="dashboard.html">
-            Tarayıcınız iframe desteklemiyor.
-        </iframe>
+        <div id="loading" style="text-align:center; display:none; color:var(--primary);">Yükleniyor...</div>
+        <ul id="kategoriListesi" class="list-group">
+            </ul>
     </div>
+</div>
 
-    <script>
-        function aktifYap(element) {
-            // Tüm menü elemanlarından active class'ını kaldır
-            document.querySelectorAll('.menu-item').forEach(item => {
-                item.classList.remove('active');
+<script>
+    async function listeYukle() {
+        document.getElementById("loading").style.display = "block";
+        try {
+            const res = await fetch('/api/kategoriler');
+            const data = await res.json();
+            const liste = document.getElementById("kategoriListesi");
+            liste.innerHTML = "";
+            
+            if(data.length === 0) {
+                liste.innerHTML = `<li style="text-align:center; color:#94a3b8; padding:20px;">Henüz kategori eklenmemiş.</li>`;
+            }
+
+            data.forEach(k => {
+                liste.innerHTML += `
+                    <li class="list-item">
+                        <span class="kategori-ad">${k.kategori_adi}</span>
+                        <button class="btn-delete" onclick="sil(${k.id})">Sil</button>
+                    </li>`;
             });
-            // Tıklanan elemana active class'ını ekle
-            element.classList.add('active');
+        } catch (err) {
+            console.error("Liste yükleme hatası:", err);
+        } finally {
+            document.getElementById("loading").style.display = "none";
         }
-    </script>
+    }
+
+    async function kategoriEkle() {
+        const adInput = document.getElementById("kategoriInput");
+        const ad = adInput.value.trim();
+        if(!ad) return;
+
+        const res = await fetch('/api/kategoriler', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ kategori_adi: ad })
+        });
+
+        if(res.ok) {
+            adInput.value = "";
+            const t = document.getElementById("toast");
+            t.className = "show";
+            setTimeout(() => { t.className = ""; }, 2000);
+            listeYukle();
+        } else {
+            const err = await res.json();
+            alert(err.error || "Bir hata oluştu");
+        }
+    }
+
+    async function sil(id) {
+        if(!confirm("Bu kategoriyi silmek istediğinize emin misiniz?")) return;
+        const res = await fetch(`/api/kategoriler/${id}`, { method: 'DELETE' });
+        if(res.ok) {
+            listeYukle();
+        }
+    }
+
+    window.onload = listeYukle;
+</script>
 </body>
 </html>
