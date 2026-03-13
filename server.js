@@ -198,7 +198,36 @@ app.get('/api/teklif-on-veriler', async (req, res) => {
 });
 
 
-// --- TEKLİF KAYDET ---
+// --- TEKLİFLER ---
+app.get('/api/teklifler', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT t.*, m.firma_adi, m.sube_adi
+            FROM teklifler t
+            LEFT JOIN musteriler m ON t.musteri_id = m.id
+            ORDER BY t.olusturulma_tarihi DESC`);
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/teklifler/:id', async (req, res) => {
+    try {
+        const { musteri_id, teklif_tarihi, gecerlilik_gun, teklif_notu, indirim_oran, ara_toplam, genel_toplam, para_birimi, kalemler, durum } = req.body;
+        const result = await pool.query(
+            `UPDATE teklifler SET musteri_id=$1, teklif_tarihi=$2, gecerlilik_gun=$3, teklif_notu=$4, indirim_oran=$5, ara_toplam=$6, genel_toplam=$7, para_birimi=$8, kalemler=$9, durum=$10 WHERE id=$11 RETURNING *`,
+            [musteri_id, teklif_tarihi, gecerlilik_gun, teklif_notu, indirim_oran, ara_toplam, genel_toplam, para_birimi, JSON.stringify(kalemler), durum||'Taslak', req.params.id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/teklifler/:id', async (req, res) => {
+    try {
+        await pool.query('DELETE FROM teklifler WHERE id=$1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.post('/api/teklifler', async (req, res) => {
     try {
         const { musteri_id, teklif_tarihi, gecerlilik_gun, teklif_notu, indirim_oran, ara_toplam, genel_toplam, para_birimi, kalemler } = req.body;
