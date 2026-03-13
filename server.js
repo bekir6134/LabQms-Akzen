@@ -308,6 +308,20 @@ app.post('/api/metotlar', async (req, res) => {
     }
 });
 
+// GÜNCELLE
+app.put('/api/metotlar/:id', async (req, res) => {
+    try {
+        const { metot_adi, metot_kodu, talimatlar, referanslar } = req.body;
+        const result = await pool.query(
+            `UPDATE kalibrasyon_metotlari SET metot_adi=$1, metot_kodu=$2, talimatlar=$3, referanslar=$4 WHERE id=$5 RETURNING *`,
+            [metot_adi, metot_kodu, talimatlar.map(Number), referanslar.map(Number), req.params.id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // SİL
 app.delete('/api/metotlar/:id', async (req, res) => {
     try {

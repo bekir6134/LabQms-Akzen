@@ -32,7 +32,12 @@
         th { background: #f8fafc; text-align: left; padding: 12px; border-bottom: 2px solid var(--border); color: #64748b; font-size: 0.8rem; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
         .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; background: #e0e7ff; color: #4338ca; margin: 2px; display: inline-block; border: 1px solid #c7d2fe; }
-        #success-msg { display:none; background:#dcfce7; color:#166534; padding:15px; border-radius:8px; margin-bottom:15px; text-align:center; font-weight:600; }
+        /* Arama ve Tablo */
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .search-box { width: 300px; }
+        .search-box input { width: 100%; padding: 10px 10px 10px 35px; background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%2364748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat 10px center; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; box-sizing: border-box; }
+        .code-badge { background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; font-family: monospace; }
+        #success-msg { display:none; background:#dcfce7; color:#166534; padding:12px; border-radius:8px; margin-bottom:15px; text-align:center; font-weight:600; border:1px solid #bbf7d0; }
     </style>
 </head>
 <body>
@@ -74,18 +79,24 @@
                 </div>
                 
                 <button type="submit" class="btn btn-primary">💾 Metodu Sisteme Kaydet</button>
+                <input type="hidden" id="duzenle_id" value="">
             </form>
         </div>
 
         <div class="card">
-            <h2>📚 Kayıtlı Metotlar</h2>
+            <div class="table-header">
+                <h2 style="margin:0; color: var(--primary);">📚 Kayıtlı Metotlar</h2>
+                <div class="search-box">
+                    <input type="text" id="metotAra" onkeyup="tabloAra()" placeholder="Metot adı veya kod ara...">
+                </div>
+            </div>
             <table id="metotTablo">
                 <thead>
                     <tr>
                         <th>Kod</th>
                         <th>Metot Adı</th>
                         <th>Bağlı Talimatlar</th>
-                        <th>Referanslar (SKT)</th>
+                        <th>Referanslar</th>
                         <th>İşlem</th>
                     </tr>
                 </thead>
@@ -115,7 +126,10 @@
                         <td>${m.metot_adi}</td>
                         <td>${(m.talimat_detay || []).map(t => `<span class="badge">${t.talimat_kodu}</span>`).join('')}</td>
                         <td>${(m.referans_detay || []).map(r => `<span class="badge">${r.cihaz_adi}</span>`).join('')}</td>
-                        <td><button onclick="metotSil(${m.id})" style="background:#fee2e2;color:#dc2626;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.8rem;">🗑️ Sil</button></td>
+                        <td>
+                            <button onclick="metotDuzenle(${m.id}, '${m.metot_adi.replace(/'/g, "\\'")}', '${m.metot_kodu.replace(/'/g, "\\'")}')" style="background:#e0e7ff;color:#4338ca;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.8rem;margin-right:5px;">✏️ Düzenle</button>
+                            <button onclick="metotSil(${m.id})" style="background:#fee2e2;color:#dc2626;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.8rem;">🗑️ Sil</button>
+                        </td>
                     </tr>
                 `).join('');
             } catch (err) { console.error("Liste yükleme hatası:", err); }
@@ -125,6 +139,24 @@
             if (!confirm("Bu metodu silmek istediğinize emin misiniz?")) return;
             const res = await fetch(`/api/metotlar/${id}`, { method: 'DELETE' });
             if (res.ok) metotlariYukle();
+        }
+
+        function tabloAra() {
+            const filter = document.getElementById("metotAra").value.toUpperCase();
+            const rows = document.getElementById("metotListe").getElementsByTagName("tr");
+            for (let i = 0; i < rows.length; i++) {
+                const txtKod = rows[i].cells[0] ? rows[i].cells[0].textContent : '';
+                const txtAd  = rows[i].cells[1] ? rows[i].cells[1].textContent : '';
+                rows[i].style.display = (txtKod.toUpperCase().includes(filter) || txtAd.toUpperCase().includes(filter)) ? "" : "none";
+            }
+        }
+
+        function metotDuzenle(id, metot_adi, metot_kodu) {
+            document.getElementById("metot_adi").value = metot_adi;
+            document.getElementById("metot_kodu").value = metot_kodu;
+            document.getElementById("duzenle_id").value = id;
+            document.querySelector(".btn-primary").textContent = "💾 Metodu Güncelle";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         async function yardimciVerileriYukle() {
@@ -169,9 +201,9 @@
         document.getElementById("metotForm").onsubmit = async (e) => {
             e.preventDefault();
             
-            // Seçili checkbox'ları topla
             const seciliTalimatlar = Array.from(document.querySelectorAll('input[name="talimatlar"]:checked')).map(cb => cb.value);
             const seciliReferanslar = Array.from(document.querySelectorAll('input[name="referanslar"]:checked')).map(cb => cb.value);
+            const duzenleId = document.getElementById("duzenle_id").value;
 
             if(seciliTalimatlar.length === 0 || seciliReferanslar.length === 0) {
                 return alert("Lütfen en az bir talimat ve bir referans seçin!");
@@ -184,15 +216,21 @@
                 referanslar: seciliReferanslar
             };
 
-            const res = await fetch('/api/metotlar', {
-                method: 'POST',
+            const url = duzenleId ? `/api/metotlar/${duzenleId}` : '/api/metotlar';
+            const method = duzenleId ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
 
             if(res.ok) {
+                document.getElementById("success-msg").textContent = duzenleId ? "✅ Metot başarıyla güncellendi!" : "✅ Metot başarıyla kaydedildi!";
                 document.getElementById("success-msg").style.display = "block";
                 document.getElementById("metotForm").reset();
+                document.getElementById("duzenle_id").value = "";
+                document.querySelector(".btn-primary").textContent = "💾 Metodu Sisteme Kaydet";
                 metotlariYukle();
                 setTimeout(() => document.getElementById("success-msg").style.display = "none", 3000);
             }
