@@ -12,39 +12,35 @@
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        /* SIDEBAR (Sol Menü) */
+        /* SIDEBAR */
         .sidebar { width: 260px; min-width: 260px; background-color: var(--sidebar-bg); color: #f8fafc; display: flex; flex-direction: column; z-index: 1000; }
         .sidebar-header { padding: 20px; font-size: 1.5rem; font-weight: 700; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; color: white; }
         .sidebar-menu { list-style: none; padding: 15px 0; margin: 0; flex-grow: 1; overflow-y: auto; }
-        .menu-item { padding: 12px 20px; display: flex; align-items: center; gap: 12px; color: #94a3b8; text-decoration: none; font-weight: 500; transition: 0.2s; cursor: pointer; }
-        .menu-item:hover, .menu-item.active { background-color: var(--sidebar-hover); color: #fff; border-left: 4px solid #60A5FA; }
         
+        .menu-item { padding: 12px 20px; display: flex; align-items: center; gap: 12px; color: #94a3b8; text-decoration: none; font-weight: 500; transition: 0.2s; cursor: pointer; font-size: 0.9rem; }
+        .menu-item:hover { background-color: var(--sidebar-hover); color: #fff; }
+        .menu-item.active { background-color: var(--sidebar-hover); color: #fff; border-left: 4px solid #60A5FA; }
+
+        /* GRUP BAŞLIĞI (tıklanabilir) */
+        .menu-group-header { padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; color: #94a3b8; font-weight: 500; cursor: pointer; transition: 0.2s; font-size: 0.9rem; user-select: none; }
+        .menu-group-header:hover { background-color: var(--sidebar-hover); color: #fff; }
+        .menu-group-header.active { color: #fff; }
+        .menu-group-header .arrow { font-size: 0.7rem; transition: transform 0.2s; }
+        .menu-group-header.open .arrow { transform: rotate(180deg); }
+
+        /* ALT MENÜ */
+        .submenu { display: none; background-color: #0a1628; }
+        .submenu.open { display: block; }
+        .submenu .menu-item { padding: 10px 20px 10px 44px; font-size: 0.85rem; color: #64748b; }
+        .submenu .menu-item:hover { color: #cbd5e1; background-color: #1e293b; }
+        .submenu .menu-item.active { color: #fff; border-left: 4px solid #60A5FA; background-color: #1e293b; }
+
+        /* BÖLÜM AYRAÇ */
+        .menu-divider { border: none; border-top: 1px solid #1e293b; margin: 8px 0; }
+
         /* ANA İÇERİK */
         .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; width: calc(100% - 260px); }
-        .topbar { background-color: #fff; height: 60px; padding: 0 30px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: relative; }
-        
-        /* SAĞ ÜST YÖNETİCİ AÇILIR MENÜ (DROPDOWN) */
-        .admin-dropdown { position: relative; display: inline-block; }
-        .admin-btn { 
-            background: #f1f5f9; border: 1px solid var(--border); padding: 8px 15px; 
-            border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; 
-            display: flex; align-items: center; gap: 8px; transition: 0.2s; color: var(--text-main);
-        }
-        .admin-btn:hover { background: #e2e8f0; }
-        
-        .dropdown-content {
-            display: none; position: absolute; right: 0; top: 110%; background-color: #fff;
-            min-width: 220px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-            border-radius: 8px; border: 1px solid var(--border); z-index: 2000; overflow: hidden;
-        }
-        .dropdown-content a {
-            color: var(--text-main); padding: 12px 16px; text-decoration: none;
-            display: block; font-size: 0.85rem; font-weight: 500; transition: 0.2s;
-        }
-        .dropdown-content a:hover { background-color: #f1f5f9; color: var(--primary); }
-        .admin-dropdown:hover .dropdown-content { display: block; }
-
-        /* IFRAME EKRANI */
+        .topbar { background-color: #fff; height: 60px; padding: 0 30px; display: flex; align-items: center; border-bottom: 1px solid var(--border); }
         #ekran { width: 100%; height: 100%; border: none; flex-grow: 1; background-color: var(--bg-main); }
     </style>
 </head>
@@ -56,40 +52,49 @@
             <a href="dashboard.html" target="ekran" class="menu-item active" onclick="aktifYap(this)"><span>📊</span> Dashboard</a>
             <a href="musteriler.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🏢</span> Müşteriler (CRM)</a>
             <a href="teklif.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📄</span> Teklif ve Fiyatlar</a>
-            
             <a href="referans-cihazlar.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📏</span> Referans Cihazlar</a>
-            
             <a href="kabul.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📥</span> Cihaz Kabul</a>
             <a href="operasyon.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🔄</span> Operasyon Merkezi</a>
             <a href="personel.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>👤</span> Personel ve Yetkiler</a>
             <a href="metotlar.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🧪</span> Kalibrasyon Metotları</a>
+
+            <hr class="menu-divider">
+
+            <!-- YÖNETİCİ PANELİ - ALT MENÜ -->
+            <div class="menu-group-header" onclick="toggleSubmenu()">
+                <span style="display:flex; align-items:center; gap:12px;"><span>⚙️</span> Yönetici Paneli</span>
+                <span class="arrow" id="adminArrow">▼</span>
+            </div>
+            <div class="submenu" id="adminSubmenu">
+                <a href="kategoriler.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📁</span> Kategori Yönetimi</a>
+                <a href="cihaz-kutuphanesi.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🗂️</span> Cihaz Kütüphanesi</a>
+                <a href="talimatlar.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>📜</span> Kalibrasyon Talimatları</a>
+                <a href="ayarlar.html" target="ekran" class="menu-item" onclick="aktifYap(this)"><span>🔧</span> Sistem Ayarları</a>
+            </div>
         </div>
     </aside>
 
     <div class="main-content">
         <header class="topbar">
             <div style="font-weight: 600; color: var(--primary);">LabQMS Pro Kalibrasyon Yönetim Sistemi</div>
-            
-            <div class="admin-dropdown">
-                <button class="admin-btn">👤 Yönetici Paneli ▼</button>
-                <div class="dropdown-content">
-                    <a href="kategoriler.html" target="ekran">📁 Kategori Yönetimi</a>
-                    <a href="cihaz-kutuphanesi.html" target="ekran">🗂️ Cihaz Kütüphanesi</a>
-                    <a href="talimatlar.html" target="ekran">📜 Kalibrasyon Talimatları</a>
-                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 5px 0;">
-                    <a href="ayarlar.html" target="ekran">⚙️ Sistem Ayarları</a>
-                </div>
-            </div>
         </header>
-
         <iframe name="ekran" id="ekran" src="dashboard.html"></iframe>
     </div>
 
     <script>
-        // Sol menüde tıklanan öğeyi aktif (mavi) yapar
         function aktifYap(secilen) {
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
             secilen.classList.add('active');
+        }
+
+        function toggleSubmenu() {
+            const submenu = document.getElementById("adminSubmenu");
+            const header = document.querySelector(".menu-group-header");
+            const arrow = document.getElementById("adminArrow");
+            const isOpen = submenu.classList.contains("open");
+            submenu.classList.toggle("open");
+            header.classList.toggle("open");
+            arrow.innerText = isOpen ? "▼" : "▲";
         }
     </script>
 </body>
