@@ -243,6 +243,32 @@ app.get('/api/referans-tarihce/:id', async (req, res) => {
     }
 });
 
+app.get('/api/metot-yardimci-veriler', async (req, res) => {
+    try {
+        // Tablo adını 'talimatlar' olarak güncelledik
+        const talimatlar = await pool.query('SELECT id, talimat_adi, talimat_kodu FROM talimatlar');
+        
+        // Referanslar (En güncel SKT ile)
+        const referanslar = await pool.query(`
+            SELECT rc.id, rc.cihaz_adi, rc.seri_no, rt.sonraki_kal_tarihi
+            FROM referans_cihazlar rc
+            LEFT JOIN (
+                SELECT DISTINCT ON (referans_id) referans_id, sonraki_kal_tarihi 
+                FROM referans_takip 
+                ORDER BY referans_id, kal_tarihi DESC
+            ) rt ON rc.id = rt.referans_id
+        `);
+
+        res.json({
+            talimatlar: talimatlar.rows,
+            referanslar: referanslar.rows
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
 app.listen(PORT, () => {
     console.log(`🚀 Sunucu ${PORT} portunda başarıyla ayağa kalktı.`);
 });
