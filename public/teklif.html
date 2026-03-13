@@ -76,6 +76,10 @@
         .summary-bar .count { font-size: 0.85rem; opacity: 0.7; }
         .btn-print { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; backdrop-filter: blur(4px); transition: 0.2s; }
         .btn-print:hover { background: rgba(255,255,255,0.25); }
+        .btn-print:disabled { opacity: 0.6; cursor: not-allowed; }
+        #toast { visibility: hidden; min-width: 260px; background-color: #10B981; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 9999; right: 30px; top: 30px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        #toast.show { visibility: visible; }
+        #toast.error { background-color: #ef4444; }
 
         /* NOT ALANI */
         textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; outline: none; font-family: inherit; font-size: 0.9rem; resize: vertical; min-height: 80px; }
@@ -89,6 +93,7 @@
     </style>
 </head>
 <body>
+<div id="toast"></div>
 <div class="container">
 
     <!-- BAŞLIK -->
@@ -220,7 +225,7 @@
             <div class="label">Genel Toplam</div>
             <div class="value" id="genelToplam">0,00 ₺</div>
         </div>
-        <button class="btn-print" onclick="window.print()">🖨️ Yazdır / PDF</button>
+        <button class="btn-print" onclick="teklifKaydet()" id="kaydetBtn">💾 Teklifi Kaydet</button>
     </div>
 
 </div>
@@ -371,6 +376,55 @@
         document.getElementById("araToplam").textContent = ara.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ' + pb;
         document.getElementById("genelToplam").textContent = genel.toLocaleString('tr-TR', {minimumFractionDigits:2}) + ' ' + pb;
         document.getElementById("indirimTutar").textContent = indirimOran > 0 ? `− ${indirimTutar.toLocaleString('tr-TR', {minimumFractionDigits:2})} ${pb} indirim` : '';
+    }
+
+    function showToast(msg, isError = false) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.className = isError ? "show error" : "show";
+        setTimeout(() => { t.className = ""; }, 3000);
+    }
+
+    async function teklifKaydet() {
+        const musteriId = document.getElementById("firma_adi").value;
+        if (!musteriId) return showToast("❌ Lütfen firma seçin!", true);
+        if (satirlar.length === 0) return showToast("❌ En az bir kalem ekleyin!", true);
+
+        const indirimOran = parseFloat(document.getElementById("indirim").value) || 0;
+        const araToplam = satirlar.reduce((sum, s) => sum + s.fiyat * s.adet, 0);
+        const genelToplam = araToplam - (araToplam * indirimOran / 100);
+
+        const payload = {
+            musteri_id: musteriId,
+            teklif_tarihi: document.getElementById("teklif_tarihi").value,
+            gecerlilik_gun: document.getElementById("gecerlilik").value,
+            teklif_notu: document.getElementById("teklif_notu").value,
+            indirim_oran: indirimOran,
+            ara_toplam: araToplam,
+            genel_toplam: genelToplam,
+            para_birimi: satirlar[0]?.pb || '₺',
+            kalemler: satirlar
+        };
+
+        const btn = document.getElementById("kaydetBtn");
+        btn.disabled = true; btn.textContent = "Kaydediliyor...";
+
+        const res = await fetch('/api/teklifler', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            showToast("✅ Teklif kaydedildi!");
+            satirlar = [];
+            renderSatirlar();
+            document.getElementById("teklif_notu").value = "";
+            document.getElementById("indirim").value = "0";
+        } else {
+            showToast("❌ Kayıt başarısız!", true);
+        }
+        btn.disabled = false; btn.textContent = "💾 Teklifi Kaydet";
     }
 
     window.onload = verileriYukle;

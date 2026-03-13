@@ -198,6 +198,25 @@ app.get('/api/teklif-on-veriler', async (req, res) => {
 });
 
 
+// --- TEKLİF KAYDET ---
+app.post('/api/teklifler', async (req, res) => {
+    try {
+        const { musteri_id, teklif_tarihi, gecerlilik_gun, teklif_notu, indirim_oran, ara_toplam, genel_toplam, para_birimi, kalemler } = req.body;
+        // Teklif no oluştur: TKL-2026-001
+        const yil = new Date().getFullYear();
+        const sayac = await pool.query(`SELECT COUNT(*) FROM teklifler WHERE EXTRACT(YEAR FROM olusturulma_tarihi) = $1`, [yil]);
+        const no = String(parseInt(sayac.rows[0].count) + 1).padStart(3, '0');
+        const teklif_no = `TKL-${yil}-${no}`;
+
+        const result = await pool.query(
+            `INSERT INTO teklifler (musteri_id, teklif_no, teklif_tarihi, gecerlilik_gun, teklif_notu, indirim_oran, ara_toplam, genel_toplam, para_birimi, kalemler)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+            [musteri_id, teklif_no, teklif_tarihi, gecerlilik_gun, teklif_notu, indirim_oran, ara_toplam, genel_toplam, para_birimi, JSON.stringify(kalemler)]
+        );
+        res.json(result.rows[0]);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // Firmaya göre müşteri cihazlarını getir (teklif için)
 app.get('/api/musteri-cihazlari-firma/:musteri_id', async (req, res) => {
     try {
