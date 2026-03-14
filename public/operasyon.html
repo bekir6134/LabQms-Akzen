@@ -778,7 +778,7 @@
         let mc = null;
         if(cihaz.musteri_cihaz_id) {
             try {
-                const mcRes = await fetch(\`/api/musteri-cihazlari/\${cihaz.musteri_cihaz_id}\`);
+                const mcRes = await fetch(`/api/musteri-cihazlari/${cihaz.musteri_cihaz_id}`);
                 if(mcRes.ok) mc = await mcRes.json();
             } catch(e) {}
         }
@@ -852,16 +852,16 @@
         document.getElementById("s_basinc").value   = '';
         if(mc?.kategori_id) {
             try {
-                const ckRes = await fetch(\`/api/cevre-kosullari/kategori/\${mc.kategori_id}\`);
+                const ckRes = await fetch(`/api/cevre-kosullari/kategori/${mc.kategori_id}`);
                 if(ckRes.ok) {
                     const ck = await ckRes.json();
                     if(ck) {
                         if(ck.sicaklik_merkez) document.getElementById("s_sicaklik").value =
-                            \`(\${ck.sicaklik_merkez}\${ck.sicaklik_tolerans?'±'+ck.sicaklik_tolerans:'\'}) °C\`;
+                            `(${ck.sicaklik_merkez}${ck.sicaklik_tolerans?'±'+ck.sicaklik_tolerans:''}) °C`;
                         if(ck.nem_merkez) document.getElementById("s_nem").value =
-                            \`(\${ck.nem_merkez}\${ck.nem_tolerans?'±'+ck.nem_tolerans:'\'}) %rh\`;
+                            `(${ck.nem_merkez}${ck.nem_tolerans?'±'+ck.nem_tolerans:''}) %rh`;
                         if(ck.basinc_merkez) document.getElementById("s_basinc").value =
-                            \`(\${ck.basinc_merkez}\${ck.basinc_tolerans?'±'+ck.basinc_tolerans:'\'}) hPa\`;
+                            `(${ck.basinc_merkez}${ck.basinc_tolerans?'±'+ck.basinc_tolerans:''}) hPa`;
                     }
                 }
             } catch(e) {}
