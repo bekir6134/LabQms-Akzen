@@ -147,14 +147,15 @@
         .ie-acc-body.open { display:block; }
 
         /* CİHAZ SATIRI */
-        .cihaz-satir { display:grid; grid-template-columns:200px 130px 130px 1fr auto; gap:12px; align-items:center; padding:10px 16px 10px 32px; border-bottom:1px solid var(--border); background:#fafbff; }
+        .cihaz-satir { display:grid; grid-template-columns:220px 140px 140px 140px 140px 1fr; gap:16px; align-items:center; padding:14px 20px 14px 40px; border-bottom:1px solid var(--border); background:#fafbff; }
         .cihaz-satir:last-child { border-bottom:none; }
         .cihaz-satir:hover { background:#f1f5f9; }
-        .cihaz-ad { font-weight:600; font-size:0.85rem; color:#334155; }
-        .cihaz-marka { font-size:0.8rem; color:#64748b; margin-top:2px; }
-        .cihaz-model { font-size:0.8rem; color:#64748b; }
-        .cihaz-seri { font-size:0.78rem; color:#94a3b8; font-family:monospace; }
-        .col-label { font-size:0.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; margin-bottom:2px; }
+        .cihaz-ad { font-weight:700; font-size:0.87rem; color:#1e293b; }
+        .cihaz-marka { font-size:0.84rem; color:#475569; }
+        .cihaz-model { font-size:0.84rem; color:#475569; }
+        .cihaz-seri { font-size:0.82rem; color:#64748b; font-family:monospace; }
+        .cihaz-envanter { font-size:0.82rem; color:#64748b; font-family:monospace; }
+        .col-label { font-size:0.68rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:3px; }
 
         #toast { visibility:hidden; min-width:260px; background-color:var(--success); color:#fff; text-align:center; border-radius:8px; padding:14px; position:fixed; z-index:9999; right:24px; top:24px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
         #toast.show { visibility:visible; }
@@ -632,9 +633,13 @@
                         <div class="col-label">Seri No</div>
                         <div class="cihaz-seri">${c.seri_no||'—'}</div>
                     </div>
-                    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+                    <div>
+                        <div class="col-label">Envanter No</div>
+                        <div class="cihaz-envanter">${c.envanter_no||'—'}</div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start;">
                         ${btn}
-                        ${tedarikci ? '<span style="font-size:0.7rem;color:#94a3b8;">Tedarikçi</span>' : ''}
+                        ${tedarikci ? '<span style="font-size:0.71rem;color:#94a3b8;font-weight:600;">📦 Tedarikçi</span>' : ''}
                     </div>
                 </div>`;
             }).join('');
@@ -662,13 +667,14 @@
                     </div>
                 </div>
                 <div class="ie-acc-body" id="body-${r.id}">
-                    <div style="padding:6px 16px 4px 32px;background:#f8fafc;border-bottom:1px solid var(--border);">
-                        <div style="display:grid;grid-template-columns:200px 130px 130px 1fr auto;gap:12px;">
-                            <div style="font-size:0.7rem;font-weight:700;color:#94a3b8;padding:4px 0;">CİHAZ ADI</div>
-                            <div style="font-size:0.7rem;font-weight:700;color:#94a3b8;padding:4px 0;">MARKA</div>
-                            <div style="font-size:0.7rem;font-weight:700;color:#94a3b8;padding:4px 0;">MODEL</div>
-                            <div style="font-size:0.7rem;font-weight:700;color:#94a3b8;padding:4px 0;">SERİ NO</div>
-                            <div style="font-size:0.7rem;font-weight:700;color:#94a3b8;padding:4px 0;">İŞLEM</div>
+                    <div style="padding:8px 20px 6px 40px;background:#f1f5f9;border-bottom:1px solid var(--border);">
+                        <div style="display:grid;grid-template-columns:220px 140px 140px 140px 140px 1fr;gap:16px;">
+                            <div style="font-size:0.68rem;font-weight:700;color:#94a3b8;letter-spacing:0.4px;">CİHAZ ADI</div>
+                            <div style="font-size:0.68rem;font-weight:700;color:#94a3b8;letter-spacing:0.4px;">MARKA</div>
+                            <div style="font-size:0.68rem;font-weight:700;color:#94a3b8;letter-spacing:0.4px;">MODEL</div>
+                            <div style="font-size:0.68rem;font-weight:700;color:#94a3b8;letter-spacing:0.4px;">SERİ NO</div>
+                            <div style="font-size:0.68rem;font-weight:700;color:#94a3b8;letter-spacing:0.4px;">ENVANTER NO</div>
+                            <div style="font-size:0.68rem;font-weight:700;color:#94a3b8;letter-spacing:0.4px;">İŞLEM</div>
                         </div>
                     </div>
                     ${cihazSatirlari}
