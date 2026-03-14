@@ -513,6 +513,8 @@
     <div class="toplu-bar" id="topluBar">
         <div class="secili-info" id="topluBilgi">0 sertifika seçildi</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-toplu" onclick="topluKapsamDisiNo()" id="btnTopluKDNo" style="background:#fef9c3;color:#854d0e;">🔢 Kapsam Dışı No Ver</button>
+            <button class="btn-toplu" onclick="topluAkrediteNo()" id="btnTopluAkrNo" style="background:#e0f2fe;color:#0369a1;opacity:0.5;cursor:not-allowed;" disabled title="Türkak API entegrasyonu yakında">🏛️ Akredite No Ver</button>
             <button class="btn-toplu" onclick="topluImzala()" id="btnTopluImzala">✍️ Seçilenleri İmzala</button>
             <button class="btn-toplu" onclick="topluOnayla()" id="btnTopluOnayla">✅ Seçilenleri Onayla</button>
             <button class="btn-toplu" onclick="topluMail()" id="btnTopluMail">📧 Seçilenlere Mail Gönder</button>
@@ -1343,6 +1345,34 @@
             showToast(`📧 ${d.basarili} sertifika mail gönderildi!`);
             await sertYukle();
         } else showToast("❌ Mail gönderilemedi!", true);
+    }
+
+    async function topluKapsamDisiNo() {
+        const idler = secilenIdler();
+        if(!idler.length) return showToast('❌ Sertifika seçin!', true);
+        // Sadece hazırlanıyor aşamasındakiler
+        const uygunlar = idler.filter(id => tumSertifikalar.find(s=>s.id===id)?.asama === 'hazırlanıyor');
+        if(!uygunlar.length) return showToast('❌ Seçilen sertifikalar hazırlanıyor aşamasında değil!', true);
+        if(!confirm(`${uygunlar.length} sertifikaya sırasıyla kapsam dışı numara verilecek. Onaylıyor musunuz?`)) return;
+
+        let basarili = 0;
+        for(const id of uygunlar) {
+            const res = await fetch('/api/sertifika-no-uret', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ sertifika_id: id })
+            });
+            if(res.ok) basarili++;
+            else { showToast('❌ #' + id + ' için numara alınamadı!', true); break; }
+        }
+        if(basarili > 0) {
+            showToast('✅ ' + basarili + ' sertifikaya numara verildi!');
+            await sertYukle();
+        }
+    }
+
+    async function topluAkrediteNo() {
+        showToast('⏳ Türkak API entegrasyonu yakında aktif olacak.', false);
     }
 
     async function topluMail() {
