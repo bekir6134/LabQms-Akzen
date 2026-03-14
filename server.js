@@ -1136,11 +1136,24 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
 
         // S1+S2 HTML → PDF (Puppeteer)
         const onizleUrl = `${req.protocol}://${req.get('host')}/sertifika-onizle.html?id=${req.params.id}&print=1`;
+        // Railway'de sistem Chromium'unu kullan
+        const execPath = process.env.CHROMIUM_PATH || 
+            require('child_process').execSync('which chromium || which chromium-browser || which google-chrome || echo ""')
+            .toString().trim() || await chromium.executablePath();
+
         browser = await puppeteer.launch({
-            args: chromium.args,
-            defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath(),
-            headless: chromium.headless,
+            executablePath: execPath,
+            headless: 'new',
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-extensions',
+            ],
         });
         const page = await browser.newPage();
         await page.setViewport({ width: 794, height: 1123 });
