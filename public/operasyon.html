@@ -536,15 +536,12 @@
     //  İŞ EMİRLERİ SEKMESİ
     // ════════════════════════════════
     async function ieYukle() {
-        const [ieRes, mRes] = await Promise.all([
-            fetch('/api/is-emirleri'),
-            fetch('/api/musteriler')
-        ]);
-        tumIsEmirleri = await ieRes.json();
-        musteriler = await mRes.json();
-
-
-
+        try {
+            const res = await fetch('/api/is-emirleri');
+            tumIsEmirleri = await res.json();
+            // asama null olanları düzelt
+            tumIsEmirleri.forEach(r => { if(!r.asama) r.asama = 'kabul_edildi'; });
+        } catch(e) { tumIsEmirleri = []; }
         ieFiltrele();
     }
 
@@ -577,7 +574,7 @@
     function renderIEKanban(data) {
         const kanban = document.getElementById("ieKanban");
         kanban.innerHTML = IE_ASAMALAR.map(asama => {
-            const kartlar = data.filter(r=>r.asama===asama);
+            const kartlar = data.filter(r=>(r.asama||'kabul_edildi')===asama);
             return `<div class="kanban-col">
                 <div class="kanban-head kh-${asama}">
                     ${IE_ASAMA_LABEL[asama]} <span class="kanban-count">${kartlar.length}</span>
@@ -585,7 +582,8 @@
                 <div class="kanban-cards">
                     ${kartlar.length===0 ? '<div class="kanban-empty">Boş</div>' :
                     kartlar.map(r => {
-                        const cihazlar = Array.isArray(r.cihazlar)?r.cihazlar:JSON.parse(r.cihazlar||'[]');
+                        let cihazlar = [];
+            try { cihazlar = Array.isArray(r.cihazlar)?r.cihazlar:JSON.parse(r.cihazlar||'[]'); } catch(e) { cihazlar=[]; }
                         return `<div class="kanban-card" onclick="ieDetay(${r.id})">
                             <div class="ie">${r.ie_no}</div>
                             <div class="firma">${r.firma_adi}</div>
@@ -604,15 +602,17 @@
             container.innerHTML='<div style="text-align:center;color:#94a3b8;padding:30px;">Kayıt bulunamadı.</div>';
             return;
         }
+        try {
         container.innerHTML = data.map(r => {
-            const cihazlar = Array.isArray(r.cihazlar)?r.cihazlar:JSON.parse(r.cihazlar||'[]');
+            let cihazlar = [];
+            try { cihazlar = Array.isArray(r.cihazlar)?r.cihazlar:JSON.parse(r.cihazlar||'[]'); } catch(e) { cihazlar=[]; }
             const asama = r.asama||'kabul_edildi';
             const kabul = r.kabul_tarihi?new Date(r.kabul_tarihi).toLocaleDateString('tr-TR'):'-';
             const teslim = r.teslim_tarihi?new Date(r.teslim_tarihi).toLocaleDateString('tr-TR'):'-';
 
             // Cihaz satırları
             const cihazSatirlari = cihazlar.map((c,idx) => {
-                const tedarikci = (c.kategori_adi||c.kategori||'').toLowerCase() === 'tedarikçi';
+                const tedarikci = (c.kategori_adi||c.kategori||'').toLowerCase().includes('tedarik');
                 const markaModel = c.marka_model||'';
                 const parca = markaModel.split('/').map(s=>s.trim());
                 const marka = parca[0]||c.marka||'';
@@ -662,7 +662,7 @@
                         <span style="background:#eff6ff;color:var(--primary);padding:2px 8px;border-radius:8px;font-size:0.75rem;font-weight:700;">${cihazlar.length} cihaz</span>
                     </div>
                     <div>
-                        <span class="asama-badge asama-${asama}">${IE_ASAMA_LABEL[asama]}</span>
+                        <span class="asama-badge asama-${asama}">${IE_ASAMA_LABEL[asama]||asama}</span>
                         <select class="asama-select" style="margin-top:5px;display:block;" onclick="event.stopPropagation()" onchange="ieAsamaGuncelle(${r.id},this.value)">
                             ${IE_ASAMALAR.map(a=>`<option value="${a}" ${a===asama?'selected':''}>${IE_ASAMA_LABEL[a]}</option>`).join('')}
                         </select>
@@ -687,6 +687,10 @@
                 </div>
             </div>`;
         }).join('');
+        } catch(e) {
+            container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px;">⚠️ Görüntüleme hatası: ' + e.message + '</div>';
+            console.error('renderIEListe hata:', e);
+        }
     }
 
     function ieAccToggle(id) {
@@ -1110,8 +1114,14 @@
 
     // ── İLK YÜKLEME ──
     async function init() {
-        const pRes = await fetch('/api/personeller');
-        personeller = await pRes.json();
+        try {
+            const [pRes, mRes] = await Promise.all([
+                fetch('/api/personeller'),
+                fetch('/api/musteriler')
+            ]);
+            personeller = await pRes.json();
+            musteriler  = await mRes.json();
+        } catch(e) {}
         await ieYukle();
     }
 
