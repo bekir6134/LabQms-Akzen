@@ -169,6 +169,13 @@
         .pdf-canvas-wrap canvas { display:block; }
         .pdf-sayfa-info { font-size:0.82rem; color:#64748b; font-weight:600; }
 
+        /* SIRALAMA */
+        .sort-th { cursor:pointer; user-select:none; white-space:nowrap; }
+        .sort-th:hover { background:#e2e8f0; }
+        .sort-th::after { content:' ⇅'; font-size:0.7rem; color:#94a3b8; }
+        .sort-th.asc::after  { content:' ↑'; color:var(--primary); }
+        .sort-th.desc::after { content:' ↓'; color:var(--primary); }
+
         #toast { visibility:hidden; min-width:260px; background-color:var(--success); color:#fff; text-align:center; border-radius:8px; padding:14px; position:fixed; z-index:9999; right:24px; top:24px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
         #toast.show { visibility:visible; }
         #toast.error { background-color:#ef4444; }
@@ -508,7 +515,7 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn-toplu" onclick="topluOnayla()" id="btnTopluOnayla">✅ Seçilenleri Onayla</button>
             <button class="btn-toplu" onclick="topluMail()" id="btnTopluMail">📧 Seçilenlere Mail Gönder</button>
-            <button class="btn-toplu" onclick="fisMailGonder()" id="btnFisMail" title="Seçili sertifikaların fiş numarasına göre tüm sertifikaları gönder">📨 Fiş Bazlı Mail</button>
+
         </div>
     </div>
 
@@ -527,17 +534,18 @@
                 <thead>
                     <tr>
                         <th style="width:36px;"></th>
-                        <th>Sertifika No</th>
-                        <th>Firma</th>
-                        <th>Cihaz</th>
-                        <th>Marka/Model</th>
-                        <th>Seri No</th>
-                        <th>Envanter No</th>
-                        <th>Fiş No</th>
-                        <th>Kal. Tarihi</th>
-                        <th>Tip</th>
+                        <th class="sort-th" onclick="sertSirala('sertifika_no',this)">Sertifika No</th>
+                        <th class="sort-th" onclick="sertSirala('firma_adi',this)">Firma</th>
+                        <th class="sort-th" onclick="sertSirala('cihaz_adi',this)">Cihaz</th>
+                        <th class="sort-th" onclick="sertSirala('imalatci',this)">Marka</th>
+                        <th class="sort-th" onclick="sertSirala('tip',this)">Model</th>
+                        <th class="sort-th" onclick="sertSirala('seri_no',this)">Seri No</th>
+                        <th class="sort-th" onclick="sertSirala('envanter_no',this)">Envanter No</th>
+                        <th class="sort-th" onclick="sertSirala('fis_no',this)">Fiş No</th>
+                        <th class="sort-th" onclick="sertSirala('kal_tarihi',this)">Kal. Tarihi</th>
+                        <th class="sort-th" onclick="sertSirala('sertifika_tipi',this)">Tip</th>
                         <th>Ölçüm PDF</th>
-                        <th>Aşama</th>
+                        <th class="sort-th" onclick="sertSirala('asama',this)">Aşama</th>
                         <th>İşlemler</th>
                     </tr>
                 </thead>
@@ -557,6 +565,7 @@
 
     let tumIsEmirleri = [], filtreliIE = [];
     let tumSertifikalar = [], filtreliSert = [];
+    let sertSiralaKolon = null, sertSiralaYon = 'asc';
     let personeller = [], musteriler = [];
     let aktifSertCihaz = null; // sertifika formu için
     let duzenle_sert_id = null; // düzenleme modunda sertifika id'si
@@ -751,6 +760,7 @@
                     </div>
                     <div style="display:flex;gap:6px;align-items:center;">
                         <button class="btn btn-detail" onclick="event.stopPropagation();ieDetay(${r.id})">👁️</button>
+                        <button class="btn btn-mail" style="font-size:0.72rem;padding:5px 8px;" onclick="event.stopPropagation();ieFisMailGonder(${r.id})" title="Bu fişe ait tüm sertifikaları mail gönder">📧 Mail</button>
                         <span class="ie-acc-arrow" id="arrow-${r.id}">▼</span>
                     </div>
                 </div>
@@ -1088,6 +1098,22 @@
         await ieSertAsamaSync();
     }
 
+    function sertSirala(kolon, thEl) {
+        // Yön belirle
+        if(sertSiralaKolon === kolon) {
+            sertSiralaYon = sertSiralaYon === 'asc' ? 'desc' : 'asc';
+        } else {
+            sertSiralaKolon = kolon;
+            sertSiralaYon = 'asc';
+        }
+        // Tüm th class'larını sıfırla
+        document.querySelectorAll('#panel-sertifikalar .sort-th').forEach(th => {
+            th.classList.remove('asc','desc');
+        });
+        thEl.classList.add(sertSiralaYon);
+        sertFiltrele();
+    }
+
     function sertFiltrele() {
         const personel = document.getElementById("s_filtre_personel").value;
         const firma    = document.getElementById("s_filtre_firma").value.trim();
@@ -1109,6 +1135,14 @@
             if(tarihBit && s.kal_tarihi > tarihBit)     return false;
             return true;
         });
+        // Sıralama uygula
+        if(sertSiralaKolon) {
+            filtreliSert.sort((a,b) => {
+                const va = (a[sertSiralaKolon]||'').toString().toLowerCase();
+                const vb = (b[sertSiralaKolon]||'').toString().toLowerCase();
+                return sertSiralaYon === 'asc' ? va.localeCompare(vb,'tr') : vb.localeCompare(va,'tr');
+            });
+        }
         renderSertListe(filtreliSert);
         secimGuncelle();
     }
@@ -1154,7 +1188,8 @@
                 <td style="font-weight:700;color:var(--primary);font-size:0.82rem;">${s.sertifika_no||'—'}</td>
                 <td style="font-size:0.82rem;">${s.firma_adi||'—'}</td>
                 <td style="font-size:0.82rem;">${s.cihaz_adi||'—'}</td>
-                <td style="font-size:0.82rem;">${[s.imalatci,s.tip].filter(Boolean).join(' / ')||'—'}</td>
+                <td style="font-size:0.82rem;">${s.imalatci||'—'}</td>
+                <td style="font-size:0.82rem;">${s.tip||'—'}</td>
                 <td style="font-size:0.82rem;font-family:monospace;">${s.seri_no||'—'}</td>
                 <td style="font-size:0.82rem;font-family:monospace;">${s.envanter_no||'—'}</td>
                 <td style="font-size:0.82rem;">${s.fis_no||'—'}</td>
@@ -1227,6 +1262,26 @@
         if(!idler.length) return showToast("❌ Sertifika seçin!", true);
         showToast(`✅ ${idler.length} sertifika onaylanıyor...`);
         await sertAsamaGuncelle(idler, 'onaylandı');
+    }
+
+    async function ieFisMailGonder(ieId) {
+        const ie = tumIsEmirleri.find(x=>x.id===ieId);
+        if(!ie) return;
+        const fişSertler = tumSertifikalar.filter(s => s.ie_id === ieId && s.asama === 'onaylandı');
+        if(!fişSertler.length) {
+            showToast('❌ Bu fişe ait onaylanmış sertifika yok!', true);
+            return;
+        }
+        if(!confirm(`${ie.ie_no} fişine ait ${fişSertler.length} onaylanmış sertifika mail gönderilecek. Onaylıyor musunuz?`)) return;
+        const res = await fetch('/api/sertifika-mail-toplu', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({idler: fişSertler.map(s=>s.id)})
+        });
+        if(res.ok) {
+            const d = await res.json();
+            showToast(`📧 ${d.basarili} sertifika mail gönderildi!`);
+            await ieYukle();
+        } else showToast('❌ Mail gönderilemedi!', true);
     }
 
     async function fisMailGonder() {
