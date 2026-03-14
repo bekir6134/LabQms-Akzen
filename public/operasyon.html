@@ -538,10 +538,27 @@
     async function ieYukle() {
         try {
             const res = await fetch('/api/is-emirleri');
+            if(!res.ok) {
+                const errText = await res.text();
+                showToast('API Hata: ' + res.status + ' - ' + errText.substring(0,100), true);
+                tumIsEmirleri = [];
+                ieFiltrele();
+                return;
+            }
             tumIsEmirleri = await res.json();
-            // asama null olanları düzelt
+            if(!Array.isArray(tumIsEmirleri)) {
+                showToast('API beklenen formatta veri döndürmedi', true);
+                console.error('API yaniti:', tumIsEmirleri);
+                tumIsEmirleri = [];
+                ieFiltrele();
+                return;
+            }
             tumIsEmirleri.forEach(r => { if(!r.asama) r.asama = 'kabul_edildi'; });
-        } catch(e) { tumIsEmirleri = []; }
+        } catch(e) {
+            showToast('Bağlantı hatası: ' + e.message, true);
+            console.error('ieYukle hata:', e);
+            tumIsEmirleri = [];
+        }
         ieFiltrele();
     }
 
