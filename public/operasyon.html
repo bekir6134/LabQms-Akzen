@@ -1589,9 +1589,7 @@
             const tekil = [...new Set(asamalar)];
             if(tekil.length === 1) {
                 const hedefAsama = tekil[0];
-                const mevcutAsama = ie.asama;
-                // Sadece ileri gidebilir
-                if((ASAMA_SIRA[hedefAsama]||0) > (ASAMA_SIRA[mevcutAsama]||0)) {
+                if(ie.asama !== hedefAsama) {
                     await fetch(`/api/is-emirleri/${ieId}/asama`, {
                         method:'PUT', headers:{'Content-Type':'application/json'},
                         body: JSON.stringify({asama: hedefAsama})
@@ -1600,6 +1598,18 @@
                 }
             }
         }
+
+        // Sertifikası kalmayan iş emirlerini kabul_edildi'ye al
+        tumIsEmirleri.forEach(async ie => {
+            const sertVar = tumSertifikalar.some(s => s.ie_id == ie.id);
+            if(!sertVar && ie.asama !== 'kabul_edildi') {
+                await fetch(`/api/is-emirleri/${ie.id}/asama`, {
+                    method:'PUT', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({asama: 'kabul_edildi'})
+                }).catch(()=>{});
+                ie.asama = 'kabul_edildi';
+            }
+        });
         // Kanban ve listeyi yenile
         renderIEKanban(filtreliIE);
         renderIEListe(filtreliIE);
@@ -1608,10 +1618,21 @@
     async function icerikTemizle(id) {
         const s = tumSertifikalar.find(x=>x.id===id);
         const cihazAdi = s?.cihaz_adi || 'bu sertifika';
+        const ieId = s?.ie_id;
         if(!confirm(`"${cihazAdi}" sertifikası silinecek ve iş emrinde tekrar oluşturulabilecek. Emin misiniz?`)) return;
         const res = await fetch(`/api/sertifikalar/${id}`, {method:'DELETE'});
         if(res.ok) {
             showToast('🗑️ Sertifika temizlendi, iş emrinde tekrar oluşturulabilir.');
+
+            // Silinen sertifikanın iş emrini kabul_edildi'ye geri al
+            if(ieId) {
+                await fetch(`/api/is-emirleri/${ieId}/asama`, {
+                    method:'PUT',
+                    headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({asama: 'kabul_edildi'})
+                }).catch(()=>{});
+            }
+
             await sertYukle();
             await ieYukle();
         } else {
