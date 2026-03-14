@@ -200,10 +200,10 @@
         </div>
         <div class="pdf-modal-foot">
             <div class="pdf-sayfa-info" id="pdfSayfaBilgi"></div>
-            <div style="display:flex;gap:8px;">
-                <label id="pdfYukleBtnLabel" style="background:#e0e7ff;color:#4338ca;padding:8px 14px;border-radius:8px;font-weight:700;font-size:0.83rem;cursor:pointer;display:none;">
-                    📎 Yeni PDF Yükle
-                    <input type="file" id="pdfDosyaInput" accept=".pdf" style="display:none;" onchange="pdfDosyaSecildi()">
+            <div style="display:flex;gap:8px;align-items:center;">
+                <input type="file" id="pdfDosyaInput" accept=".pdf" style="display:none;" onchange="pdfDosyaSecildi()">
+                <label id="pdfYukleBtnLabel" for="pdfDosyaInput" style="background:#e0e7ff;color:#4338ca;padding:8px 14px;border-radius:8px;font-weight:700;font-size:0.83rem;cursor:pointer;display:none;">
+                    📎 PDF Seç & Yükle
                 </label>
                 <button onclick="pdfModalKapat()" style="background:#f1f5f9;color:#475569;border:none;padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer;">Kapat</button>
             </div>
@@ -1111,6 +1111,9 @@
             } else {
                 butonlar += `<button class="btn btn-onizle" onclick="sertOnizle(${s.id})">👁️ Önizle</button>`;
             }
+            // Tam sertifika önizle ve PDF indir her zaman
+            butonlar += `<button class="btn" style="background:#f0fdf4;color:#166534;" onclick="tamOnizle(${s.id})">📋 Önizle</button>`;
+            butonlar += `<button class="btn" style="background:#fdf2f8;color:#86198f;" onclick="pdfIndir(${s.id})" title="Sertifika PDF üret ve indir">📥 PDF</button>`;
             if(asama==='hazırlanıyor' && pdfVar) {
                 butonlar += `<button class="btn btn-imzala" onclick="tekliImzala(${s.id})">✍️ İmzala</button>`;
             }
@@ -1134,7 +1137,7 @@
                     ? '<span class="tip-akredite">Akredite</span>'
                     : '<span class="tip-kapsam_disi">Kapsam Dışı</span>'}</td>
                 <td>${pdfVar
-                    ? '<span class="pdf-var">✅ Yüklü</span>'
+                    ? `<span class="pdf-var" title="${s.olcum_pdf_sayfa ? s.olcum_pdf_sayfa+' sayfa' : ''}">✅ Yüklü${s.olcum_pdf_sayfa ? ' ('+s.olcum_pdf_sayfa+'s)' : ''}</span>`
                     : '<span class="pdf-yok">❌ Yok</span>'}</td>
                 <td><span class="asama-badge asama-${asama}">${IE_ASAMA_LABEL[asama]||asama}</span></td>
                 <td style="white-space:nowrap;">${butonlar}</td>
@@ -1254,7 +1257,7 @@
                 <div style="font-size:0.82rem;color:#94a3b8;">Ölçüm sayfalarını içeren PDF'i yükleyin</div>
             </div>`;
         document.getElementById('pdfSayfaBilgi').textContent = '';
-        document.getElementById('pdfYukleBtnLabel').style.display = 'flex';
+        document.getElementById('pdfYukleBtnLabel').style.display = 'inline-flex';
         document.getElementById('pdfDosyaInput').value = '';
         document.getElementById('pdfModal').classList.add('open');
     }
@@ -1263,7 +1266,8 @@
         aktifPdfSertId = id;
         const s = tumSertifikalar.find(x=>x.id===id);
         document.getElementById('pdfModalBaslik').textContent = '👁️ Ölçüm PDF Önizleme — ' + (s?.cihaz_adi||'');
-        document.getElementById('pdfYukleBtnLabel').style.display = 'flex';
+        document.getElementById('pdfYukleBtnLabel').style.display = 'inline-flex';
+        document.getElementById('pdfYukleBtnLabel').textContent = '📎 PDF Değiştir';
         document.getElementById('pdfCanvasAlani').innerHTML = '<div id="pdfYukleniyor" style="color:#64748b;padding:40px;text-align:center;"><div style="font-size:2rem;margin-bottom:8px;">⏳</div><div>PDF yükleniyor...</div></div>';
         document.getElementById('pdfModal').classList.add('open');
 
@@ -1334,7 +1338,8 @@
                     body: JSON.stringify({pdf_base64: base64Data, sayfa_sayisi: sayfaSayisi})
                 });
                 if(res.ok) {
-                    showToast('✅ PDF yüklendi! Toplam ' + toplamSayfa + ' sayfa');
+                    showToast('✅ PDF kaydedildi! Ölçüm: ' + sayfaSayisi + ' | Toplam: ' + toplamSayfa + ' sayfa');
+                    document.getElementById('pdfYukleBtnLabel').textContent = '📎 PDF Değiştir';
                     await sertYukle();
                     await ieYukle();
                 } else {
@@ -1351,6 +1356,8 @@
         document.getElementById('pdfModal').classList.remove('open');
         aktifPdfSertId = null;
         document.getElementById('pdfDosyaInput').value = '';
+        document.getElementById('pdfYukleBtnLabel').textContent = '📎 PDF Seç & Yükle';
+        document.getElementById('pdfYukleBtnLabel').style.display = 'none';
     }
 
     async function sertDuzenle(id) {
@@ -1407,6 +1414,36 @@
 
     function uygunsuzlukForm(id) {
         showToast("⚠️ Uygunsuzluk formu açılıyor...");
+    }
+
+    function tamOnizle(id) {
+        window.open('/sertifika-onizle.html?id=' + id, '_blank');
+    }
+
+    async function pdfIndir(id) {
+        const s = tumSertifikalar.find(x=>x.id===id);
+        const btn = document.querySelector(`button[onclick="pdfIndir(${id})"]`);
+        if(btn) { btn.disabled=true; btn.textContent='⏳'; }
+        showToast('📥 PDF üretiliyor...');
+        try {
+            const res = await fetch(`/api/sertifikalar/${id}/pdf`);
+            if(!res.ok) {
+                const err = await res.json();
+                showToast('❌ PDF üretilemedi: ' + (err.error||''), true);
+                return;
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sertifika-${s?.sertifika_no||id}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('✅ PDF indirildi!');
+        } catch(e) {
+            showToast('❌ Hata: ' + e.message, true);
+        }
+        if(btn) { btn.disabled=false; btn.textContent='📥 PDF'; }
     }
 
     async function icerikTemizle(id) {

@@ -1,5 +1,7 @@
 require('dotenv').config();
 const express = require('express');
+const puppeteer = require('puppeteer-core');
+const chromium  = require('@sparticuz/chromium');
 const { Pool } = require('pg');
 const path = require('path');
 const cors = require('cors');
@@ -1074,6 +1076,93 @@ app.delete('/api/sertifikalar/:id', async (req, res) => {
         await pool.query('DELETE FROM sertifikalar WHERE id=$1', [req.params.id]);
         res.json({ success: true });
     } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// Sertifika tam veri (önizleme için)
+app.get('/api/sertifikalar/:id/tam', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT s.*,
+                m.firma_adi, m.adres as firma_adres_ham, m.il, m.ilce,
+                p1.ad_soyad as kal_yapan_adi,
+                p2.ad_soyad as onaylayan_adi,
+                mc.kalibrasyon_yeri,
+                COALESCE(
+                    (SELECT json_agg(json_build_object('talimat_kodu', t.talimat_kodu, 'talimat_adi', t.talimat_adi))
+                     FROM talimatlar t WHERE t.id = ANY(km.talimatlar)), '[]'
+                ) as talimat_detay,
+                COALESCE(
+                    (SELECT json_agg(json_build_object(
+                        'cihaz_adi', rc.cihaz_adi, 'marka', rc.marka, 'model', rc.model,
+                        'seri_no', rc.seri_no, 'envanter_no', rc.envanter_no
+                    ))
+                    FROM referans_cihazlar rc WHERE rc.id = ANY(km.referanslar)), '[]'
+                ) as referans_detay
+            FROM sertifikalar s
+            LEFT JOIN musteriler m ON s.musteri_id = m.id
+            LEFT JOIN personeller p1 ON s.kal_yapan_id = p1.id
+            LEFT JOIN personeller p2 ON s.onaylayan_id = p2.id
+            LEFT JOIN is_emirleri ie ON s.ie_id = ie.id
+            LEFT JOIN musteri_cihazlari mc ON (ie.cihazlar->s.cihaz_index->>'musteri_cihaz_id')::int = mc.id
+            LEFT JOIN kalibrasyon_metotlari km ON mc.metot_id = km.id
+            WHERE s.id = $1
+        `, [req.params.id]);
+        if(!result.rows.length) return res.status(404).json({ error: 'Bulunamadı' });
+        const row = result.rows[0];
+        // Firma adres birleştir
+        const adresParcalar = [];
+        if(row.firma_adres_ham) adresParcalar.push(row.firma_adres_ham);
+        const ilIlce = [row.ilce, row.il].filter(Boolean).join(' / ');
+        if(ilIlce) adresParcalar.push(ilIlce);
+        row.firma_adres = adresParcalar.join(' - ');
+        res.json(row);
+    } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// Sertifika PDF üret (Puppeteer)
+app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
+    let browser;
+    try {
+        const onizleUrl = `${req.protocol}://${req.get('host')}/sertifika-onizle.html?id=${req.params.id}&print=1`;
+
+        browser = await puppeteer.launch({
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath(),
+            headless: chromium.headless,
+        });
+
+        const page = await browser.newPage();
+        await page.goto(onizleUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+
+        // Sayfa sayısını al
+        const toplamSayfa = await page.evaluate(() => {
+            return parseInt(document.getElementById('tbToplamSayfa')?.textContent?.match(/\d+/)?.[0] || '2');
+        });
+
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            margin: { top: '12mm', right: '15mm', bottom: '10mm', left: '15mm' },
+            printBackground: true,
+        });
+
+        await browser.close();
+
+        // DB'ye kaydet
+        await pool.query(
+            'UPDATE sertifikalar SET sertifika_pdf=$1 WHERE id=$2',
+            [pdfBuffer.toString('base64'), req.params.id]
+        );
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="sertifika-${req.params.id}.pdf"`);
+        res.send(pdfBuffer);
+
+    } catch(err) {
+        if(browser) await browser.close().catch(()=>{});
+        console.error('PDF üretim hata:', err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Ölçüm PDF yükle
