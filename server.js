@@ -1187,8 +1187,9 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
         );
 
         const dosyaAdi = `sertifika-${sert.sertifika_no || req.params.id}.pdf`;
+        const preview = req.query.preview === '1';
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${dosyaAdi}"`);
+        res.setHeader('Content-Disposition', `${preview ? 'inline' : 'attachment'}; filename="${dosyaAdi}"`);
         res.send(sonPdfBuffer);
 
     } catch(err) {
@@ -1202,7 +1203,8 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
 app.get('/api/sertifikalar/:id/qr', async (req, res) => {
     try {
         const host = `${req.protocol}://${req.get('host')}`;
-        const url  = `${host}/sertifika-onizle.html?id=${req.params.id}`;
+        // QR → direkt PDF indir
+        const url  = `${host}/api/sertifikalar/${req.params.id}/pdf`;
         const qrDataUrl = await QRCode.toDataURL(url, {
             width: 120, margin: 1,
             color: { dark: '#000000', light: '#ffffff' }

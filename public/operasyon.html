@@ -1434,7 +1434,8 @@
     }
 
     function tamOnizle(id) {
-        window.open('/sertifika-onizle.html?id=' + id, '_blank');
+        showToast('📄 PDF hazırlanıyor...');
+        window.open('/api/sertifikalar/' + id + '/pdf?preview=1', '_blank');
     }
 
     async function pdfIndir(id) {
@@ -1443,7 +1444,7 @@
         if(btn) { btn.disabled=true; btn.textContent='⏳'; }
         showToast('📥 PDF üretiliyor...');
         try {
-            const res = await fetch(`/api/sertifikalar/${id}/pdf`);
+            const res = await fetch(`/api/sertifikalar/${id}/pdf?download=1`);
             if(!res.ok) {
                 const err = await res.json();
                 showToast('❌ PDF üretilemedi: ' + (err.error||''), true);
