@@ -1327,7 +1327,8 @@ app.get('/api/sertifikalar/:id/imzali-pdf', async (req, res) => {
         if(!result.rows.length) return res.status(404).json({ error: 'Sertifika bulunamadı' });
         const s = result.rows[0];
         if(!s.sertifika_pdf) return res.status(404).json({ error: 'İmzalı PDF bulunamadı' });
-        if(s.asama !== 'imzalandı') return res.status(400).json({ error: 'Sertifika imzalandı aşamasında değil' });
+        if(!['imzalandı','onaylandı','sertifika_gönderildi'].includes(s.asama)) 
+            return res.status(400).json({ error: 'Sertifika henüz imzalanmamış' });
         res.json({ pdf_base64: s.sertifika_pdf, sertifika_no: s.sertifika_no });
     } catch(err) {
         res.status(500).json({ error: err.message });

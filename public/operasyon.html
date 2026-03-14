@@ -1182,9 +1182,11 @@
             }
             if(asama==='imzalandı') {
                 butonlar += `<button class="btn btn-onayla" onclick="tekliOnayla(${s.id})">✅ Onayla</button>`;
+                butonlar += `<button class="btn" style="background:#f3e8ff;color:#7c3aed;" onclick="imzaliPdfIndir(${s.id})">📥 İmzalı PDF</button>`;
             }
-            if(asama==='onaylandı') {
+            if(asama==='onaylandı' || asama==='sertifika_gönderildi') {
                 butonlar += `<button class="btn btn-mail" onclick="tekliMail(${s.id})">📧 Mail</button>`;
+                butonlar += `<button class="btn" style="background:#f3e8ff;color:#7c3aed;" onclick="imzaliPdfIndir(${s.id})">📥 İmzalı PDF</button>`;
             }
             butonlar += `<button class="btn btn-uygun" onclick="uygunsuzlukForm(${s.id})">⚠️ Uygunsuzluk</button>`;
             butonlar += `<button class="btn" style="background:#fff1f2;color:#be123c;font-size:0.72rem;" onclick="icerikTemizle(${s.id})" title="Sertifikayı siler, iş emrinde tekrar oluşturulabilir">🗑️ Temizle</button>`;
@@ -1687,6 +1689,28 @@
             await sertYukle();
         } else {
             showToast('❌ Numara oluşturulamadı!', true);
+        }
+    }
+
+    async function imzaliPdfIndir(id) {
+        const s = tumSertifikalar.find(x=>x.id===id);
+        showToast('📥 İmzalı PDF indiriliyor...');
+        try {
+            const res = await fetch('/api/sertifikalar/' + id + '/imzali-pdf');
+            if(!res.ok) return showToast('❌ İmzalı PDF bulunamadı!', true);
+            const d = await res.json();
+            // Base64 → blob → indir
+            const bytes = Uint8Array.from(atob(d.pdf_base64), c => c.charCodeAt(0));
+            const blob  = new Blob([bytes], {type:'application/pdf'});
+            const url   = URL.createObjectURL(blob);
+            const a     = document.createElement('a');
+            a.href      = url;
+            a.download  = (s?.sertifika_no || 'sertifika') + '_imzali.pdf';
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+            showToast('✅ İmzalı PDF indirildi!');
+        } catch(e) {
+            showToast('❌ Hata: ' + e.message, true);
         }
     }
 
