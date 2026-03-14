@@ -82,7 +82,7 @@
 
     /* YASAL */
     .yasal { font-size:6pt; color:var(--orta); font-style:italic; text-align:center; line-height:1.4; margin-bottom:1mm; }
-    .sayfa-no { font-size:6.5pt; color:var(--orta); text-align:right; margin-top:2mm; }
+    .sayfa-no { font-size:6.5pt; color:var(--orta); margin-top:2mm; display:flex; justify-content:space-between; }
 
     /* ─── SAYFA 2 ─── */
     .s2-header { display:grid; grid-template-columns:1fr 1fr; margin-bottom:0; }
@@ -283,8 +283,24 @@ async function yukle() {
                 <tr>
                     <td style="width:33mm;"><div class="imza-baslik">Mühür</div><div class="imza-en">Seal</div><div style="margin-top:4mm;">${ayar.muhur_logo ? `<img src="${ayar.muhur_logo}" style="max-width:28mm;max-height:20mm;object-fit:contain;">` : ''}</div></td>
                     <td style="width:42mm;"><div class="imza-baslik">Yayımlandığı Tarih</div><div class="imza-en">Date</div><div class="imza-deger">${yayin_tarihi}</div></td>
-                    <td style="width:60mm;"><div class="imza-baslik">Kalibrasyonu Yapan</div><div class="imza-en">Calibrated by</div><div class="imza-deger">${s.kal_yapan_adi||'—'}</div><div style="font-size:7pt;color:var(--lacivert);margin-top:3mm;">✒️ E-İmzalıdır</div></td>
-                    <td><div class="imza-baslik">Onaylayan / Tarih</div><div class="imza-en">Approval / Date</div><div class="imza-deger">${s.onaylayan_adi||'—'}</div><div style="font-size:8pt;">${onay_tarihi}</div></td>
+                    <td style="width:60mm;"><div class="imza-baslik">Kalibrasyonu Yapan</div><div class="imza-en">Calibrated by</div><div class="imza-deger">${s.kal_yapan_adi||'—'}</div><div style="display:flex;justify-content:center;margin-top:2mm;">
+  <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 72 72">
+    <circle cx="36" cy="36" r="32" fill="#cc0000"/>
+    <circle cx="36" cy="36" r="28" fill="none" stroke="#fff" stroke-width="1.5"/>
+    <text x="36" y="30" text-anchor="middle" font-size="15" fill="white">&#x270C;</text>
+    <text x="36" y="41" text-anchor="middle" font-size="6" font-weight="bold" fill="white" font-family="Arial,sans-serif">E-&#x130;MZALIDIR</text>
+    <text x="36" y="50" text-anchor="middle" font-size="5" fill="rgba(255,255,255,0.85)" font-family="Arial,sans-serif">Digitally Signed</text>
+  </svg>
+</div></td>
+                    <td><div class="imza-baslik">Onaylayan / Tarih</div><div class="imza-en">Approval / Date</div><div class="imza-deger" style="margin-bottom:2mm;">${s.onaylayan_adi||'--'}</div><div style="font-size:8pt;margin-bottom:2mm;">${onay_tarihi}</div><div style="display:flex;justify-content:center;margin-top:2mm;">
+  <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 72 72">
+    <circle cx="36" cy="36" r="32" fill="#cc0000"/>
+    <circle cx="36" cy="36" r="28" fill="none" stroke="#fff" stroke-width="1.5"/>
+    <text x="36" y="30" text-anchor="middle" font-size="15" fill="white">&#x270C;</text>
+    <text x="36" y="41" text-anchor="middle" font-size="6" font-weight="bold" fill="white" font-family="Arial,sans-serif">E-&#x130;MZALIDIR</text>
+    <text x="36" y="50" text-anchor="middle" font-size="5" fill="rgba(255,255,255,0.85)" font-family="Arial,sans-serif">Digitally Signed</text>
+  </svg>
+</div></td>
                 </tr>
             </table>
 
@@ -297,7 +313,7 @@ async function yukle() {
                     <div class="alt-sol">${labAdi}  ${labAdres}</div>
                     <div class="alt-sag">Tel: ${labTel}  |  ${labWeb}  |  ${labMail}</div>
                 </div>
-                <p class="sayfa-no">${formNo}  |  Sayfa No: 1 / ${toplamSayfa}</p>
+                <div class="sayfa-no"><span>${formNo}</span><span>Sayfa No: 1 / ${toplamSayfa}</span></div>
             </div>
         </div>
 
@@ -384,7 +400,7 @@ async function yukle() {
                     <div class="alt-sol">${labAdi}  ${labAdres}</div>
                     <div class="alt-sag">Tel: ${labTel}  |  ${labWeb}  |  ${labMail}</div>
                 </div>
-                <p class="sayfa-no">${formNo}  |  Sayfa No: 2 / ${toplamSayfa}</p>
+                <div class="sayfa-no"><span>${formNo}</span><span>Sayfa No: 2 / ${toplamSayfa}</span></div>
             </div>
         </div>`;
 
