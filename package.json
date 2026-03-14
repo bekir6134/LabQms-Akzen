@@ -12,6 +12,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "puppeteer-core": "^21.0.0",
-    "@sparticuz/chromium": "^119.0.0"
+    "@sparticuz/chromium": "^119.0.0",
+    "qrcode": "^1.5.3"
   }
 }

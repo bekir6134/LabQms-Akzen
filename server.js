@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const puppeteer = require('puppeteer-core');
+const QRCode    = require('qrcode');
 const chromium  = require('@sparticuz/chromium');
 const { Pool } = require('pg');
 const path = require('path');
@@ -1133,7 +1134,12 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
         });
 
         const page = await browser.newPage();
+        await page.setViewport({ width: 794, height: 1123 }); // A4 px
         await page.goto(onizleUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+
+        // İçeriğin render olmasını bekle
+        await page.waitForSelector('.a4', { timeout: 10000 }).catch(()=>{});
+        await new Promise(r => setTimeout(r, 1500)); // font/img yüklenmesi
 
         // Sayfa sayısını al
         const toplamSayfa = await page.evaluate(() => {
@@ -1142,8 +1148,9 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
 
         const pdfBuffer = await page.pdf({
             format: 'A4',
-            margin: { top: '12mm', right: '15mm', bottom: '10mm', left: '15mm' },
+            margin: { top: '0', right: '0', bottom: '0', left: '0' },
             printBackground: true,
+            preferCSSPageSize: true,
         });
 
         await browser.close();
@@ -1163,6 +1170,19 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
         console.error('PDF üretim hata:', err);
         res.status(500).json({ error: err.message });
     }
+});
+
+// QR kod üret (sertifika görüntüleme linki)
+app.get('/api/sertifikalar/:id/qr', async (req, res) => {
+    try {
+        const host = `${req.protocol}://${req.get('host')}`;
+        const url  = `${host}/sertifika-onizle.html?id=${req.params.id}`;
+        const qrDataUrl = await QRCode.toDataURL(url, {
+            width: 120, margin: 1,
+            color: { dark: '#000000', light: '#ffffff' }
+        });
+        res.json({ qr: qrDataUrl, url });
+    } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
 // Ölçüm PDF yükle

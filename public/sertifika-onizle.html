@@ -5,7 +5,8 @@
 <title>Sertifika Önizleme</title>
 <style>
     * { box-sizing:border-box; margin:0; padding:0; }
-    body { font-family:'Liberation Sans', Arial, sans-serif; background:#e5e7eb; }
+    body { font-family:'Liberation Sans', Arial, sans-serif; background:#e5e7eb; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    * { -webkit-font-smoothing: antialiased; }
 
     /* ARAÇ ÇUBUĞU */
     .toolbar { position:fixed; top:0; left:0; right:0; background:#1e293b; color:white; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; z-index:1000; gap:12px; }
@@ -19,36 +20,43 @@
     .sayfa-ici { padding: 80px 20px 40px; display:flex; flex-direction:column; align-items:center; gap:24px; }
 
     /* A4 SAYFA */
-    .a4 { width:210mm; min-height:297mm; background:white; padding:12mm 15mm 10mm; box-shadow:0 4px 24px rgba(0,0,0,0.15); position:relative; page-break-after:always; }
+    .a4 { width:210mm; background:white; padding:12mm 15mm 10mm; box-shadow:0 4px 24px rgba(0,0,0,0.15); position:relative; page-break-after:always; page-break-inside:avoid; }
+    @media print {
+        html, body { margin:0; padding:0; background:white; }
+        .toolbar { display:none !important; }
+        .sayfa-ici { padding:0 !important; gap:0 !important; background:white; }
+        .a4 { width:210mm; min-height:297mm; box-shadow:none; margin:0; padding:12mm 15mm 10mm;
+              page-break-after:always; page-break-inside:avoid; }
+    }
 
     /* RENKLer */
     :root { --lacivert:#1E3A5F; --koyu:#222222; --orta:#555555; --acik:#F7F7F7; --sinir:#CCCCCC; --kirmizi:#CC0000; --tablo-bg:#EEEEEE; }
 
     /* ORTAK */
-    .hr-koyu { border:none; border-top:1px solid var(--koyu); margin:3mm 0 4mm; }
-    .hr-ince { border:none; border-top:0.3px solid var(--sinir); margin:1mm 0; }
+    .hr-koyu { border:none; border-top:1pt solid var(--koyu); margin:3mm 0 4mm; }
+    .hr-ince { border:none; border-top:0.5pt solid var(--sinir); margin:1mm 0; }
     small { font-size:7pt; color:var(--orta); font-style:italic; }
 
     /* ─── SAYFA 1 ─── */
     /* HEADER */
     .s1-header { display:grid; grid-template-columns:34mm 105mm 37mm; gap:0; margin-bottom:0; }
-    .logo-kutu { border:0.5px solid var(--sinir); display:flex; align-items:center; justify-content:center; min-height:24mm; color:#aaa; font-size:7pt; text-align:center; padding:4px; }
-    .qr-kutu   { border:0.5px solid var(--sinir); display:flex; align-items:center; justify-content:center; min-height:18mm; color:#bbb; font-size:6pt; text-align:center; padding:4px; margin-top:1mm; }
+    .logo-kutu { border:0.5pt solid var(--sinir); display:flex; align-items:center; justify-content:center; min-height:24mm; color:#aaa; font-size:7pt; text-align:center; padding:4px; }
+    .qr-kutu   { border:0.5pt solid var(--sinir); display:flex; align-items:center; justify-content:center; min-height:18mm; color:#bbb; font-size:6pt; text-align:center; padding:4px; margin-top:1mm; }
     .orta-blok { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 4mm; }
     .lab-adi   { font-size:11pt; font-weight:700; color:var(--lacivert); text-align:center; line-height:1.3; }
     .lab-adres { font-size:7pt; color:var(--orta); text-align:center; margin-top:2mm; }
     .sert-baslik    { font-size:13pt; font-weight:700; color:var(--koyu); text-align:center; margin-top:3mm; }
     .sert-baslik-en { font-size:10pt; color:var(--orta); font-style:italic; text-align:center; }
-    .turkak-kutu { border:0.8px solid var(--sinir); text-align:center; padding:3mm; }
+    .turkak-kutu { border:0.8pt solid var(--sinir); text-align:center; padding:3mm; }
     .turkak-adi  { font-size:9pt; font-weight:700; color:var(--kirmizi); }
     .turkak-alt  { font-size:6.5pt; color:var(--lacivert); line-height:1.4; margin-top:1mm; }
-    .qr-sag      { border:0.8px solid var(--sinir); text-align:center; padding:2mm; margin-top:1mm; }
+    .qr-sag      { border:0.8pt solid var(--sinir); text-align:center; padding:2mm; margin-top:1mm; }
     .qr-placeholder { width:24mm; height:24mm; background:#f0f0f0; display:inline-flex; align-items:center; justify-content:center; font-size:7pt; color:#999; border:1px solid #ddd; }
     .sag-blok    { display:flex; flex-direction:column; }
 
     /* BİLGİ SATIRLARI */
     .bilgi-tablo { width:100%; border-collapse:collapse; margin-bottom:1mm; }
-    .bilgi-tablo td { padding:2px 4px; border-bottom:0.25px solid var(--sinir); vertical-align:top; font-size:8pt; }
+    .bilgi-tablo td { padding:2px 4px; border-bottom:0.5pt solid var(--sinir); vertical-align:top; font-size:8pt; }
     .bilgi-baslik { color:var(--lacivert); font-weight:700; width:52mm; }
     .bilgi-baslik-en { font-size:6.5pt; color:#888; font-weight:400; font-style:italic; }
 
@@ -58,13 +66,13 @@
 
     /* İMZA */
     .imza-tablo { width:100%; border-collapse:collapse; margin-top:2mm; }
-    .imza-tablo td { border:0.5px solid var(--sinir); background:var(--acik); padding:5px 4px 16px; text-align:center; font-size:8pt; vertical-align:top; }
+    .imza-tablo td { border:0.5pt solid var(--sinir); background:var(--acik); padding:5px 4px 16px; text-align:center; font-size:8pt; vertical-align:top; }
     .imza-baslik { font-weight:700; font-size:8pt; }
     .imza-en     { font-size:6.5pt; color:#888; font-style:italic; }
     .imza-deger  { font-weight:700; margin-top:4mm; font-size:8pt; }
 
     /* ALT BAR */
-    .alt-bar { display:grid; grid-template-columns:1fr 1fr; border-top:0.5px solid var(--sinir); padding-top:3px; margin-top:2mm; }
+    .alt-bar { display:grid; grid-template-columns:1fr 1fr; border-top:0.5pt solid var(--sinir); padding-top:3px; margin-top:2mm; }
     .alt-sol { font-size:6pt; color:var(--orta); }
     .alt-sag { font-size:6pt; color:var(--orta); text-align:right; }
 
@@ -77,13 +85,13 @@
     .s2-lab-adi { font-size:9pt; font-weight:700; color:var(--lacivert); }
     .s2-sert-no { font-size:9pt; font-weight:700; color:var(--lacivert); text-align:right; }
 
-    .tarih-satir { display:grid; grid-template-columns:62mm 28mm 56mm auto; font-size:8pt; border-bottom:0.3px solid var(--sinir); padding:2px 0; }
+    .tarih-satir { display:grid; grid-template-columns:62mm 28mm 56mm auto; font-size:8pt; border-bottom:0.5pt solid var(--sinir); padding:2px 0; }
     .tarih-baslik { font-weight:700; }
 
     .bolum-baslik { background:var(--lacivert); color:white; font-size:8.5pt; font-weight:700; padding:3px 5px; margin:3mm 0 1mm; }
 
     .icerik-tablo { width:100%; border-collapse:collapse; }
-    .icerik-tablo td { font-size:8pt; padding:2px 4px 2px; border-bottom:0.2px solid var(--sinir); vertical-align:top; }
+    .icerik-tablo td { font-size:8pt; padding:2px 4px 2px; border-bottom:0.5pt solid var(--sinir); vertical-align:top; }
     .icerik-tablo .ic-baslik { font-weight:700; width:72mm; padding-left:6px; }
     .icerik-tablo .ic-en { font-size:7pt; font-style:italic; font-weight:400; }
 
@@ -91,13 +99,13 @@
     .s2-metin-en { font-size:7pt; color:var(--orta); font-style:italic; line-height:1.35; margin-bottom:2mm; }
 
     .prosedur-tablo { width:100%; border-collapse:collapse; margin-bottom:2mm; }
-    .prosedur-tablo th { background:var(--tablo-bg); font-size:8pt; padding:3px 5px; text-align:center; border:0.3px solid var(--sinir); }
-    .prosedur-tablo td { font-size:8pt; padding:3px 5px; border:0.3px solid var(--sinir); }
+    .prosedur-tablo th { background:var(--tablo-bg); font-size:8pt; padding:3px 5px; text-align:center; border:0.3pt solid var(--sinir); }
+    .prosedur-tablo td { font-size:8pt; padding:3px 5px; border:0.3pt solid var(--sinir); }
     .prosedur-tablo tr:nth-child(even) td { background:var(--acik); }
 
     .ref-tablo { width:100%; border-collapse:collapse; margin-bottom:2mm; }
-    .ref-tablo th { background:var(--tablo-bg); font-size:7.5pt; padding:2px 3px; text-align:center; border:0.3px solid var(--sinir); }
-    .ref-tablo td { font-size:7pt; padding:2px 3px; border:0.3px solid var(--sinir); vertical-align:middle; }
+    .ref-tablo th { background:var(--tablo-bg); font-size:7.5pt; padding:2px 3px; text-align:center; border:0.3pt solid var(--sinir); }
+    .ref-tablo td { font-size:7pt; padding:2px 3px; border:0.3pt solid var(--sinir); vertical-align:middle; }
     .ref-tablo tr:nth-child(even) td { background:var(--acik); }
 
     /* PRINT */
@@ -134,16 +142,19 @@ async function yukle() {
     if(!sertId) { document.getElementById('sayfaIci').innerHTML = '<div style="padding:60px;color:#ef4444;">Sertifika ID bulunamadı</div>'; return; }
 
     try {
-        const [sertRes, ayarRes] = await Promise.all([
+        const [sertRes, ayarRes, qrRes] = await Promise.all([
             fetch('/api/sertifikalar/' + sertId + '/tam'),
-            fetch('/api/ayarlar')
+            fetch('/api/ayarlar'),
+            fetch('/api/sertifikalar/' + sertId + '/qr')
         ]);
         const s = await sertRes.json();
         const ayarlar = await ayarRes.json();
+        const qrData = qrRes.ok ? await qrRes.json() : null;
 
-        // Ayarları parse et
-        const ayar = {};
-        (Array.isArray(ayarlar) ? ayarlar : []).forEach(a => ayar[a.anahtar] = a.deger);
+        // Ayarları parse et - API obje döndürüyor {anahtar: deger}
+        const ayar = Array.isArray(ayarlar)
+            ? ayarlar.reduce((o,a) => { o[a.anahtar]=a.deger; return o; }, {})
+            : (ayarlar || {});
 
         const labAdi     = ayar.lab_adi     || 'AYER KALİBRASYON VE DANIŞMANLIK DIŞ TİC.LTD.ŞTİ.';
         const labAdres   = ayar.lab_adres   || '';
@@ -208,7 +219,11 @@ async function yukle() {
             <div class="s1-header">
                 <div style="display:flex;flex-direction:column;gap:1mm;">
                     <div class="logo-kutu">${ayar.lab_logo ? `<img src="${ayar.lab_logo}" style="max-width:30mm;max-height:22mm;object-fit:contain;">` : 'LAB LOGOSU'}</div>
-                    <div class="qr-kutu">${ayar.muhur_logo ? `<img src="${ayar.muhur_logo}" style="max-width:28mm;max-height:16mm;object-fit:contain;">` : 'Mühür'}</div>
+                    <div class="qr-kutu" style="display:flex;flex-direction:column;align-items:center;justify-content:center;border:0.5pt solid var(--sinir);padding:2mm;margin-top:1mm;">
+                        ${qrData?.qr ? `<img src="${qrData.qr}" style="width:18mm;height:18mm;">
+                        <div style="font-size:5pt;color:var(--orta);text-align:center;margin-top:1mm;">Sertifikayı görüntüle</div>` 
+                        : '<div style="font-size:6pt;color:#bbb;text-align:center;">QR</div>'}
+                    </div>
                 </div>
                 <div class="orta-blok">
                     <div class="lab-adi">${labAdi}</div>

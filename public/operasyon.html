@@ -1284,34 +1284,69 @@
         }
     }
 
-    async function pdfDosyaSecildi() {
+    function pdfDosyaSecildi() {
         const dosya = document.getElementById('pdfDosyaInput').files[0];
         if(!dosya) return;
+
+        // Yükleniyor göster
+        const canvasAlani = document.getElementById('pdfCanvasAlani');
+        canvasAlani.innerHTML = '<div style="color:#64748b;padding:40px;text-align:center;"><div style="font-size:2rem;margin-bottom:8px;">⏳</div><div>PDF yükleniyor ve kaydediliyor...</div></div>';
+        document.getElementById('pdfYukleBtnLabel').style.display = 'none';
+
         const reader = new FileReader();
-        reader.onload = async (e) => {
+        reader.onload = function(e) {
             const base64 = e.target.result.split(',')[1];
-            // Önce PDF.js ile göster ve sayfa say
-            await pdfGoster(base64, aktifPdfSertId, true);
+            pdfYukleVeKaydet(base64, aktifPdfSertId);
         };
         reader.readAsDataURL(dosya);
     }
 
-    async function pdfGoster(base64Data, sertId, kaydet=false) {
+    async function pdfYukleVeKaydet(base64Data, sertId) {
         const canvasAlani = document.getElementById('pdfCanvasAlani');
-        canvasAlani.innerHTML = '<div style="color:#64748b;padding:40px;text-align:center;"><div style="font-size:2rem;margin-bottom:8px;">⏳</div><div>İşleniyor...</div></div>';
-
         try {
-            // PDF.js ile render et
-            const pdfData = atob(base64Data);
-            const pdfArray = new Uint8Array(pdfData.length);
-            for(let i=0; i<pdfData.length; i++) pdfArray[i] = pdfData.charCodeAt(i);
-
+            // Sayfa sayısını PDF.js ile hesapla
             const pdfjsLib = window['pdfjs-dist/build/pdf'];
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-            const pdfDoc = await pdfjsLib.getDocument({data: pdfArray}).promise;
+            const pdfData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+            const pdfDoc = await pdfjsLib.getDocument({data: pdfData}).promise;
             const sayfaSayisi = pdfDoc.numPages;
-            const toplamSayfa = 2 + sayfaSayisi; // 2 kapak sayfası + ölçüm
+            const toplamSayfa = 2 + sayfaSayisi;
+
+            // Server'a kaydet
+            const res = await fetch('/api/sertifikalar/' + sertId + '/olcum-pdf', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({pdf_base64: base64Data, sayfa_sayisi: sayfaSayisi})
+            });
+
+            if(res.ok) {
+                showToast('✅ PDF kaydedildi! Ölçüm: ' + sayfaSayisi + ' | Toplam: ' + toplamSayfa + ' sayfa');
+                pdfModalKapat();
+                await sertYukle();
+                await ieYukle();
+            } else {
+                const err = await res.json().catch(()=>({}));
+                showToast('❌ PDF kaydedilemedi: ' + (err.error||''), true);
+                canvasAlani.innerHTML = '<div style="padding:30px;text-align:center;color:#ef4444;">Kayıt başarısız. Tekrar deneyin.</div>';
+                document.getElementById('pdfYukleBtnLabel').style.display = 'inline-flex';
+            }
+        } catch(e) {
+            showToast('❌ Hata: ' + e.message, true);
+            canvasAlani.innerHTML = '<div style="padding:30px;text-align:center;color:#ef4444;">Hata: ' + e.message + '</div>';
+            document.getElementById('pdfYukleBtnLabel').style.display = 'inline-flex';
+            console.error('PDF hata:', e);
+        }
+    }
+
+    async function pdfGoster(base64Data, sertId) {
+        const canvasAlani = document.getElementById('pdfCanvasAlani');
+        canvasAlani.innerHTML = '<div style="color:#64748b;padding:40px;text-align:center;"><div style="font-size:2rem;margin-bottom:8px;">⏳</div><div>Yükleniyor...</div></div>';
+        try {
+            const pdfjsLib = window['pdfjs-dist/build/pdf'];
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            const pdfData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+            const pdfDoc = await pdfjsLib.getDocument({data: pdfData}).promise;
+            const sayfaSayisi = pdfDoc.numPages;
 
             canvasAlani.innerHTML = '';
             for(let i=1; i<=sayfaSayisi; i++) {
@@ -1326,29 +1361,10 @@
                 canvasAlani.appendChild(wrap);
                 await sayfa.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
             }
-
             document.getElementById('pdfSayfaBilgi').textContent =
-                `Ölçüm: ${sayfaSayisi} sayfa | Kapak+Teknik: 2 sayfa | Toplam: ${toplamSayfa} sayfa`;
-
-            // Kaydet
-            if(kaydet && sertId) {
-                const res = await fetch('/api/sertifikalar/' + sertId + '/olcum-pdf', {
-                    method:'POST',
-                    headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({pdf_base64: base64Data, sayfa_sayisi: sayfaSayisi})
-                });
-                if(res.ok) {
-                    showToast('✅ PDF kaydedildi! Ölçüm: ' + sayfaSayisi + ' | Toplam: ' + toplamSayfa + ' sayfa');
-                    document.getElementById('pdfYukleBtnLabel').textContent = '📎 PDF Değiştir';
-                    await sertYukle();
-                    await ieYukle();
-                } else {
-                    showToast('❌ PDF kaydedilemedi!', true);
-                }
-            }
+                `Ölçüm: ${sayfaSayisi} sayfa | Toplam: ${2+sayfaSayisi} sayfa`;
         } catch(e) {
-            canvasAlani.innerHTML = '<div style="padding:40px;text-align:center;color:#ef4444;">PDF işlenemedi: ' + e.message + '</div>';
-            console.error('PDF hata:', e);
+            canvasAlani.innerHTML = '<div style="padding:30px;text-align:center;color:#ef4444;">PDF gösterilemedi: ' + e.message + '</div>';
         }
     }
 
