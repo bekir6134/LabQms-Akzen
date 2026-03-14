@@ -162,10 +162,11 @@ async function yukle() {
             : (ayarlar || {});
 
         const labAdi     = ayar.lab_adi     || 'AYER KALİBRASYON VE DANIŞMANLIK DIŞ TİC.LTD.ŞTİ.';
-        const labAdres   = ayar.lab_adres   || '';
-        const labTel     = ayar.lab_tel     || '';
-        const labWeb     = ayar.lab_web     || '';
-        const labMail    = ayar.lab_mail    || '';
+        const labAdres   = ayar.adres       || ayar.lab_adres || '';
+        const labTel     = ayar.telefon     || ayar.lab_tel   || '';
+        const labWeb     = ayar.website     || ayar.lab_web   || '';
+        const labMail    = ayar.email       || ayar.lab_mail  || '';
+        const labTamAdres = labAdres;
         const akredNo    = ayar.akreditasyon_no || 'AB-0088-K';
         const akredStd   = 'TS EN ISO/IEC 17025:2017';
         const formNo     = 'AKFG448 Rev02 110625';
@@ -232,7 +233,7 @@ async function yukle() {
                 </div>
                 <div class="orta-blok">
                     <div class="lab-adi">${labAdi}</div>
-                    <div class="lab-adres">${labAdres}</div>
+                    <div class="lab-adres">${labTamAdres}</div>
                     <div class="sert-baslik">KALİBRASYON SERTİFİKASI</div>
                     <div class="sert-baslik-en">Calibration Certificate</div>
                 </div>
@@ -340,9 +341,9 @@ async function yukle() {
 
         <!-- ═══════════ SAYFA 2 — TEKNİK ═══════════ -->
         <div class="a4">
-            <div class="s2-header">
-                <div class="s2-lab-adi">${labAdi}</div>
-                <div class="s2-sert-no">${sertNo}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0;">
+                <div style="font-size:9pt;font-weight:700;color:var(--lacivert);flex:1;text-align:center;">${labAdi}</div>
+                <div style="font-size:9pt;font-weight:700;color:var(--lacivert);white-space:nowrap;margin-left:8mm;">${sertNo}</div>
             </div>
             <hr class="hr-koyu">
 
@@ -461,8 +462,9 @@ async function yukle() {
                     // ÜST BAŞLIK - firma ünvanı sol, sertifika no sağ
                     const hd = document.createElement('div');
                     hd.style.cssText = 'padding:4mm 15mm 2mm;border-bottom:1pt solid #222;display:flex;justify-content:space-between;align-items:center;';
-                    hd.innerHTML = '<span style="font-size:8pt;font-weight:700;color:#1E3A5F;flex:1;text-align:justify;">' + labAdi + '</span>'
-                                 + '<span style="font-size:8pt;font-weight:700;color:#1E3A5F;margin-left:8mm;white-space:nowrap;">' + sertNo + '</span>';
+                    hd.innerHTML = '<span style="font-size:8pt;font-weight:700;color:#1E3A5F;position:absolute;left:50%;transform:translateX(-50%);text-align:center;">' + labAdi + '</span>'
+                                 + '<span style="font-size:8pt;font-weight:700;color:#1E3A5F;margin-left:auto;white-space:nowrap;">' + sertNo + '</span>';
+                    hd.style.position = 'relative';
                     sayfaDiv.appendChild(hd);
 
                     // Canvas (ölçüm içeriği)
