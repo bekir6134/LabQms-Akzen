@@ -694,8 +694,8 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
         if(!sertRow.rows.length) return res.status(404).json({ error: 'Sertifika bulunamadı' });
         const sert = sertRow.rows[0];
 
-        // 1. ZIRH: Puppeteer internete çıkıp kaybolmasın diye direkt sunucunun kendi içine (localhost) yönlendiriyoruz.
-        const onizleUrl = `http://localhost:${PORT}/sertifika-onizle.html?id=${req.params.id}&print=1`;
+        // 1. ZIRH: Localhost bazen Railway'de port engeline takılır. En garanti yol sistemin gerçek domainine gitmesidir.
+        const onizleUrl = `${req.protocol}://${req.get('host')}/sertifika-onizle.html?id=${req.params.id}&print=1`;
         const execPath = process.env.CHROMIUM_PATH || require('child_process').execSync('which chromium || which chromium-browser || which google-chrome || echo ""').toString().trim() || await chromium.executablePath();
 
         browser = await puppeteer.launch({
@@ -706,9 +706,11 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
         const page = await browser.newPage();
         await page.setViewport({ width: 794, height: 1123 });
         
-        await page.goto(onizleUrl, { waitUntil: 'networkidle0', timeout: 30000 });
-        await page.waitForSelector('.a4', { timeout: 10000 }).catch(()=>{});
-        await new Promise(r => setTimeout(r, 1500));
+        // 2. ZIRH: networkidle0 çok katıdır, dışarıdan yüklenen bir font/resim 30 saniye gecikirse sistemi çökertir. 
+        // networkidle2 yapıp süreyi 60 saniyeye çıkarıyoruz.
+        await page.goto(onizleUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+        await page.waitForSelector('.a4', { timeout: 15000 }).catch(()=>{});
+        await new Promise(r => setTimeout(r, 2000));
 
         const s1s2Buffer = await page.pdf({ format: 'A4', margin: { top: '0', right: '0', bottom: '0', left: '0' }, printBackground: true, preferCSSPageSize: true });
         await browser.close();
@@ -744,9 +746,8 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
                 sonPdfBuffer = Buffer.from(birlesikBytes);
                 
             } catch (mergeErr) {
-                // 2. ZIRH: Eğer R2'deki PDF bozuksa sistemi çökertme, hatayı yakala ve mesaj gönder!
                 console.error("PDF-LIB Birleştirme Hatası:", mergeErr);
-                throw new Error("Cloudflare'deki Ölçüm PDF dosyası bozuk veya okunamıyor. Lütfen operasyon ekranına dönüp bu cihaza ait Ölçüm PDF'ini silin ve tekrar yükleyin.");
+                throw new Error("Cloudflare'deki Ölçüm PDF dosyası bozuk veya okunamıyor. Lütfen laboratuvarda yüklenen orijinal dosyayı tekrar yükleyin.");
             }
         } else {
             sonPdfBuffer = s1s2Buffer;
