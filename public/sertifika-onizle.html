@@ -356,6 +356,7 @@ async function yukle() {
 // =========================================================================
 // YENİ EKLENEN: SUNUCUDAN BİRLEŞİK, NET VE E-İMZA UYUMLU PDF ÇEKME FONKSİYONU
 // =========================================================================
+// YENİ E-İMZA VE İNDİRME FONKSİYONU - DİREKT BACKEND'E BAĞLANIR
 async function pdfKaydet(mod) {
     const btn = document.getElementById('btnPdfKaydet');
     if(btn) { btn.disabled = true; btn.textContent = '⏳ Hazırlanıyor...'; }
@@ -364,7 +365,6 @@ async function pdfKaydet(mod) {
         const params = new URLSearchParams(window.location.search);
         const sertId = params.get('id');
 
-        // Tarayıcıyı yormuyoruz, PDF'i 3 sayfa olarak sunucudan istiyoruz
         const response = await fetch('/api/sertifikalar/' + sertId + '/pdf');
         
         if (!response.ok) {
@@ -375,7 +375,6 @@ async function pdfKaydet(mod) {
         const blob = await response.blob();
 
         if (mod === 'base64') {
-            // E-İmza programına giden 3 sayfalık data
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result.split(',')[1]);
@@ -383,7 +382,6 @@ async function pdfKaydet(mod) {
                 reader.readAsDataURL(blob);
             });
         } else {
-            // Manuel tıklandığında indirilecek 3 sayfalık yüksek çözünürlüklü dosya
             const blobUrl = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = blobUrl;
@@ -411,7 +409,9 @@ window.onload = () => {
     yukle();
 };
 </script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+</body>
+</html>
 </body>
 </html>

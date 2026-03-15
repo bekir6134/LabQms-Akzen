@@ -4,6 +4,10 @@ const nodemailer = require('nodemailer');
 const https = require('https');
 const aws4  = require('aws4');
 
+// İŞTE EKSİK OLAN HAYATİ KÜTÜPHANELER BURADA:
+const puppeteer = require('puppeteer-core');
+const chromium = require('@sparticuz/chromium');
+
 const R2_BUCKET   = process.env.R2_BUCKET_NAME || 'labqms-pdfs';
 const R2_ACCOUNT  = process.env.R2_ACCOUNT_ID  || '';
 const R2_HOST     = `${R2_ACCOUNT}.r2.cloudflarestorage.com`;
