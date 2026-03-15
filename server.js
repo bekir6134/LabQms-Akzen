@@ -8,9 +8,6 @@ const R2_BUCKET   = process.env.R2_BUCKET_NAME || 'labqms-pdfs';
 const R2_ACCOUNT  = process.env.R2_ACCOUNT_ID  || '';
 const R2_HOST     = `${R2_ACCOUNT}.r2.cloudflarestorage.com`;
 
-const puppeteer = require('puppeteer-core');
-const chromium = require('@sparticuz/chromium');
-
 function r2Request(method, key, body) {
     return new Promise((resolve, reject) => {
         const encodedKey = key.split('/').map(encodeURIComponent).join('/');
@@ -1209,38 +1206,54 @@ app.get('/api/sertifikalar/:id/tam', async (req, res) => {
 });
 
 // Sertifika PDF üret (Puppeteer)
-// === KRİTİK DÜZELTME ALANI 1: PDF BİRLEŞTİRME VE İNDİRME ===
 app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
     let browser;
     try {
-        // ... (Veritabanı sorgu kısmı aynı kalıyor) ...
+        // Ölçüm PDF'ini DB'den çek
+        const sertRow = await pool.query(
+            'SELECT olcum_pdf_url, sertifika_no, cihaz_adi FROM sertifikalar WHERE id=$1',
+            [req.params.id]
+        );
+        if(!sertRow.rows.length) return res.status(404).json({ error: 'Sertifika bulunamadı' });
+        const sert = sertRow.rows[0];
 
-        const onizleUrl = `http://127.0.0.1:${PORT}/sertifika-onizle.html?id=${req.params.id}&print=1`;
-        
-        // GÜVENLİ YOL TANIMLAMASI
-        let exePath;
-        try {
-            exePath = await chromium.executablePath();
-        } catch (e) {
-            exePath = require('child_process').execSync('which chromium || which google-chrome').toString().trim();
-        }
+        // S1+S2 HTML → PDF (Puppeteer)
+        const onizleUrl = `${req.protocol}://${req.get('host')}/sertifika-onizle.html?id=${req.params.id}&print=1`;
+        // Railway'de sistem Chromium'unu kullan
+        const execPath = process.env.CHROMIUM_PATH || 
+            require('child_process').execSync('which chromium || which chromium-browser || which google-chrome || echo ""')
+            .toString().trim() || await chromium.executablePath();
 
         browser = await puppeteer.launch({
-            executablePath: exePath,
-            headless: 'new', // Railway için en stabil mod
+            executablePath: execPath,
+            headless: 'new',
             args: [
-                ...chromium.args,
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-gpu',
-                '--single-process' // RAM kullanımını minimize eder
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-extensions',
             ],
-            defaultViewport: chromium.defaultViewport,
         });
-
         const page = await browser.newPage();
-        // ... (Sayfa yükleme ve PDF oluşturma kısmı aynı kalıyor) ...
+        await page.setViewport({ width: 794, height: 1123 });
+        await page.goto(onizleUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+        await page.waitForSelector('.a4', { timeout: 10000 }).catch(()=>{});
+        await new Promise(r => setTimeout(r, 1500));
+
+        const s1s2Buffer = await page.pdf({
+            format: 'A4',
+            margin: { top: '0', right: '0', bottom: '0', left: '0' },
+            printBackground: true,
+            preferCSSPageSize: true,
+        });
+        await browser.close();
+        browser = null;
+
+        let sonPdfBuffer;
 
         // Ölçüm PDF varsa birleştir
         if(sert.olcum_pdf_url) {
