@@ -514,7 +514,7 @@
         <div class="secili-info" id="topluBilgi">0 sertifika seçildi</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn-toplu" onclick="topluKapsamDisiNo()" id="btnTopluKDNo" style="background:#fef9c3;color:#854d0e;">🔢 Kapsam Dışı No Ver</button>
-            <button class="btn-toplu" onclick="topluAkrediteNo()" id="btnTopluAkrNo" style="background:#e0f2fe;color:#0369a1;opacity:0.5;cursor:not-allowed;" disabled title="Türkak API entegrasyonu yakında">🏛️ Akredite No Ver</button>
+            <button class="btn-toplu" onclick="topluAkrediteNo()" id="btnTopluAkrNo" style="background:#e0f2fe;color:#0369a1;">🏛️ Akredite No (TÜRKAK) Al</button>
             <button class="btn-toplu" onclick="topluImzala()" id="btnTopluImzala">✍️ Seçilenleri İmzala</button>
             <button class="btn-toplu" onclick="topluOnayla()" id="btnTopluOnayla">✅ Seçilenleri Onayla</button>
             <button class="btn-toplu" onclick="topluMail()" id="btnTopluMail">📧 Seçilenlere Mail Gönder</button>
@@ -1462,35 +1462,49 @@
         }
     }
 
-    async function topluAkrediteNo() {
-        showToast('⏳ Türkak API entegrasyonu yakında aktif olacak.', false);
-    }
-
-    async function topluMail() {
+async function topluAkrediteNo() {
         const idler = secilenIdler();
-        if(!idler.length) return showToast("❌ Sertifika seçin!", true);
-        const res = await fetch('/api/sertifika-mail-toplu', {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({idler})
-        });
-        if(res.ok) {
-            const d = await res.json();
-            showToast(`📧 ${d.basarili} mail gönderildi!`);
-            await sertYukle();
-        } else showToast("❌ Mail gönderilemedi!", true);
-    }
+        if(!idler.length) return showToast('❌ Sertifika seçin!', true);
 
-    async function sertAsamaGuncelle(idler, asama) {
-        await Promise.all(idler.map(id =>
-            fetch(`/api/sertifikalar/${id}/asama`, {
-                method:'PUT', headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({asama})
-            })
-        ));
-        showToast(`✅ ${idler.length} sertifika → ${IE_ASAMA_LABEL[asama]||asama}`);
-        await sertYukle();
-    }
+        // Zaten numarası olanları filtreleyebiliriz (İstersen kapatabilirsin)
+        const uygunlar = idler.filter(id => !tumSertifikalar.find(s=>s.id===id)?.sertifika_no);
+        
+        if(!uygunlar.length) return showToast('❌ Seçilen sertifikaların zaten numarası var!', true);
+        if(!confirm(`${uygunlar.length} sertifika için TÜRKAK TBDS numarası alınacak. Onaylıyor musunuz?`)) return;
 
+        const btn = document.getElementById('btnTopluAkrNo');
+        const eskiMetin = btn.innerText;
+        btn.innerText = "⏳ TÜRKAK'a Bağlanıyor...";
+        btn.disabled = true;
+        showToast(`⏳ TÜRKAK ile haberleşiliyor, lütfen bekleyin...`);
+
+        try {
+            const response = await fetch('/api/turkak/toplu-numara-al', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sertifika_idler: uygunlar })
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || "TÜRKAK Servis Hatası");
+            }
+
+            showToast(`✅ İşlem Bitti! ${data.basarili.length} başarılı, ${data.hatali.length} hatalı.`);
+            
+            // Tabloyu ve seçimleri yenile
+            await sertYukle(); 
+            document.getElementById('tumunuSec').checked = false;
+            tumunuSecToggle();
+
+        } catch (err) {
+            showToast("❌ Hata Oluştu: " + err.message, true);
+        } finally {
+            btn.innerText = eskiMetin;
+            btn.disabled = false;
+        }
+    }
     // ── DİĞER İŞLEMLER ──
     function sertifkaDuzenle(sertId) {
         // Sertifikalar sekmesine geç
