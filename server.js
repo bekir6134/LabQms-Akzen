@@ -7,6 +7,38 @@ const chromium  = require('@sparticuz/chromium');
 const { Pool } = require('pg');
 const path = require('path');
 const cors = require('cors');
+const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+
+// Cloudflare R2 client
+const r2 = new S3Client({
+    region: 'auto',
+    endpoint: process.env.R2_ENDPOINT,
+    credentials: {
+        accessKeyId:     process.env.R2_ACCESS_KEY_ID,
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
+});
+const R2_BUCKET = process.env.R2_BUCKET_NAME || 'labqms-pdfs';
+
+// R2'ye PDF yükle
+async function r2Yukle(key, buffer) {
+    await r2.send(new PutObjectCommand({
+        Bucket: R2_BUCKET,
+        Key:    key,
+        Body:   buffer,
+        ContentType: 'application/pdf',
+    }));
+    return key;
+}
+
+// R2'den PDF indir (Buffer olarak)
+async function r2Indir(key) {
+    const cmd = new GetObjectCommand({ Bucket: R2_BUCKET, Key: key });
+    const resp = await r2.send(cmd);
+    const chunks = [];
+    for await (const chunk of resp.Body) chunks.push(chunk);
+    return Buffer.concat(chunks);
+}
 
 const app = express(); // İŞTE HATAYA SEBEP OLAN EKSİK SATIR BUYDU!
 const PORT = process.env.PORT || 3000;
@@ -1260,7 +1292,11 @@ app.get('/api/sertifikalar/:id/olcum-pdf', async (req, res) => {
             [req.params.id]
         );
         if(!result.rows.length) return res.status(404).json({ error: 'Bulunamadı' });
-        res.json(result.rows[0]);
+        const row = result.rows[0];
+        if(!row.olcum_pdf_url) return res.status(404).json({ error: 'PDF yok' });
+        // R2'den indir, base64 döndür
+        const buffer = await r2Indir(row.olcum_pdf_url);
+        res.json({ olcum_pdf_url: buffer.toString('base64'), olcum_pdf_sayfa: row.olcum_pdf_sayfa });
     } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -1268,7 +1304,7 @@ app.get('/api/sertifikalar/:id/olcum-pdf', async (req, res) => {
 app.post('/api/sertifika-mail/:id', async (req, res) => {
     try {
         const result = await pool.query(
-            'SELECT asama, sertifika_pdf, sertifika_no FROM sertifikalar WHERE id=$1',
+            'SELECT asama, sertifika_pdf, sertifika_no, imzali_pdf_var FROM sertifikalar WHERE id=$1',
             [req.params.id]
         );
         if(!result.rows.length) return res.status(404).json({ error: 'Sertifika bulunamadı' });
@@ -1364,7 +1400,9 @@ app.get('/api/sertifikalar/:id/imzali-pdf', async (req, res) => {
         if(!s.sertifika_pdf) return res.status(404).json({ error: 'İmzalı PDF bulunamadı' });
         if(!['imzalandı','onaylandı','sertifika_gönderildi'].includes(s.asama)) 
             return res.status(400).json({ error: 'Sertifika henüz imzalanmamış' });
-        res.json({ pdf_base64: s.sertifika_pdf, sertifika_no: s.sertifika_no });
+        // R2'den indir
+        const buffer = await r2Indir(s.sertifika_pdf);
+        res.json({ pdf_base64: buffer.toString('base64'), sertifika_no: s.sertifika_no });
     } catch(err) {
         res.status(500).json({ error: err.message });
     }
@@ -1389,10 +1427,14 @@ app.post('/api/imzali-pdf-yukle', async (req, res) => {
         if (mevcutAsama === 'hazırlanıyor') yeniAsama = 'imzalandı';
         else if (mevcutAsama === 'imzalandı') yeniAsama = 'onaylandı';
 
-        // İmzalı PDF'i ve aşamayı kaydet
+        // R2'ye yükle
+        const imzaKey = `imzali/${sertifika_id}_${yeniAsama}.pdf`;
+        const imzaBuf = Buffer.from(pdf_base64, 'base64');
+        await r2Yukle(imzaKey, imzaBuf);
+        // DB'ye key kaydet
         await pool.query(
             'UPDATE sertifikalar SET sertifika_pdf=$1, asama=$2 WHERE id=$3',
-            [pdf_base64, yeniAsama, sertifika_id]
+            [imzaKey, yeniAsama, sertifika_id]
         );
 
         console.log(`[EronSign] Sertifika #${sertifika_id}: ${mevcutAsama} → ${yeniAsama}`);
