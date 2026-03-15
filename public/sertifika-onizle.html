@@ -364,47 +364,49 @@ async function yukle() {
 // YENİ E-İMZA VE İNDİRME FONKSİYONU - EKRAN GÖRÜNTÜSÜ ALMAZ, DİREKT BACKEND'E BAĞLANIR
 async function pdfKaydet(mod) {
     const btn = document.getElementById('btnPdfKaydet');
-    if(btn) { btn.disabled = true; btn.textContent = '⏳ Hazırlanıyor...'; }
+    if(btn) { btn.disabled = true; btn.textContent = '⏳ Birleştiriliyor...'; }
 
     try {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
-        const sayfalar = document.querySelectorAll('.a4');
+        const params = new URLSearchParams(window.location.search);
+        const sertId = params.get('id');
 
-        for(let i = 0; i < sayfalar.length; i++) {
-            const sayfa = sayfalar[i];
-            const canvas = await html2canvas(sayfa, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#ffffff',
-                width: sayfa.scrollWidth,
-                height: sayfa.scrollHeight,
+        // DİKKAT: Artık ekran görüntüsü almıyoruz! 
+        // Direkt backend'deki 3 sayfayı birleştiren API'ye gidiyoruz.
+        const response = await fetch('/api/sertifikalar/' + sertId + '/pdf');
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || "PDF birleştirilemedi.");
+        }
+
+        const blob = await response.blob();
+
+        if (mod === 'base64') {
+            // E-İMZA PROGRAMI İÇİN: 3 sayfalık tam PDF'i base64 yapıp gönder
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
             });
-
-            const imgData = canvas.toDataURL('image/jpeg', 0.92);
-            const pdfW = 210;
-            const pdfH = (canvas.height * pdfW) / canvas.width;
-
-            if(i > 0) pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+        } else {
+            // MANUEL İNDİRME İÇİN:
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = `Sertifika_${sertId}_Tam.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
         }
-
-        if(mod === 'base64') {
-            return pdf.output('datauristring').split(',')[1];
-        }
-
-        const pdfBlob = pdf.output('blob');
-        const blobUrl = URL.createObjectURL(pdfBlob);
-        window.open(blobUrl, '_blank');
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
 
     } catch(e) {
-        alert('PDF oluşturulamadı: ' + e.message);
+        alert('Hata: ' + e.message);
         console.error(e);
+    } finally {
+        if(btn) { btn.disabled = false; btn.textContent = '📥 PDF İndir'; }
     }
-
-    if(btn) { btn.disabled = false; btn.textContent = '📥 PDF İndir'; }
 }
 
 window.onload = () => {
