@@ -1,5 +1,31 @@
 require('dotenv').config();
 const express = require('express');
+const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+
+// Cloudflare R2 client
+const r2 = new S3Client({
+    region: 'auto',
+    endpoint: process.env.R2_ENDPOINT,
+    credentials: {
+        accessKeyId:     process.env.R2_ACCESS_KEY_ID,
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
+});
+const R2_BUCKET = process.env.R2_BUCKET_NAME || 'labqms-pdfs';
+
+async function r2Yukle(key, buffer) {
+    await r2.send(new PutObjectCommand({
+        Bucket: R2_BUCKET, Key: key, Body: buffer, ContentType: 'application/pdf',
+    }));
+    return key;
+}
+
+async function r2Indir(key) {
+    const resp = await r2.send(new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }));
+    const chunks = [];
+    for await (const chunk of resp.Body) chunks.push(chunk);
+    return Buffer.concat(chunks);
+}
 const puppeteer = require('puppeteer-core');
 const QRCode    = require('qrcode');
 const { PDFDocument } = require('pdf-lib');
@@ -1260,7 +1286,10 @@ app.get('/api/sertifikalar/:id/olcum-pdf', async (req, res) => {
             [req.params.id]
         );
         if(!result.rows.length) return res.status(404).json({ error: 'Bulunamadı' });
-        res.json(result.rows[0]);
+        const row = result.rows[0];
+        if(!row.olcum_pdf_url) return res.status(404).json({ error: 'PDF yok' });
+        const buffer = await r2Indir(row.olcum_pdf_url);
+        res.json({ olcum_pdf_url: buffer.toString('base64'), olcum_pdf_sayfa: row.olcum_pdf_sayfa });
     } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -1364,7 +1393,8 @@ app.get('/api/sertifikalar/:id/imzali-pdf', async (req, res) => {
         if(!s.sertifika_pdf) return res.status(404).json({ error: 'İmzalı PDF bulunamadı' });
         if(!['imzalandı','onaylandı','sertifika_gönderildi'].includes(s.asama)) 
             return res.status(400).json({ error: 'Sertifika henüz imzalanmamış' });
-        res.json({ pdf_base64: s.sertifika_pdf, sertifika_no: s.sertifika_no });
+        const buffer = await r2Indir(s.sertifika_pdf);
+        res.json({ pdf_base64: buffer.toString('base64'), sertifika_no: s.sertifika_no });
     } catch(err) {
         res.status(500).json({ error: err.message });
     }
@@ -1389,10 +1419,12 @@ app.post('/api/imzali-pdf-yukle', async (req, res) => {
         if (mevcutAsama === 'hazırlanıyor') yeniAsama = 'imzalandı';
         else if (mevcutAsama === 'imzalandı') yeniAsama = 'onaylandı';
 
-        // İmzalı PDF'i ve aşamayı kaydet
+        // R2'ye yükle, DB'ye key kaydet
+        const imzaKey = `imzali/${sertifika_id}_${yeniAsama}.pdf`;
+        await r2Yukle(imzaKey, Buffer.from(pdf_base64, 'base64'));
         await pool.query(
             'UPDATE sertifikalar SET sertifika_pdf=$1, asama=$2 WHERE id=$3',
-            [pdf_base64, yeniAsama, sertifika_id]
+            [imzaKey, yeniAsama, sertifika_id]
         );
 
         console.log(`[EronSign] Sertifika #${sertifika_id}: ${mevcutAsama} → ${yeniAsama}`);
