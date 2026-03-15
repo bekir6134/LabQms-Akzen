@@ -367,49 +367,37 @@ async function pdfKaydet(mod) {
     if(btn) { btn.disabled = true; btn.textContent = '⏳ Hazırlanıyor...'; }
 
     try {
-        const params = new URLSearchParams(window.location.search);
-        const sertId = params.get('id');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+        const sayfalar = document.querySelectorAll('.a4');
 
-        // 1. ADIM: Zaten imzalanmışsa R2'den hazır halini çek
-        const imzaRes = await fetch('/api/sertifikalar/' + sertId + '/imzali-pdf');
-        if(imzaRes.ok) {
-            const imzaData = await imzaRes.json();
-            if (mod === 'base64') return imzaData.pdf_base64;
-            
-            const linkSource = `data:application/pdf;base64,${imzaData.pdf_base64}`;
-            const downloadLink = document.createElement("a");
-            downloadLink.href = linkSource;
-            downloadLink.download = `Sertifika_${sertId}_Imzali.pdf`;
-            downloadLink.click();
-            if(btn) { btn.disabled = false; btn.textContent = '📥 PDF İndir'; }
-            return;
-        }
-
-        // 2. ADIM: İmzalanmamışsa server.js'teki kusursuz (pdf-lib) API'sine bağlan!
-        const response = await fetch('/api/sertifikalar/' + sertId + '/pdf');
-        if (!response.ok) throw new Error("Sunucu PDF oluşturamadı.");
-        
-        const blob = await response.blob();
-
-        if (mod === 'base64') {
-            // E-İmza programına "tam takım 3 sayfa" gönder!
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
+        for(let i = 0; i < sayfalar.length; i++) {
+            const sayfa = sayfalar[i];
+            const canvas = await html2canvas(sayfa, {
+                scale: 3,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                width: sayfa.scrollWidth,
+                height: sayfa.scrollHeight,
             });
-        } else {
-            // Kullanıcıya orijinal, net kalitede indir!
-            const blobUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = `Sertifika_${sertId}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdfW = 210;
+            const pdfH = (canvas.height * pdfW) / canvas.width;
+
+            if(i > 0) pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
         }
+
+        if(mod === 'base64') {
+            return pdf.output('datauristring').split(',')[1];
+        }
+
+        const pdfBlob = pdf.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        window.open(blobUrl, '_blank');
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
 
     } catch(e) {
         alert('PDF oluşturulamadı: ' + e.message);
