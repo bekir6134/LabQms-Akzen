@@ -799,20 +799,23 @@ app.get('/api/sertifikalar/:id/olcum-pdf', async (req, res) => {
         const row = result.rows[0];
         if(!row.olcum_pdf_url) return res.status(404).json({ error: 'PDF yok' });
         
-        // ESKİ KAYIT KONTROLÜ: Eğer metin 500 karakterden uzunsa, bu eski sistemdeki devasa base64 verisidir. R2'ye sorma!
+        // ESKİ KAYIT KONTROLÜ: R2'ye sorma, ama takısı varsa mutlaka temizle!
         if (row.olcum_pdf_url.length > 500) {
-            return res.json({ olcum_pdf_url: row.olcum_pdf_url, olcum_pdf_sayfa: row.olcum_pdf_sayfa });
+            let safBase64 = row.olcum_pdf_url;
+            if(safBase64.includes('base64,')) {
+                safBase64 = safBase64.split('base64,')[1];
+            }
+            return res.json({ olcum_pdf_url: safBase64, olcum_pdf_sayfa: row.olcum_pdf_sayfa });
         }
 
-        // YENİ KAYIT İSE: R2'den indir ve frontend çökmesin diye başına "data..." takısını ekle
+        // YENİ KAYIT İSE: R2'den indir ve HİÇBİR TAKI EKLEMEDEN (saf) gönder
         const buffer = await r2Indir(row.olcum_pdf_url);
         res.json({ 
-            olcum_pdf_url: "data:application/pdf;base64," + buffer.toString('base64'), 
+            olcum_pdf_url: buffer.toString('base64'), // Takıyı kaldırdık!
             olcum_pdf_sayfa: row.olcum_pdf_sayfa 
         });
     } catch(err) { res.status(500).json({ error: err.message }); }
 });
-
 app.post('/api/sertifika-no-uret', async (req, res) => {
     try {
         const { sertifika_id } = req.body;
