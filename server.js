@@ -1575,7 +1575,7 @@ app.post('/api/turkak/akredite-no-ver-toplu', async (req, res) => {
                     method:'POST',
                     headers:{
                         'Content-Type':'application/json',
-                        'Authorization':`Bearer ${token}`
+                        'Authorization': token
                     },
                     body: JSON.stringify(payload)
                 }
@@ -1616,7 +1616,7 @@ try {
                 `https://api.turkak.org.tr/TBDS/api/v1/CalibrationService/CalibrationCertificateGetCertificate/${turkakId}`,
                 {
                     headers:{
-                        'Authorization':`Bearer ${token}`
+                        'Authorization': token
                     }
                 }
             );
