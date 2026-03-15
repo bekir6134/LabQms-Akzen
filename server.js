@@ -1311,23 +1311,11 @@ app.get('/api/sertifikalar/:id/qr', async (req, res) => {
 // Ölçüm PDF yükle
 app.post('/api/sertifikalar/:id/olcum-pdf', async (req, res) => {
     try {
-        let { pdf_base64, sayfa_sayisi } = req.body;
+        const { pdf_base64, sayfa_sayisi } = req.body;
         if(!pdf_base64) return res.status(400).json({ error: 'PDF verisi eksik' });
-        
-        // Base64 takısını temizle
-        if(pdf_base64.includes('base64,')) {
-            pdf_base64 = pdf_base64.split('base64,')[1];
-        }
-        
-        const pdfBuffer = Buffer.from(pdf_base64, 'base64');
-        const r2Key = `olcum_pdfleri/sertifika_${req.params.id}_olcum.pdf`;
-        
-        // İŞTE EKSİK OLAN HAYAT KURTARICI KOD BURADA: R2'ye yüklüyoruz.
-        await r2Yukle(r2Key, pdfBuffer);
-
         const result = await pool.query(
             `UPDATE sertifikalar SET olcum_pdf_url=$1, olcum_pdf_sayfa=$2 WHERE id=$3 RETURNING id, olcum_pdf_sayfa`,
-            [r2Key, sayfa_sayisi||0, req.params.id]
+            [pdf_base64, sayfa_sayisi||0, req.params.id]
         );
         res.json(result.rows[0]);
     } catch(err) { res.status(500).json({ error: err.message }); }
@@ -1336,26 +1324,15 @@ app.post('/api/sertifikalar/:id/olcum-pdf', async (req, res) => {
 // Ölçüm PDF getir (önizleme)
 app.get('/api/sertifikalar/:id/olcum-pdf', async (req, res) => {
     try {
-        const result = await pool.query('SELECT olcum_pdf_url, olcum_pdf_sayfa FROM sertifikalar WHERE id=$1', [req.params.id]);
+        const result = await pool.query(
+            'SELECT olcum_pdf_url, olcum_pdf_sayfa FROM sertifikalar WHERE id=$1',
+            [req.params.id]
+        );
         if(!result.rows.length) return res.status(404).json({ error: 'Bulunamadı' });
         const row = result.rows[0];
         if(!row.olcum_pdf_url) return res.status(404).json({ error: 'PDF yok' });
-        
-        // Eski DB kayıtları için koruma
-        if (row.olcum_pdf_url.length > 500) {
-            let safBase64 = row.olcum_pdf_url;
-            if(safBase64.includes('base64,')) {
-                safBase64 = safBase64.split('base64,')[1];
-            }
-            return res.json({ olcum_pdf_url: safBase64, olcum_pdf_sayfa: row.olcum_pdf_sayfa });
-        }
-
-        // Yeni kayıtları R2'den çek
         const buffer = await r2Indir(row.olcum_pdf_url);
-        res.json({ 
-            olcum_pdf_url: buffer.toString('base64'), 
-            olcum_pdf_sayfa: row.olcum_pdf_sayfa 
-        });
+        res.json({ olcum_pdf_url: buffer.toString('base64'), olcum_pdf_sayfa: row.olcum_pdf_sayfa });
     } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
