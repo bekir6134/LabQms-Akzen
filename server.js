@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const nodemailer = require('nodemailer');
 const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 
 // Cloudflare R2 client
@@ -1015,6 +1016,24 @@ app.delete('/api/cevre-kosullari/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+
+// SMTP transporter oluştur (ayarlardan)
+async function smtpTransporter() {
+    const res = await pool.query(
+        "SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from_name','smtp_secure')"
+    );
+    const a = {};
+    res.rows.forEach(r => a[r.anahtar] = r.deger);
+    if(!a.smtp_host || !a.smtp_user || !a.smtp_pass)
+        throw new Error('SMTP ayarları eksik. Lütfen Ayarlar sayfasından yapılandırın.');
+    return nodemailer.createTransport({
+        host: a.smtp_host,
+        port: parseInt(a.smtp_port || '587'),
+        secure: a.smtp_secure === 'true',
+        auth: { user: a.smtp_user, pass: a.smtp_pass }
+    });
+}
+
 // --- SERTİFİKALAR ---
 app.get('/api/sertifikalar', async (req, res) => {
     try {
@@ -1293,38 +1312,118 @@ app.get('/api/sertifikalar/:id/olcum-pdf', async (req, res) => {
     } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
-// Mail gönder (tek) - imzalı PDF kontrolü
+// SMTP test endpoint
+app.post('/api/smtp-test', async (req, res) => {
+    try {
+        const ayarRes = await pool.query(
+            "SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('smtp_user','smtp_from_name','lab_adi')"
+        );
+        const a = {};
+        ayarRes.rows.forEach(r => a[r.anahtar] = r.deger);
+        const transporter = await smtpTransporter();
+        await transporter.sendMail({
+            from: `"${a.smtp_from_name||a.lab_adi||'LabQMS'}" <${a.smtp_user}>`,
+            to: a.smtp_user,
+            subject: 'LabQMS Pro - SMTP Test',
+            html: '<p>SMTP bağlantısı başarılı! LabQMS Pro mail sistemi çalışıyor.</p>'
+        });
+        res.json({ ok: true });
+    } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// Mail gönder (tek) - nodemailer + R2 imzalı PDF
 app.post('/api/sertifika-mail/:id', async (req, res) => {
     try {
-        const result = await pool.query(
-            'SELECT asama, sertifika_pdf, sertifika_no, imzali_pdf_var FROM sertifikalar WHERE id=$1',
-            [req.params.id]
-        );
+        const result = await pool.query(`
+            SELECT s.id, s.asama, s.sertifika_pdf, s.sertifika_no, s.cihaz_adi,
+                   s.imalatci, s.seri_no, s.envanter_no, s.kal_tarihi,
+                   m.firma_adi, m.sube_adi, m.sertifika_mailleri
+            FROM sertifikalar s
+            LEFT JOIN musteriler m ON s.musteri_id = m.id
+            WHERE s.id=$1`, [req.params.id]);
+
         if(!result.rows.length) return res.status(404).json({ error: 'Sertifika bulunamadı' });
         const s = result.rows[0];
 
-        // İmzalı PDF kontrolü
-        if(!s.sertifika_pdf) {
-            return res.status(400).json({ 
-                error: 'Bu sertifika henüz imzalanmamış! Mail gönderilemez.',
-                asama: s.asama
-            });
-        }
-        if(s.asama !== 'onaylandı') {
-            return res.status(400).json({ 
-                error: `Sertifika onaylanmamış (mevcut aşama: ${s.asama}). Önce onaylanmalı.`,
-                asama: s.asama
-            });
-        }
+        if(!s.sertifika_pdf)
+            return res.status(400).json({ error: 'Bu sertifika henüz imzalanmamış!' });
+        if(s.asama !== 'onaylandı')
+            return res.status(400).json({ error: `Sertifika onaylanmamış (${s.asama})` });
 
-        // Aşamayı güncelle
+        const mailler = s.sertifika_mailleri || [];
+        if(!mailler.length)
+            return res.status(400).json({ error: 'Müşteri sertifika mail adresi tanımlı değil!' });
+
+        const ayarRes = await pool.query(
+            "SELECT anahtar, deger FROM ayarlar WHERE anahtar IN ('lab_adi','smtp_user','smtp_from_name')"
+        );
+        const ayar = {};
+        ayarRes.rows.forEach(r => ayar[r.anahtar] = r.deger);
+
+        // İmzalı PDF R2'den indir
+        const pdfBuffer = await r2Indir(s.sertifika_pdf);
+
+        const firmaAdi = s.sube_adi ? `${s.firma_adi} - ${s.sube_adi}` : s.firma_adi;
+        const kalTarihi = s.kal_tarihi ? new Date(s.kal_tarihi).toLocaleDateString('tr-TR') : '-';
+        const labAdi = ayar.lab_adi || 'Kalibrasyon Laboratuvarı';
+
+        const htmlIcerik = `
+        <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:20px;">
+            <div style="background:#1E40AF;color:white;padding:20px;border-radius:8px 8px 0 0;">
+                <h2 style="margin:0;">${labAdi}</h2>
+                <p style="margin:5px 0 0;">Kalibrasyon Sertifikası Bildirimi</p>
+            </div>
+            <div style="background:#f8fafc;padding:20px;border:1px solid #e2e8f0;">
+                <p>Sayın <strong>${firmaAdi}</strong>,</p>
+                <p>Aşağıda bilgileri yer alan cihazınıza ait kalibrasyon sertifikasına ulaşabilirsiniz.</p>
+                <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                    <tr style="background:#1E40AF;color:white;">
+                        <th style="padding:10px;text-align:left;">Cihaz</th>
+                        <th style="padding:10px;text-align:left;">Marka/Model</th>
+                        <th style="padding:10px;text-align:left;">Seri No</th>
+                        <th style="padding:10px;text-align:left;">Envanter No</th>
+                        <th style="padding:10px;text-align:left;">Kal. Tarihi</th>
+                        <th style="padding:10px;text-align:center;">Sertifika No</th>
+                    </tr>
+                    <tr style="background:white;">
+                        <td style="padding:10px;border-bottom:1px solid #e2e8f0;">${s.cihaz_adi||'-'}</td>
+                        <td style="padding:10px;border-bottom:1px solid #e2e8f0;">${s.imalatci||'-'}</td>
+                        <td style="padding:10px;border-bottom:1px solid #e2e8f0;">${s.seri_no||'-'}</td>
+                        <td style="padding:10px;border-bottom:1px solid #e2e8f0;">${s.envanter_no||'-'}</td>
+                        <td style="padding:10px;border-bottom:1px solid #e2e8f0;">${kalTarihi}</td>
+                        <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:center;"><strong>${s.sertifika_no||'-'}</strong></td>
+                    </tr>
+                </table>
+                <p style="color:#64748b;font-size:0.85rem;">Sertifika PDF dosyası bu mailin ekinde bulunmaktadır.</p>
+            </div>
+            <div style="background:#e2e8f0;padding:12px;border-radius:0 0 8px 8px;text-align:center;font-size:0.8rem;color:#64748b;">
+                ${labAdi} | Bu mail otomatik gönderilmiştir.
+            </div>
+        </div>`;
+
+        const transporter = await smtpTransporter();
+        await transporter.sendMail({
+            from: `"${ayar.smtp_from_name||labAdi}" <${ayar.smtp_user}>`,
+            to: mailler.join(', '),
+            subject: `Kalibrasyon Sertifikası - ${s.sertifika_no||s.cihaz_adi} - ${firmaAdi}`,
+            html: htmlIcerik,
+            attachments: [{
+                filename: `Sertifika_${s.sertifika_no||s.id}.pdf`,
+                content: pdfBuffer,
+                contentType: 'application/pdf'
+            }]
+        });
+
         await pool.query(
             "UPDATE sertifikalar SET asama='sertifika_gönderildi' WHERE id=$1",
             [req.params.id]
         );
-        // TODO: Gerçek mail gönderimi (nodemailer entegrasyonu)
-        res.json({ success: true, mesaj: 'Sertifika gönderildi olarak işaretlendi.' });
-    } catch(err) { res.status(500).json({ error: err.message }); }
+
+        res.json({ success: true, mesaj: `Mail ${mailler.join(', ')} adresine gönderildi.` });
+    } catch(err) {
+        console.error('Mail gönderme hata:', err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Mail gönder (toplu)

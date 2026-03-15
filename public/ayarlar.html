@@ -213,6 +213,50 @@
     </div>
 </div>
 
+
+        <div class="card" style="margin-bottom:16px;">
+            <div class="card-header">
+                <div class="card-icon">📧</div>
+                <div class="card-title">Mail (SMTP) Ayarları</div>
+            </div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div>
+                        <label>SMTP Sunucu</label>
+                        <input type="text" id="smtp_host" placeholder="mail.sirket.com">
+                    </div>
+                    <div>
+                        <label>SMTP Port</label>
+                        <input type="number" id="smtp_port" placeholder="587">
+                    </div>
+                    <div>
+                        <label>Mail Adresi</label>
+                        <input type="email" id="smtp_user" placeholder="info@sirket.com">
+                    </div>
+                    <div>
+                        <label>Mail Şifresi</label>
+                        <input type="password" id="smtp_pass" placeholder="••••••••">
+                        <div class="hint">💡 Şifre kaydedilince gösterilmez</div>
+                    </div>
+                    <div>
+                        <label>Gönderen Adı</label>
+                        <input type="text" id="smtp_from_name" placeholder="Ayer Kalibrasyon">
+                    </div>
+                    <div>
+                        <label>Bağlantı Tipi</label>
+                        <select id="smtp_secure" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;">
+                            <option value="false">STARTTLS (Port 587)</option>
+                            <option value="true">SSL (Port 465)</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top:12px;">
+                    <button onclick="smtpTest()" style="background:#e0f2fe;color:#0369a1;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;">📨 Test Maili Gönder</button>
+                    <span id="smtpTestSonuc" style="margin-left:10px;font-size:0.85rem;"></span>
+                </div>
+            </div>
+        </div>
+
 <!-- LOGO -->
 <div class="card">
     <div class="card-header">
@@ -365,6 +409,12 @@
             set('turkak_username', 'turkak_username');
             set('turkak_file_id', 'turkak_file_id');
             set('turkak_dosya_no', 'turkak_dosya_no');
+            set('smtp_host', 'smtp_host');
+            set('smtp_port', 'smtp_port');
+            set('smtp_user', 'smtp_user');
+            set('smtp_from_name', 'smtp_from_name');
+            const smtpSecureEl = document.getElementById('smtp_secure');
+            if(smtpSecureEl && data.smtp_secure) smtpSecureEl.value = data.smtp_secure;
             set('kd_format', 'kd_format');
             set('kd_sayac', 'kd_sayac');
             set('kd_basamak', 'kd_basamak');
@@ -399,6 +449,16 @@
         } catch(e) { console.error(e); }
     }
 
+    async function smtpTest() {
+        const sonuc = document.getElementById('smtpTestSonuc');
+        sonuc.textContent = '⏳ Test ediliyor...';
+        try {
+            const res = await fetch('/api/smtp-test', {method:'POST'});
+            if(res.ok) sonuc.textContent = '✅ Mail gönderildi!';
+            else { const e = await res.json(); sonuc.textContent = '❌ ' + (e.error||'Hata'); }
+        } catch(e) { sonuc.textContent = '❌ Sunucuya ulaşılamadı'; }
+    }
+
     async function kaydet() {
         const btn = document.getElementById("saveBtn");
         btn.disabled = true; btn.textContent = "Kaydediliyor...";
@@ -414,6 +474,12 @@
             turkak_password: document.getElementById("turkak_password").value || undefined,
             turkak_file_id: document.getElementById("turkak_file_id").value,
             turkak_dosya_no: document.getElementById("turkak_dosya_no").value,
+            smtp_host: document.getElementById("smtp_host").value,
+            smtp_port: document.getElementById("smtp_port").value,
+            smtp_user: document.getElementById("smtp_user").value,
+            smtp_pass: document.getElementById("smtp_pass").value || undefined,
+            smtp_from_name: document.getElementById("smtp_from_name").value,
+            smtp_secure: document.getElementById("smtp_secure").value,
             kd_format: document.getElementById("kd_format").value,
             kd_sayac: document.getElementById("kd_sayac").value,
             kd_basamak: document.getElementById("kd_basamak").value,
