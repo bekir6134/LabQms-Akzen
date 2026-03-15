@@ -1575,7 +1575,8 @@ app.post('/api/turkak/akredite-no-ver-toplu', async (req, res) => {
                     method:'POST',
                     headers:{
                         'Content-Type':'application/json',
-                        'Authorization': token
+                        'Authorization': `Bearer ${token}`
+
                     },
                     body: JSON.stringify(payload)
                 }
@@ -1585,6 +1586,8 @@ app.post('/api/turkak/akredite-no-ver-toplu', async (req, res) => {
 
 console.log('TBDS save status:', response.status);
 console.log('TBDS save raw response:', rawText);
+console.log("TOKEN LENGTH:", token.length);
+console.log("TOKEN START:", token.slice(0,20));
 
 let data;
 try {
@@ -1616,7 +1619,8 @@ try {
                 `https://api.turkak.org.tr/TBDS/api/v1/CalibrationService/CalibrationCertificateGetCertificate/${turkakId}`,
                 {
                     headers:{
-                        'Authorization': token
+                        'Authorization': `Bearer ${token}`
+
                     }
                 }
             );
