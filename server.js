@@ -1,36 +1,60 @@
 require('dotenv').config();
 const express = require('express');
 const nodemailer = require('nodemailer');
-const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const https = require('https');
+const aws4  = require('aws4');
 
-// Cloudflare R2 client
-const r2 = new S3Client({
-    region: 'auto',
-    endpoint: process.env.R2_ENDPOINT,
-    credentials: {
-        accessKeyId:     process.env.R2_ACCESS_KEY_ID,
-        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-    },
-});
-const R2_BUCKET = process.env.R2_BUCKET_NAME || 'labqms-pdfs';
+const R2_BUCKET   = process.env.R2_BUCKET_NAME || 'labqms-pdfs';
+const R2_ACCOUNT  = process.env.R2_ACCOUNT_ID  || '';
+const R2_HOST     = `${R2_ACCOUNT}.r2.cloudflarestorage.com`;
+
+function r2Request(method, key, body) {
+    return new Promise((resolve, reject) => {
+        const opts = aws4.sign({
+            service:  's3',
+            region:   'auto',
+            method,
+            host:     R2_HOST,
+            path:     `/${R2_BUCKET}/${key}`,
+            headers:  body ? { 'Content-Type': 'application/pdf', 'Content-Length': body.length } : {},
+            body
+        }, {
+            accessKeyId:     process.env.R2_ACCESS_KEY_ID,
+            secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+        });
+
+        const req = https.request({
+            hostname: R2_HOST,
+            path:     `/${R2_BUCKET}/${key}`,
+            method,
+            headers:  opts.headers
+        }, res => {
+            const chunks = [];
+            res.on('data', c => chunks.push(c));
+            res.on('end', () => {
+                if(res.statusCode >= 300) {
+                    reject(new Error(`R2 HTTP ${res.statusCode}: ${Buffer.concat(chunks).toString()}`));
+                } else {
+                    resolve(Buffer.concat(chunks));
+                }
+            });
+        });
+        req.on('error', reject);
+        if(body) req.write(body);
+        req.end();
+    });
+}
 
 async function r2Yukle(key, buffer) {
-    await r2.send(new PutObjectCommand({
-        Bucket: R2_BUCKET, Key: key, Body: buffer, ContentType: 'application/pdf',
-    }));
+    await r2Request('PUT', key, buffer);
     return key;
 }
 
 async function r2Indir(key) {
-    const resp = await r2.send(new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }));
-    const chunks = [];
-    for await (const chunk of resp.Body) chunks.push(chunk);
-    return Buffer.concat(chunks);
+    return await r2Request('GET', key, null);
 }
-const puppeteer = require('puppeteer-core');
 const QRCode    = require('qrcode');
 const { PDFDocument } = require('pdf-lib');
-const chromium  = require('@sparticuz/chromium');
 const { Pool } = require('pg');
 const path = require('path');
 const cors = require('cors');
