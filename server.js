@@ -1205,92 +1205,109 @@ app.get('/api/sertifikalar/:id/tam', async (req, res) => {
     } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
-// Sertifika PDF üret (Puppeteer)
+// === KRİTİK DÜZELTME ALANI 1: PDF BİRLEŞTİRME VE İNDİRME ===
 app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
     let browser;
     try {
-        // Ölçüm PDF'ini DB'den çek
-        const sertRow = await pool.query(
-            'SELECT olcum_pdf_url, sertifika_no, cihaz_adi FROM sertifikalar WHERE id=$1',
-            [req.params.id]
-        );
+        const sertRow = await pool.query('SELECT olcum_pdf_url, sertifika_no, cihaz_adi FROM sertifikalar WHERE id=$1', [req.params.id]);
         if(!sertRow.rows.length) return res.status(404).json({ error: 'Sertifika bulunamadı' });
         const sert = sertRow.rows[0];
 
-        // S1+S2 HTML → PDF (Puppeteer)
-        const onizleUrl = `${req.protocol}://${req.get('host')}/sertifika-onizle.html?id=${req.params.id}&print=1`;
-        // Railway'de sistem Chromium'unu kullan
-        const execPath = process.env.CHROMIUM_PATH || 
-            require('child_process').execSync('which chromium || which chromium-browser || which google-chrome || echo ""')
-            .toString().trim() || await chromium.executablePath();
+        // Railway içinde dışarıya çıkmadan direkt kendi içine bağlanıyoruz
+        const onizleUrl = `http://127.0.0.1:${PORT}/sertifika-onizle.html?id=${req.params.id}&print=1`;
+        
+        // CHROMIUM TANIMLAMA HATASI ÇÖZÜMÜ
+        let exePath;
+        try {
+            // Önce @sparticuz/chromium'u dene
+            exePath = await chromium.executablePath();
+        } catch (e) {
+            // Bulamazsa sistemdeki Chromium'u bul (Railway/Linux için yedek plan)
+            try {
+                exePath = require('child_process').execSync('which chromium || which chromium-browser || which google-chrome').toString().trim();
+            } catch (inner) {
+                exePath = '/usr/bin/google-chrome'; // Son çare
+            }
+        }
 
+        // Tarayıcıyı Başlat
         browser = await puppeteer.launch({
-            executablePath: execPath,
+            executablePath: exePath,
             headless: 'new',
             args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
+                '--no-sandbox', 
+                '--disable-setuid-sandbox', 
+                '--disable-dev-shm-usage', 
                 '--disable-gpu',
-                '--no-first-run',
-                '--no-zygote',
-                '--single-process',
-                '--disable-extensions',
-            ],
+                '--single-process'
+            ]
         });
+
         const page = await browser.newPage();
         await page.setViewport({ width: 794, height: 1123 });
-        await page.goto(onizleUrl, { waitUntil: 'networkidle0', timeout: 30000 });
-        await page.waitForSelector('.a4', { timeout: 10000 }).catch(()=>{});
-        await new Promise(r => setTimeout(r, 1500));
+        
+        // Sayfayı yükle (networkidle2 daha esnektir, çökme ihtimalini azaltır)
+        await page.goto(onizleUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+        await page.waitForSelector('.a4', { timeout: 15000 }).catch(()=>{});
+        
+        // Fontların ve QR kodun tam yüklenmesi için 2 saniye bekle
+        await new Promise(r => setTimeout(r, 2000));
 
-        const s1s2Buffer = await page.pdf({
-            format: 'A4',
-            margin: { top: '0', right: '0', bottom: '0', left: '0' },
-            printBackground: true,
-            preferCSSPageSize: true,
+        // PDF'i Oluştur (S1 ve S2)
+        const s1s2Buffer = await page.pdf({ 
+            format: 'A4', 
+            printBackground: true, 
+            preferCSSPageSize: true 
         });
+        
         await browser.close();
         browser = null;
 
         let sonPdfBuffer;
 
-        // Ölçüm PDF varsa birleştir
-        if(sert.olcum_pdf_url) {
-            const olcumBytes = Buffer.from(sert.olcum_pdf_url, 'base64');
-            const birlesikDoc = await PDFDocument.create();
+        // ÖLÇÜM PDF BİRLEŞTİRME (3. Sayfa)
+        if(sert.olcum_pdf_url && sert.olcum_pdf_url.trim() !== '') {
+            try {
+                let olcumBytes;
+                // R2'den çek veya eski base64'ü al
+                if (sert.olcum_pdf_url.length > 500) {
+                    let rawBase64 = sert.olcum_pdf_url;
+                    if (rawBase64.includes('base64,')) rawBase64 = rawBase64.split('base64,')[1];
+                    olcumBytes = Buffer.from(rawBase64, 'base64');
+                } else {
+                    olcumBytes = await r2Indir(sert.olcum_pdf_url); 
+                }
 
-            // S1+S2 sayfaları ekle
-            const s1s2Doc = await PDFDocument.load(s1s2Buffer);
-            const s1s2Pages = await birlesikDoc.copyPages(s1s2Doc, s1s2Doc.getPageIndices());
-            s1s2Pages.forEach(p => birlesikDoc.addPage(p));
+                const birlesikDoc = await PDFDocument.create();
+                
+                // İlk iki sayfayı ekle
+                const s1s2Doc = await PDFDocument.load(s1s2Buffer);
+                const s1s2Pages = await birlesikDoc.copyPages(s1s2Doc, s1s2Doc.getPageIndices());
+                s1s2Pages.forEach(p => birlesikDoc.addPage(p));
 
-            // Ölçüm PDF sayfaları ekle
-            const olcumDoc = await PDFDocument.load(olcumBytes);
-            const olcumPages = await birlesikDoc.copyPages(olcumDoc, olcumDoc.getPageIndices());
-            olcumPages.forEach(p => birlesikDoc.addPage(p));
+                // Ölçüm sayfalarını ekle
+                const olcumDoc = await PDFDocument.load(olcumBytes);
+                const olcumPages = await birlesikDoc.copyPages(olcumDoc, olcumDoc.getPageIndices());
+                olcumPages.forEach(p => birlesikDoc.addPage(p));
 
-            const birlesikBytes = await birlesikDoc.save();
-            sonPdfBuffer = Buffer.from(birlesikBytes);
+                const birlesikBytes = await birlesikDoc.save();
+                sonPdfBuffer = Buffer.from(birlesikBytes);
+                
+            } catch (mergeErr) {
+                console.error("PDF Birleştirme Hatası:", mergeErr);
+                throw new Error("Ölçüm PDF dosyası okunamadı veya bozuk.");
+            }
         } else {
             sonPdfBuffer = s1s2Buffer;
         }
 
-        // DB'ye kaydet
-        await pool.query(
-            'UPDATE sertifikalar SET sertifika_pdf=$1 WHERE id=$2',
-            [sonPdfBuffer.toString('base64'), req.params.id]
-        );
-
-        const dosyaAdi = `sertifika-${sert.sertifika_no || req.params.id}.pdf`;
-        const preview = req.query.preview === '1';
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `${preview ? 'inline' : 'attachment'}; filename="${dosyaAdi}"`);
+        res.setHeader('Content-Disposition', `attachment; filename="sertifika-${req.params.id}.pdf"`);
         res.send(sonPdfBuffer);
 
     } catch(err) {
         if(browser) await browser.close().catch(()=>{});
-        console.error('PDF üretim hata:', err);
+        console.error("SUNUCU PDF HATASI:", err);
         res.status(500).json({ error: err.message });
     }
 });
