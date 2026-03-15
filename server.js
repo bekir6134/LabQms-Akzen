@@ -3,6 +3,8 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const https = require('https');
 const aws4  = require('aws4');
+const puppeteer = require('puppeteer-core'); // Bunu kontrol et
+const chromium = require('@sparticuz/chromium');
 
 const R2_BUCKET   = process.env.R2_BUCKET_NAME || 'labqms-pdfs';
 const R2_ACCOUNT  = process.env.R2_ACCOUNT_ID  || '';
