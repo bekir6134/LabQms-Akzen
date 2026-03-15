@@ -4,10 +4,6 @@ const nodemailer = require('nodemailer');
 const https = require('https');
 const aws4  = require('aws4');
 
-// İŞTE EKSİK OLAN HAYATİ KÜTÜPHANELER BURADA:
-const puppeteer = require('puppeteer-core');
-const chromium = require('@sparticuz/chromium');
-
 const R2_BUCKET   = process.env.R2_BUCKET_NAME || 'labqms-pdfs';
 const R2_ACCOUNT  = process.env.R2_ACCOUNT_ID  || '';
 const R2_HOST     = `${R2_ACCOUNT}.r2.cloudflarestorage.com`;
@@ -1243,31 +1239,17 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
             ],
         });
         const page = await browser.newPage();
-        
-        // 1. DOKUNUŞ: Çözünürlük ölçeğini (deviceScaleFactor) artırıyoruz. 
-        // Bu, logoların ve çizgilerin çok daha keskin çıkmasını sağlar.
-        await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 2 });
-        
-        // 2. DOKUNUŞ: networkidle2 yerine networkidle0 kullanıyoruz. 
-        // Sayfadaki tüm resimler, QR kodlar ve dış bağlantılar tamamen inene kadar bekler.
-        await page.goto(onizleUrl, { waitUntil: 'networkidle0', timeout: 60000 });
-        
-        // 3. DOKUNUŞ: En Kritik Kısım. Web fontlarının (Google Fonts) sisteme
-        // tamamen yüklendiğinden ve işlendiğinden emin oluyoruz.
-        await page.evaluateHandle('document.fonts.ready');
-        
-        await page.waitForSelector('.a4', { timeout: 15000 }).catch(()=>{});
-        
-        // Ekstra çizim payı
-        await new Promise(r => setTimeout(r, 2000));
+        await page.setViewport({ width: 794, height: 1123 });
+        await page.goto(onizleUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+        await page.waitForSelector('.a4', { timeout: 10000 }).catch(()=>{});
+        await new Promise(r => setTimeout(r, 1500));
 
-        // PDF Çıktı Kalitesi
-        const s1s2Buffer = await page.pdf({ 
-            format: 'A4', 
-            printBackground: true, 
-            preferCSSPageSize: true
+        const s1s2Buffer = await page.pdf({
+            format: 'A4',
+            margin: { top: '0', right: '0', bottom: '0', left: '0' },
+            printBackground: true,
+            preferCSSPageSize: true,
         });
-        
         await browser.close();
         browser = null;
 

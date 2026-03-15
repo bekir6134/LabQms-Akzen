@@ -20,31 +20,17 @@
     /* SAYFA WRAPPER */
     .sayfa-ici { padding: 80px 20px 40px; display:flex; flex-direction:column; align-items:center; gap:24px; }
 
-    /* A4 SAYFA GÖRÜNÜMÜ */
+    /* A4 SAYFA */
     .a4 { width:210mm; background:white; padding:12mm 15mm 10mm; box-shadow:0 4px 24px rgba(0,0,0,0.15); position:relative; }
-    
-    /* ========================================================
-       YENİ EKLENEN: VEKTÖREL (CAM GİBİ) PDF BASKI GARANTİSİ
-    ======================================================== */
     @media print {
-        * {
-            box-shadow: none !important;
-            text-shadow: none !important;
-            filter: none !important;
-            backdrop-filter: none !important;
-            transform: none !important;
-            transition: none !important;
-            animation: none !important;
-            zoom: 1 !important;
-            opacity: 1 !important;
-            -webkit-font-smoothing: antialiased !important;
-            text-rendering: optimizeLegibility !important;
-        }
-        @page { size: A4; margin: 0; }
-        body { margin: 0 !important; padding: 0 !important; background-color: white !important; }
-        .a4 { border: none !important; margin: 0 !important; width: 210mm !important; height: 297mm !important; page-break-after: always; box-shadow:none !important; }
-        .toolbar { display: none !important; }
-        .sayfa-ici { padding: 0 !important; gap: 0 !important; }
+        html, body { margin:0; padding:0; background:white; width:210mm; }
+        .toolbar { display:none !important; }
+        .sayfa-ici { padding:0 !important; gap:0 !important; background:white; }
+        .a4 { width:210mm !important; box-shadow:none; margin:0 !important;
+              padding:12mm 15mm 10mm !important;
+              page-break-after:always; break-after:page;
+              page-break-inside:avoid; break-inside:avoid; }
+        @page { size:210mm 297mm; margin:0; }
     }
 
     /* RENKLer */
@@ -56,6 +42,7 @@
     small { font-size:7pt; color:var(--orta); font-style:italic; }
 
     /* ─── SAYFA 1 ─── */
+    /* HEADER */
     .s1-header { display:grid; grid-template-columns:34mm 105mm 37mm; gap:0; margin-bottom:0; }
     .logo-kutu { display:flex; align-items:center; justify-content:center; min-height:24mm; color:#aaa; font-size:7pt; text-align:center; padding:4px; }
     .qr-kutu   { border:0.5pt solid var(--sinir); display:flex; align-items:center; justify-content:center; min-height:18mm; color:#bbb; font-size:6pt; text-align:center; padding:4px; margin-top:1mm; }
@@ -65,6 +52,8 @@
     .sert-baslik    { font-size:13pt; font-weight:700; color:var(--koyu); text-align:center; margin-top:3mm; }
     .sert-baslik-en { font-size:10pt; color:var(--orta); font-style:italic; text-align:center; }
     .turkak-kutu { text-align:center; padding:3mm; }
+    .turkak-adi  { font-size:9pt; font-weight:700; color:var(--kirmizi); }
+    .turkak-alt  { font-size:6.5pt; color:var(--lacivert); line-height:1.4; margin-top:1mm; }
     .qr-sag      { text-align:center; padding:2mm; margin-top:1mm; }
     .qr-placeholder { width:24mm; height:24mm; background:#f0f0f0; display:inline-flex; align-items:center; justify-content:center; font-size:7pt; color:#999; border:1px solid #ddd; }
     .sag-blok    { display:flex; flex-direction:column; }
@@ -97,23 +86,40 @@
 
     /* ─── SAYFA 2 ─── */
     .s2-header { display:grid; grid-template-columns:1fr 1fr; margin-bottom:0; }
+    .s2-lab-adi { font-size:9pt; font-weight:700; color:var(--lacivert); text-align:justify; }
+    .s2-sert-no { font-size:9pt; font-weight:700; color:var(--lacivert); text-align:right; }
+
     .tarih-satir { display:grid; grid-template-columns:62mm 28mm 56mm auto; font-size:8pt; border-bottom:0.5pt solid var(--sinir); padding:2px 0; }
     .tarih-baslik { font-weight:700; }
+
     .bolum-baslik { background:var(--lacivert); color:white; font-size:8.5pt; font-weight:700; padding:3px 5px; margin:3mm 0 1mm; }
+
     .icerik-tablo { width:100%; border-collapse:collapse; }
     .icerik-tablo td { font-size:8pt; padding:2px 4px 2px; border-bottom:0.5pt solid var(--sinir); vertical-align:top; }
     .icerik-tablo .ic-baslik { font-weight:700; width:72mm; padding-left:6px; }
     .icerik-tablo .ic-en { font-size:7pt; font-style:italic; font-weight:400; }
+
     .s2-metin    { font-size:8pt; color:var(--koyu); line-height:1.4; margin-bottom:1mm; }
+    .s2-metin-en { font-size:7pt; color:var(--orta); font-style:italic; line-height:1.35; margin-bottom:2mm; }
+
     .prosedur-tablo { width:100%; border-collapse:collapse; margin-bottom:2mm; }
     .prosedur-tablo th { background:var(--tablo-bg); font-size:8pt; padding:3px 5px; text-align:center; border:0.3pt solid var(--sinir); font-weight:700; }
     .prosedur-tablo td { font-size:8pt; padding:3px 5px; border:0.3pt solid var(--sinir); text-align:center; }
     .prosedur-tablo tr:nth-child(even) td { background:var(--acik); }
+
     .ref-tablo { width:100%; border-collapse:collapse; margin-bottom:2mm; table-layout:fixed; }
     .ref-tablo th { background:var(--tablo-bg); font-size:7pt; padding:3px 4px; text-align:center; border:0.3pt solid var(--sinir); font-weight:700; vertical-align:middle; word-wrap:break-word; }
     .ref-tablo td { font-size:7pt; padding:3px 4px; border:0.3pt solid var(--sinir); vertical-align:middle; text-align:center; word-wrap:break-word; }
     .ref-tablo td:nth-child(2) { text-align:left; }
     .ref-tablo tr:nth-child(even) td { background:var(--acik); }
+
+    /* PRINT */
+    @media print {
+        .toolbar { display:none !important; }
+        body { background:white; }
+        .sayfa-ici { padding:0; }
+        .a4 { box-shadow:none; width:100%; padding:12mm 15mm 10mm; }
+    }
 </style>
 </head>
 <body>
@@ -133,12 +139,11 @@
 <div class="sayfa-ici" id="sayfaIci">
     <div style="color:#64748b;padding:60px;text-align:center;">⏳ Yükleniyor...</div>
 </div>
-
 <script>
 async function yukle() {
     const params = new URLSearchParams(window.location.search);
     const sertId = params.get('id');
-    const isPrint = params.get('print') === '1';
+    const isPrint = params.get('print') === '1'; // Puppeteer (Server) mi geldi kontrolü
 
     if(!sertId) { document.getElementById('sayfaIci').innerHTML = '<div style="padding:60px;color:#ef4444;">Sertifika ID bulunamadı</div>'; return; }
 
@@ -289,9 +294,12 @@ async function yukle() {
             </div>
         </div>`;
 
+        // DİKKAT: EĞER BİZİ "SERVER.JS" (Puppeteer) ÇAĞIRIYORSA EKRANA 3. SAYFAYI ÇİZME! 
+        // ÇÜNKÜ SERVER.JS ORİJİNAL DOSYAYI ZATEN ARKA PLANDA ZIMBALAYACAK. 
         if(s.olcum_pdf_url && !isPrint) {
             const sayfaIci = document.getElementById('sayfaIci');
             try {
+                // R2'den saf base64'ü çekiyoruz (atob hatası olmaması için)
                 const pdfRes = await fetch('/api/sertifikalar/' + sertId + '/olcum-pdf');
                 if (!pdfRes.ok) throw new Error("Ölçüm PDF alınamadı");
                 
@@ -353,51 +361,50 @@ async function yukle() {
     }
 }
 
-// =========================================================================
-// YENİ EKLENEN: SUNUCUDAN BİRLEŞİK, NET VE E-İMZA UYUMLU PDF ÇEKME FONKSİYONU
-// =========================================================================
-// YENİ E-İMZA VE İNDİRME FONKSİYONU - DİREKT BACKEND'E BAĞLANIR
+// YENİ E-İMZA VE İNDİRME FONKSİYONU - EKRAN GÖRÜNTÜSÜ ALMAZ, DİREKT BACKEND'E BAĞLANIR
 async function pdfKaydet(mod) {
     const btn = document.getElementById('btnPdfKaydet');
     if(btn) { btn.disabled = true; btn.textContent = '⏳ Hazırlanıyor...'; }
 
     try {
-        const params = new URLSearchParams(window.location.search);
-        const sertId = params.get('id');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+        const sayfalar = document.querySelectorAll('.a4');
 
-        const response = await fetch('/api/sertifikalar/' + sertId + '/pdf');
-        
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error || "Sunucu PDF oluşturamadı.");
-        }
-
-        const blob = await response.blob();
-
-        if (mod === 'base64') {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
+        for(let i = 0; i < sayfalar.length; i++) {
+            const sayfa = sayfalar[i];
+            const canvas = await html2canvas(sayfa, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                width: sayfa.scrollWidth,
+                height: sayfa.scrollHeight,
             });
-        } else {
-            const blobUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = `Sertifika_${sertId}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.92);
+            const pdfW = 210;
+            const pdfH = (canvas.height * pdfW) / canvas.width;
+
+            if(i > 0) pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
         }
+
+        if(mod === 'base64') {
+            return pdf.output('datauristring').split(',')[1];
+        }
+
+        const pdfBlob = pdf.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        window.open(blobUrl, '_blank');
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
 
     } catch(e) {
-        alert('Hata: ' + e.message);
-        console.error("PDF Kaydet Hatası:", e);
-    } finally {
-        if(btn) { btn.disabled = false; btn.textContent = '📥 PDF İndir'; }
+        alert('PDF oluşturulamadı: ' + e.message);
+        console.error(e);
     }
+
+    if(btn) { btn.disabled = false; btn.textContent = '📥 PDF İndir'; }
 }
 
 window.onload = () => {
@@ -410,8 +417,7 @@ window.onload = () => {
 };
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
-</body>
-</html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
