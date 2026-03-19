@@ -17,7 +17,7 @@ function r2Request(method, key, body) {
             method,
             host:     R2_HOST,
             path:     `/${R2_BUCKET}/${encodedKey}`,
-            headers:  body ? { 'Content-Type': 'application/pdf', 'Content-Length': body.length } : {},app.post(
+            headers:  body ? { 'Content-Type': 'application/pdf', 'Content-Length': body.length } : {},
             body
         }, {
             accessKeyId:     process.env.R2_ACCESS_KEY_ID,
@@ -434,25 +434,6 @@ app.post('/api/referans-takip-guncelle', async (req, res) => {
             SET sertifika_no = $2, izlenebilirlik = $3, kal_tarihi = $4, sonraki_kal_tarihi = $5 
             WHERE id = $1 RETURNING *`;
         const result = await pool.query(query, [id, sertifika_no, izlenebilirlik, kal_tarihi, sonraki_kal_tarihi]);
-        res.json(result.rows[0]);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-
-app.post('/api/referans-takip', async (req, res) => {
-    try {
-        const { referans_id, islem_tipi, sertifika_no, izlenebilirlik, kal_tarihi, sonraki_kal_tarihi } = req.body;
-
-        const result = await pool.query(`
-            INSERT INTO referans_takip 
-            (referans_id, islem_tipi, sertifika_no, izlenebilirlik, kal_tarihi, sonraki_kal_tarihi)
-            VALUES ($1,$2,$3,$4,$5,$6)
-            RETURNING *`,
-            [referans_id, islem_tipi, sertifika_no, izlenebilirlik, kal_tarihi, sonraki_kal_tarihi]
-        );
-
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
