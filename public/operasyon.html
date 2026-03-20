@@ -179,6 +179,18 @@
         #toast { visibility:hidden; min-width:260px; background-color:var(--success); color:#fff; text-align:center; border-radius:8px; padding:14px; position:fixed; z-index:9999; right:24px; top:24px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
         #toast.show { visibility:visible; }
         #toast.error { background-color:#ef4444; }
+
+        /* DROPDOWN MENÜ */
+        .act-wrap { position:relative; display:inline-block; }
+        .act-btn { background:#f8fafc; border:1px solid var(--border); padding:5px 11px; border-radius:6px; cursor:pointer; font-size:0.78rem; font-weight:600; color:var(--text); white-space:nowrap; }
+        .act-btn:hover { background:#e0e7ff; border-color:#a5b4fc; color:var(--primary); }
+        .act-drop { display:none; position:absolute; right:0; top:calc(100% + 4px); background:#fff; border:1px solid var(--border); border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,0.12); z-index:500; min-width:170px; overflow:hidden; }
+        .act-wrap.open .act-drop { display:block; }
+        .act-drop-item { padding:9px 15px; cursor:pointer; font-size:0.83rem; display:flex; align-items:center; gap:8px; color:var(--text); }
+        .act-drop-item:hover { background:#f1f5f9; }
+        .act-drop-item.danger { color:#dc2626; }
+        .act-drop-item.danger:hover { background:#fee2e2; }
+        .act-drop hr { margin:4px 0; border:none; border-top:1px solid var(--border); }
     </style>
 </head>
 <body>
@@ -1191,29 +1203,27 @@
             const tarih = s.kal_tarihi?new Date(s.kal_tarihi).toLocaleDateString('tr-TR'):'-';
             const pdfVar = s.olcum_pdf_var;
 
-            // Aşamaya göre butonlar
-            let butonlar = `<button class="btn btn-duzenle" onclick="sertDuzenle(${s.id})">✏️ Düzenle</button>`;
-            // Ölçüm PDF
-            if(!pdfVar) {
-                butonlar += `<button class="btn btn-pdf-yukle" onclick="olcumPdfYukle(${s.id})">📎 Ölçüm PDF</button>`;
-            } else {
-                butonlar += `<button class="btn btn-pdf-yukle" onclick="olcumPdfYukle(${s.id})" title="Değiştir">📎 Ölçüm PDF ✓</button>`;
-            }
-            // Tam sertifika önizle
-            butonlar += `<button class="btn btn-onizle" onclick="tamOnizle(${s.id})">👁️ Önizle</button>`;
+            // Ölçüm PDF (dropdown dışında kalır)
+            const olcumPdfBtn = !pdfVar
+                ? `<button class="btn btn-pdf-yukle" onclick="olcumPdfYukle(${s.id})">📎 Ölçüm PDF</button>`
+                : `<button class="btn btn-pdf-yukle" onclick="olcumPdfYukle(${s.id})" title="Değiştir">📎 Ölçüm PDF ✓</button>`;
 
-            // Aşamaya göre aksiyon butonları
+            // Dropdown içindeki aşamaya göre öğeler
+            let dropItems = `<div class="act-drop-item" onclick="tamOnizle(${s.id});menuKapat()">👁️ Önizle</div>`;
+            dropItems += `<div class="act-drop-item" onclick="sertDuzenle(${s.id});menuKapat()">✏️ Düzenle</div>`;
             if(asama==='hazırlanıyor' && pdfVar) {
-                butonlar += `<button class="btn btn-imzala" onclick="tekliImzala(${s.id})">✍️ İmzala</button>`;
+                dropItems += `<div class="act-drop-item" onclick="tekliImzala(${s.id});menuKapat()">✍️ İmzala</div>`;
             }
             if(asama==='imzalandı') {
-                butonlar += `<button class="btn btn-onayla" onclick="tekliOnayla(${s.id})">✅ Onayla</button>`;
+                dropItems += `<div class="act-drop-item" onclick="tekliOnayla(${s.id});menuKapat()">✅ Onayla</div>`;
             }
             if(asama==='onaylandı' || asama==='sertifika_gönderildi') {
-                butonlar += `<button class="btn btn-mail" onclick="tekliMail(${s.id})">📧 Mail</button>`;
+                dropItems += `<div class="act-drop-item" onclick="tekliMail(${s.id});menuKapat()">📧 Mail Gönder</div>`;
             }
-            butonlar += `<button class="btn btn-uygun" onclick="uygunsuzlukForm(${s.id})">⚠️ Uygunsuzluk</button>`;
-            butonlar += `<button class="btn" style="background:#fff1f2;color:#be123c;font-size:0.72rem;" onclick="icerikTemizle(${s.id})" title="Sertifikayı siler, iş emrinde tekrar oluşturulabilir">🗑️ Temizle</button>`;
+            dropItems += `<hr><div class="act-drop-item" onclick="uygunsuzlukForm(${s.id});menuKapat()">⚠️ Uygunsuzluk</div>`;
+            dropItems += `<div class="act-drop-item danger" onclick="icerikTemizle(${s.id});menuKapat()" title="Sertifikayı siler">🗑️ Temizle</div>`;
+
+            const butonlar = `${olcumPdfBtn}<div class="act-wrap" id="am-${s.id}"><button class="act-btn" onclick="menuToggle(${s.id},event)">İşlemler ▾</button><div class="act-drop">${dropItems}</div></div>`;
 
             return `<tr data-sert-id="${s.id}">
                 <td><input type="checkbox" class="sert-sec" data-id="${s.id}" onchange="secimGuncelle()"></td>
@@ -1933,6 +1943,14 @@
         } catch(e) {}
         await ieYukle();
     }
+
+    function menuToggle(id, e) {
+        e.stopPropagation();
+        document.querySelectorAll('.act-wrap.open').forEach(m => { if(m.id !== 'am-'+id) m.classList.remove('open'); });
+        document.getElementById('am-'+id).classList.toggle('open');
+    }
+    function menuKapat() { document.querySelectorAll('.act-wrap.open').forEach(m => m.classList.remove('open')); }
+    document.addEventListener('click', menuKapat);
 
     window.onload = init;
 </script>
