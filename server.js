@@ -411,8 +411,21 @@ ${t.teklif_notu ? `<div class="note-box"><strong>Not:</strong> ${t.teklif_notu}<
 
         let chromiumPath = process.env.CHROMIUM_PATH || '';
         if (!chromiumPath) {
-            try { chromiumPath = require('child_process').execSync('which chromium || which chromium-browser || which google-chrome', { timeout: 3000 }).toString().trim(); }
-            catch(e) { chromiumPath = 'chromium'; }
+            const candidates = [
+                '/nix/var/nix/profiles/default/bin/chromium',
+                '/run/current-system/sw/bin/chromium',
+                '/usr/bin/chromium',
+                '/usr/bin/chromium-browser',
+                '/usr/bin/google-chrome',
+                '/usr/bin/google-chrome-stable',
+            ];
+            const foundCandidate = candidates.find(p => { try { require('fs').accessSync(p); return true; } catch(e) { return false; } });
+            if (foundCandidate) {
+                chromiumPath = foundCandidate;
+            } else {
+                try { chromiumPath = require('child_process').execSync('which chromium || which chromium-browser || which google-chrome-stable || which google-chrome 2>/dev/null', { timeout: 3000 }).toString().trim(); }
+                catch(e) { chromiumPath = 'chromium-browser'; }
+            }
         }
 
         await new Promise((resolve, reject) => {
@@ -1856,4 +1869,13 @@ app.post('/api/sertifika-mail-toplu', async (req, res) => {
         );
         res.json({ success: true, basarili: idler.length });
     } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// Chromium path bilgisi (debug)
+app.get('/api/chromium-path', (req, res) => {
+    const { execSync } = require('child_process');
+    try {
+        const p = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null || which google-chrome 2>/dev/null || find /nix /usr -name "chromium" -type f 2>/dev/null | head -1 || echo "not found"', { timeout: 5000 }).toString().trim();
+        res.json({ path: p });
+    } catch(e) { res.json({ path: 'error', err: e.message }); }
 });
