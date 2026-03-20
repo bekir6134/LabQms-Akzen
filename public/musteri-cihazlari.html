@@ -198,6 +198,7 @@
 <script>
     let tumCihazlar = [];
     let kutuphaneCihazlar = [];
+    let labAdres = '';
 
     // ── ACCORDION ──
     function toggleAccordion() {
@@ -250,8 +251,15 @@
 
     // ── SAYFA YÜKLEMESİ ──
     async function sayfaYukle() {
-        const res = await fetch('/api/musteri-cihazlari-on-veriler');
+        const [res, ayarlarRes] = await Promise.all([
+            fetch('/api/musteri-cihazlari-on-veriler'),
+            fetch('/api/ayarlar')
+        ]);
         const data = await res.json();
+        const ayarlar = await ayarlarRes.json();
+
+        labAdres = ayarlar.adres || '';
+        document.getElementById("kalibrasyon_yeri").value = labAdres;
 
         // Müşteri select
         const mSel = document.getElementById("musteri_id");
@@ -386,10 +394,11 @@
     function formTemizle() {
         ["duzenle_id","musteri_id","kategori_id","cihaz_adi","marka","model",
          "seri_no","envanter_no","olcum_araligi","cozunurluk","metot_id",
-         "degerlendirme_kriteri","kalibrasyon_yeri"].forEach(id => {
+         "degerlendirme_kriteri"].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = "";
         });
+        document.getElementById("kalibrasyon_yeri").value = labAdres;
         document.getElementById("saveBtn").innerText = "🚀 Cihazı Kaydet";
     }
 
