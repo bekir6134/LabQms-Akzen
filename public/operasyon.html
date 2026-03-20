@@ -458,6 +458,9 @@
 <!-- ════ SEKME 2: SERTİFİKALAR ════ -->
 <div class="tab-panel" id="panel-sertifikalar">
 
+    <!-- DURUM KANBAN -->
+    <div class="kanban" id="sertKanban"></div>
+
     <!-- FİLTRE -->
     <div class="filter-wrap">
         <div class="filter-grid">
@@ -565,6 +568,11 @@
         'onaylandı':'Onaylandı', sertifika_gönderildi:'Sertifika Gönderildi'
     };
     const IE_ASAMALAR = ['kabul_edildi','hazırlanıyor','tamamlandı','imzalandı','onaylandı','sertifika_gönderildi'];
+    const SERT_ASAMALAR = ['hazırlanıyor','imzalandı','onaylandı','sertifika_gönderildi'];
+    const SERT_ASAMA_LABEL = {
+        'hazırlanıyor':'Hazırlanıyor', 'imzalandı':'İmzalandı',
+        'onaylandı':'Onaylandı', 'sertifika_gönderildi':'Sertifika Gönderildi'
+    };
 
     let tumIsEmirleri = [], filtreliIE = [];
     let tumSertifikalar = [], filtreliSert = [];
@@ -640,12 +648,41 @@
         ieFiltrele();
     }
 
+    function ieKanbanFiltrele(asama) {
+        const sel = document.getElementById("ie_filtre_asama");
+        sel.value = (sel.value === asama) ? '' : asama;
+        ieFiltrele();
+        document.querySelector('#panel-is-emirleri .card').scrollIntoView({behavior:'smooth', block:'start'});
+    }
+
+    function renderSertKanban() {
+        const el = document.getElementById("sertKanban");
+        if(!el) return;
+        const asamaFiltre = document.getElementById("s_filtre_asama").value;
+        el.innerHTML = SERT_ASAMALAR.map(asama => {
+            const sayi = tumSertifikalar.filter(s => (s.asama||'hazırlanıyor') === asama).length;
+            const aktif = asamaFiltre === asama;
+            return `<div class="kanban-col" onclick="sertKanbanFiltrele('${asama}')" style="cursor:pointer;${aktif ? 'box-shadow:0 0 0 2px var(--primary);' : ''}">
+                <div class="kanban-head kh-${asama}" style="text-align:center;" title="Bu durumu filtrele">
+                    ${SERT_ASAMA_LABEL[asama]} <span class="kanban-count">${sayi}</span>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function sertKanbanFiltrele(asama) {
+        const sel = document.getElementById("s_filtre_asama");
+        sel.value = (sel.value === asama) ? '' : asama;
+        sertFiltrele();
+        document.querySelector('#panel-sertifikalar .card').scrollIntoView({behavior:'smooth', block:'start'});
+    }
+
     function renderIEKanban(data) {
         const kanban = document.getElementById("ieKanban");
         kanban.innerHTML = IE_ASAMALAR.map(asama => {
             const kartlar = data.filter(r=>(r.asama||'kabul_edildi')===asama);
             return `<div class="kanban-col">
-                <div class="kanban-head kh-${asama}">
+                <div class="kanban-head kh-${asama}" onclick="ieKanbanFiltrele('${asama}')" style="cursor:pointer;" title="Bu aşamayı filtrele">
                     ${IE_ASAMA_LABEL[asama]} <span class="kanban-count">${kartlar.length}</span>
                 </div>
                 <div class="kanban-cards">
@@ -1096,6 +1133,7 @@
 
 
 
+        renderSertKanban();
         sertFiltrele();
         // İş emri aşamalarını sertifika aşamalarına göre güncelle
         await ieSertAsamaSync();
@@ -1146,6 +1184,7 @@
                 return sertSiralaYon === 'asc' ? va.localeCompare(vb,'tr') : vb.localeCompare(va,'tr');
             });
         }
+        renderSertKanban();
         renderSertListe(filtreliSert);
         secimGuncelle();
     }
