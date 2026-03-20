@@ -267,7 +267,7 @@ app.get('/api/teklif-on-veriler', async (req, res) => {
 app.get('/api/teklifler', async (req, res) => {
     try {
         const result = await pool.query(`
-            SELECT t.*, m.firma_adi, m.sube_adi, m.adres, m.il, m.ilce, m.yetkililer, m.telefonlar
+            SELECT t.*, m.firma_adi, m.sube_adi, m.adres, m.il, m.ilce, m.yetkililer, m.telefonlar, m.sertifika_mailleri
             FROM teklifler t
             LEFT JOIN musteriler m ON t.musteri_id = m.id
             ORDER BY t.olusturulma_tarihi DESC`);
@@ -289,6 +289,139 @@ app.put('/api/teklifler/:id', async (req, res) => {
 app.delete('/api/teklifler/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM teklifler WHERE id=$1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Durum güncelle
+app.patch('/api/teklifler/:id/durum', async (req, res) => {
+    try {
+        const { durum } = req.body;
+        await pool.query('UPDATE teklifler SET durum=$1 WHERE id=$2', [durum, req.params.id]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Teklif mail gönder
+app.post('/api/teklifler/:id/gonder', async (req, res) => {
+    try {
+        const { mailler } = req.body;
+        if (!mailler || !mailler.length) return res.status(400).json({ error: 'En az bir mail adresi gerekli' });
+
+        const teklifResult = await pool.query(
+            `SELECT t.*, m.firma_adi, m.sube_adi, m.adres, m.il, m.ilce FROM teklifler t LEFT JOIN musteriler m ON t.musteri_id = m.id WHERE t.id = $1`,
+            [req.params.id]
+        );
+        if (!teklifResult.rows.length) return res.status(404).json({ error: 'Teklif bulunamadı' });
+        const t = teklifResult.rows[0];
+
+        const ayarlarResult = await pool.query('SELECT anahtar, deger FROM ayarlar');
+        const ay = {};
+        ayarlarResult.rows.forEach(r => ay[r.anahtar] = r.deger);
+        if (!ay.smtp_host) return res.status(400).json({ error: 'SMTP ayarları yapılandırılmamış. Lütfen Ayarlar sayfasını kontrol edin.' });
+
+        const kalemler = (() => {
+            try {
+                const kd = typeof t.kalemler === 'object' ? t.kalemler : JSON.parse(t.kalemler || '{}');
+                return Array.isArray(kd) ? kd : (kd.items || []);
+            } catch(e) { return []; }
+        })();
+        const kdObj = (() => {
+            try {
+                const kd = typeof t.kalemler === 'object' ? t.kalemler : JSON.parse(t.kalemler || '{}');
+                return Array.isArray(kd) ? { yol_ucreti:0, konaklama_ucreti:0, kdv_oran:20 } : kd;
+            } catch(e) { return { yol_ucreti:0, konaklama_ucreti:0, kdv_oran:20 }; }
+        })();
+
+        const tarih = t.teklif_tarihi ? new Date(t.teklif_tarihi).toLocaleDateString('tr-TR') : '-';
+        const pb = t.para_birimi || '₺';
+        const fmt = v => parseFloat(v||0).toLocaleString('tr-TR', {minimumFractionDigits:2});
+        const araToplam = parseFloat(t.ara_toplam || 0);
+        const indOran = parseFloat(t.indirim_oran || 0);
+        const indTutar = araToplam * indOran / 100;
+        const yolU = parseFloat(kdObj.yol_ucreti) || 0;
+        const konU = parseFloat(kdObj.konaklama_ucreti) || 0;
+        const kdvOran = kdObj.kdv_oran != null ? parseFloat(kdObj.kdv_oran) : 20;
+        const kdvHaric = (araToplam - indTutar) + yolU + konU;
+        const kdvTutar = kdvHaric * kdvOran / 100;
+        const kdvDahil = kdvHaric + kdvTutar;
+        const labAdi = ay.lab_adi || 'Kalibrasyon Laboratuvarı';
+        const adresTam = [t.adres, t.ilce, t.il].filter(Boolean).join(', ') || '';
+
+        const kalemlerHTML = kalemler.map((k,i) => `
+            <tr style="background:${i%2===0?'#f8fafc':'#fff'}">
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;">${i+1}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;"><strong>${k.ad||''}</strong></td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${k.ozellik_not||'-'}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;">${k.hizmet_sekli||'-'}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:center;">${k.adet||1}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;">${fmt(k.fiyat)} ${k.pb||pb}</td>
+                <td style="padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:bold;">${fmt((k.fiyat||0)*(k.adet||1))} ${k.pb||pb}</td>
+            </tr>`).join('');
+
+        const htmlBody = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8">
+<style>body{font-family:Arial,sans-serif;max-width:700px;margin:0 auto;color:#1e293b;font-size:12px;}</style>
+</head><body>
+<div style="background:#1E40AF;color:white;padding:20px 24px;border-radius:8px 8px 0 0;">
+    <div style="font-size:18px;font-weight:bold;">${labAdi}</div>
+    <div style="font-size:11px;opacity:0.8;margin-top:4px;">Kalibrasyon ve Test Hizmetleri</div>
+</div>
+<div style="border:1px solid #e2e8f0;border-top:none;padding:20px 24px;border-radius:0 0 8px 8px;">
+    <h2 style="color:#1E40AF;margin:0 0 16px;">TEKLİF / QUOTATION — ${t.teklif_no}</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div style="background:#f8fafc;padding:12px;border-radius:6px;border:1px solid #e2e8f0;">
+            <div style="font-size:10px;color:#64748b;font-weight:bold;text-transform:uppercase;margin-bottom:4px;">Firma Bilgileri</div>
+            <div style="font-weight:bold;">${t.firma_adi||''}${t.sube_adi?' / '+t.sube_adi:''}</div>
+            ${adresTam ? `<div style="font-size:11px;color:#475569;margin-top:2px;">${adresTam}</div>` : ''}
+        </div>
+        <div style="background:#f8fafc;padding:12px;border-radius:6px;border:1px solid #e2e8f0;">
+            <div style="font-size:10px;color:#64748b;font-weight:bold;text-transform:uppercase;margin-bottom:4px;">Teklif Bilgileri</div>
+            <div><strong>No:</strong> ${t.teklif_no}</div>
+            <div><strong>Tarih:</strong> ${tarih}</div>
+            <div><strong>Geçerlilik:</strong> ${t.gecerlilik_gun||30} Gün</div>
+        </div>
+    </div>
+    ${t.teklif_notu ? `<div style="background:#fffbeb;border:1px solid #fde68a;padding:8px 12px;border-radius:6px;margin-bottom:12px;"><strong>Not:</strong> ${t.teklif_notu}</div>` : ''}
+    <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
+        <thead><tr style="background:#1E40AF;color:white;">
+            <th style="padding:8px;text-align:left;font-size:11px;">#</th>
+            <th style="padding:8px;text-align:left;font-size:11px;">Cihaz / Hizmet</th>
+            <th style="padding:8px;text-align:left;font-size:11px;">Özellik</th>
+            <th style="padding:8px;text-align:left;font-size:11px;">Hizmet Şekli</th>
+            <th style="padding:8px;text-align:center;font-size:11px;">Adet</th>
+            <th style="padding:8px;text-align:right;font-size:11px;">Birim</th>
+            <th style="padding:8px;text-align:right;font-size:11px;">Toplam</th>
+        </tr></thead>
+        <tbody>${kalemlerHTML}</tbody>
+    </table>
+    <div style="margin-left:auto;max-width:320px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">
+        ${indOran > 0 ? `<div style="display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">İndirim (%${indOran})</span><span style="color:#dc2626;">− ${fmt(indTutar)} ${pb}</span></div>` : ''}
+        ${yolU > 0 ? `<div style="display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid #e2e8f0;"><span>Yol Ücreti</span><span>${fmt(yolU)} ${pb}</span></div>` : ''}
+        ${konU > 0 ? `<div style="display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid #e2e8f0;"><span>Konaklama Ücreti</span><span>${fmt(konU)} ${pb}</span></div>` : ''}
+        <div style="display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid #e2e8f0;background:#f0f9ff;"><span style="color:#0369a1;font-weight:bold;">KDV Hariç Toplam</span><span style="color:#0369a1;font-weight:bold;">${fmt(kdvHaric)} ${pb}</span></div>
+        ${kdvOran > 0 ? `<div style="display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid #e2e8f0;"><span>KDV (%${kdvOran})</span><span>${fmt(kdvTutar)} ${pb}</span></div>` : ''}
+        <div style="display:flex;justify-content:space-between;padding:10px 12px;background:#1E40AF;color:white;"><span style="font-weight:bold;">GENEL TOPLAM (KDV DAHİL)</span><span style="font-size:14px;font-weight:800;">${fmt(kdvDahil)} ${pb}</span></div>
+    </div>
+    <p style="margin-top:20px;font-size:11px;color:#64748b;">Teklifimizin kabulü halinde imzalı, firma kaşeli onayınızı tarafımıza iletmenizi rica ederiz.<br>Bu teklif ${tarih} tarihinde düzenlenmiş olup ${t.gecerlilik_gun||30} gün geçerlidir.</p>
+    <hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0;">
+    <div style="font-size:11px;color:#94a3b8;text-align:center;">${labAdi} | ${ay.telefon||''} | ${ay.email||''}</div>
+</div>
+</body></html>`;
+
+        const transporter = nodemailer.createTransport({
+            host: ay.smtp_host, port: parseInt(ay.smtp_port)||587,
+            secure: ay.smtp_secure === 'true',
+            auth: { user: ay.smtp_user, pass: ay.smtp_pass }
+        });
+
+        await transporter.sendMail({
+            from: `"${ay.smtp_from_name || labAdi}" <${ay.smtp_user}>`,
+            to: mailler.join(', '),
+            subject: `Teklif: ${t.teklif_no} - ${t.firma_adi}`,
+            html: htmlBody
+        });
+
+        await pool.query("UPDATE teklifler SET durum='Gönderildi' WHERE id=$1", [req.params.id]);
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });

@@ -80,6 +80,13 @@
         .durum-Taslak { background: #f1f5f9; color: #64748b; }
         .durum-Onaylandı { background: #dcfce7; color: #166534; }
         .durum-Reddedildi { background: #fee2e2; color: #dc2626; }
+        .durum-select { outline: none; }
+        .durum-sel-Taslak { background: #f1f5f9; color: #64748b; }
+        .durum-sel-Gönderildi { background: #e0f2fe; color: #0369a1; }
+        .durum-sel-Onaylandı { background: #dcfce7; color: #166534; }
+        .durum-sel-Reddedildi { background: #fee2e2; color: #dc2626; }
+        .mail-chip { display:inline-flex; align-items:center; gap:5px; background:#e0e7ff; color:#4338ca; padding:4px 10px; border-radius:20px; font-size:0.82rem; font-weight:600; }
+        .mail-chip button { background:none; border:none; cursor:pointer; color:#4338ca; font-size:1rem; padding:0; line-height:1; }
         .btn-view { background: #dcfce7; color: #059669; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 600; margin-right: 4px; }
         .btn-edit { background: #e0e7ff; color: #4338ca; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 600; margin-right: 4px; }
         .btn-del { background: #fee2e2; color: #dc2626; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 600; }
@@ -113,6 +120,25 @@
 </head>
 <body>
 <div id="toast"></div>
+
+<!-- MAİL MODALI -->
+<div id="mailModal" style="display:none;position:fixed;z-index:2000;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:14px;width:90%;max-width:520px;padding:28px;position:relative;">
+        <button onclick="mailModalKapat()" style="position:absolute;right:16px;top:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">✕</button>
+        <h3 style="margin:0 0 6px;color:var(--primary);">📧 Teklif Gönder</h3>
+        <p id="mailTeklifBilgi" style="font-size:0.85rem;color:#64748b;margin:0 0 18px;"></p>
+        <div style="margin-bottom:14px;">
+            <label style="font-size:0.8rem;font-weight:700;color:#64748b;">Alıcı Adresler</label>
+            <div id="mailChipArea" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:36px;padding:8px;border:1px solid var(--border);border-radius:8px;background:#f8fafc;"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:18px;">
+            <input type="email" id="manuelMailInput" placeholder="manuel@mail.com ekle..." style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;">
+            <button onclick="mailEkle()" style="background:var(--primary);color:white;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;">Ekle</button>
+        </div>
+        <div id="mailUyari" style="display:none;background:#fee2e2;color:#dc2626;padding:8px 12px;border-radius:6px;font-size:0.85rem;margin-bottom:12px;"></div>
+        <button id="mailGonderBtn" onclick="mailGonder()" style="background:var(--success);color:white;border:none;padding:12px 28px;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.95rem;width:100%;">📨 Teklifi Gönder</button>
+    </div>
+</div>
 
 <!-- GÖRÜNTÜLEME MODALI -->
 <div id="modal">
@@ -495,20 +521,28 @@
     function renderListe(data) {
         const tbody = document.getElementById("teklifListe");
         if (!data.length) { tbody.innerHTML='<tr class="empty-row"><td colspan="7">Henüz teklif kaydı bulunmuyor.</td></tr>'; return; }
+        const durumlar = ['Taslak','Gönderildi','Onaylandı','Reddedildi'];
         tbody.innerHTML = data.map(t => {
             const firma = t.firma_adi + (t.sube_adi ? ` <span style="color:#64748b;font-size:0.78rem;">/ ${t.sube_adi}</span>` : '');
             const tarih = t.teklif_tarihi ? new Date(t.teklif_tarihi).toLocaleDateString('tr-TR') : '-';
             const durum = t.durum || 'Taslak';
+            const durumOptions = durumlar.map(d => `<option value="${d}" ${d===durum?'selected':''}>${d}</option>`).join('');
             return `<tr>
                 <td><strong style="color:var(--primary);">${t.teklif_no||'-'}</strong></td>
                 <td>${firma}</td>
                 <td>${tarih}</td>
                 <td>${t.gecerlilik_gun||30} Gün</td>
                 <td class="price-green">${parseFloat(t.genel_toplam||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} ${t.para_birimi||'₺'}</td>
-                <td><span class="durum-badge durum-${durum}">${durum}</span></td>
+                <td>
+                    <select class="durum-select durum-sel-${durum}" onchange="durumDegistir(${t.id}, this.value, this)"
+                        style="padding:4px 8px;border-radius:6px;font-size:0.78rem;font-weight:700;border:1px solid #e2e8f0;cursor:pointer;">
+                        ${durumOptions}
+                    </select>
+                </td>
                 <td>
                     <button class="btn-view" onclick="pdfGoruntule(${t.id})">📄 PDF</button>
                     <button class="btn-edit" onclick="duzenle(${t.id})">✏️ Düzenle</button>
+                    <button style="background:#e0f2fe;color:#0369a1;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:0.78rem;font-weight:600;margin-right:4px;" onclick="teklifGonder(${t.id})">📧 Gönder</button>
                     <button class="btn-del" onclick="sil(${t.id})">🗑️ Sil</button>
                 </td>
             </tr>`;
@@ -764,6 +798,101 @@ ${t.teklif_notu ? `<div class="note-box"><strong>Not / Note:</strong> ${t.teklif
     }
 
     function modalKapat() { document.getElementById("modal").classList.remove("open"); }
+
+    // ── DURUM DEĞİŞTİR ──
+    async function durumDegistir(id, yeniDurum, selectEl) {
+        const res = await fetch(`/api/teklifler/${id}/durum`, {
+            method: 'PATCH', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ durum: yeniDurum })
+        });
+        if (res.ok) {
+            const t = tumTeklifler.find(x => x.id === id);
+            if (t) t.durum = yeniDurum;
+            selectEl.className = `durum-select durum-sel-${yeniDurum}`;
+            showToast(`✅ Durum: ${yeniDurum}`);
+        } else showToast("❌ Durum güncellenemedi!", true);
+    }
+
+    // ── TEKLİF GÖNDER ──
+    let aktifMailTeklifId = null;
+    let mailListesi = [];
+
+    function teklifGonder(id) {
+        const t = tumTeklifler.find(x => x.id === id);
+        if (!t) return;
+        aktifMailTeklifId = id;
+        mailListesi = [];
+
+        // Müşterinin kayıtlı maillerini yükle
+        let kayitliMailler = [];
+        try { kayitliMailler = typeof t.sertifika_mailleri === 'string' ? JSON.parse(t.sertifika_mailleri) : (t.sertifika_mailleri || []); } catch(e) {}
+        kayitliMailler.forEach(m => {
+            const mail = typeof m === 'string' ? m : (m.email || m.adres || '');
+            if (mail) mailListesi.push(mail);
+        });
+
+        document.getElementById("mailTeklifBilgi").textContent = `${t.teklif_no} — ${t.firma_adi}${t.sube_adi ? ' / ' + t.sube_adi : ''}`;
+        document.getElementById("manuelMailInput").value = "";
+        document.getElementById("mailUyari").style.display = "none";
+        renderMailChipler();
+        document.getElementById("mailModal").style.display = "flex";
+    }
+
+    function renderMailChipler() {
+        const area = document.getElementById("mailChipArea");
+        if (!mailListesi.length) {
+            area.innerHTML = '<span style="font-size:0.8rem;color:#94a3b8;">Henüz mail eklenmedi</span>';
+            return;
+        }
+        area.innerHTML = mailListesi.map((m, i) => `
+            <span class="mail-chip">${m} <button onclick="mailSil(${i})">×</button></span>
+        `).join('');
+    }
+
+    function mailEkle() {
+        const input = document.getElementById("manuelMailInput");
+        const mail = input.value.trim();
+        if (!mail || !mail.includes('@')) { showToast("❌ Geçerli bir mail adresi girin!", true); return; }
+        if (mailListesi.includes(mail)) { showToast("⚠️ Bu adres zaten ekli!", true); return; }
+        mailListesi.push(mail);
+        input.value = "";
+        renderMailChipler();
+    }
+
+    function mailSil(i) {
+        mailListesi.splice(i, 1);
+        renderMailChipler();
+    }
+
+    async function mailGonder() {
+        if (!mailListesi.length) {
+            document.getElementById("mailUyari").textContent = "En az bir mail adresi ekleyin.";
+            document.getElementById("mailUyari").style.display = "block";
+            return;
+        }
+        const btn = document.getElementById("mailGonderBtn");
+        btn.disabled = true; btn.textContent = "Gönderiliyor...";
+        document.getElementById("mailUyari").style.display = "none";
+        const res = await fetch(`/api/teklifler/${aktifMailTeklifId}/gonder`, {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ mailler: mailListesi })
+        });
+        if (res.ok) {
+            showToast("✅ Teklif gönderildi!");
+            mailModalKapat();
+            listele();
+        } else {
+            const e = await res.json();
+            document.getElementById("mailUyari").textContent = e.error || "Gönderilemedi.";
+            document.getElementById("mailUyari").style.display = "block";
+        }
+        btn.disabled = false; btn.textContent = "📨 Teklifi Gönder";
+    }
+
+    function mailModalKapat() {
+        document.getElementById("mailModal").style.display = "none";
+        aktifMailTeklifId = null; mailListesi = [];
+    }
 
     // ── DÜZENLE ──
     function duzenle(id) {
