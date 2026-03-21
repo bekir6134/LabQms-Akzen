@@ -121,10 +121,33 @@
         .act-drop-item.danger { color:#dc2626; }
         .act-drop-item.danger:hover { background:#fee2e2; }
         .act-drop hr { margin:4px 0; border:none; border-top:1px solid var(--border); }
+        /* ONAY MODAL */
+        #onayModal { display:none; position:fixed; z-index:9999; inset:0; background:rgba(0,0,0,0.45); align-items:center; justify-content:center; }
+        #onayModal.open { display:flex; }
+        .onay-box { background:#fff; border-radius:14px; padding:28px 32px; max-width:380px; width:90%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.18); }
+        .onay-ikon { font-size:2.2rem; margin-bottom:10px; }
+        .onay-baslik { font-weight:700; font-size:1.05rem; color:#1e293b; margin-bottom:8px; }
+        .onay-mesaj { font-size:0.87rem; color:#64748b; margin-bottom:22px; }
+        .onay-butonlar { display:flex; gap:10px; justify-content:center; }
+        .onay-evet { background:var(--primary); color:#fff; border:none; padding:10px 24px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.9rem; }
+        .onay-hayir { background:#f1f5f9; color:#475569; border:none; padding:10px 24px; border-radius:8px; font-weight:600; cursor:pointer; font-size:0.9rem; }
     </style>
 </head>
 <body>
 <div id="toast"></div>
+
+<!-- ONAY MODAL -->
+<div id="onayModal">
+    <div class="onay-box">
+        <div class="onay-ikon" id="onayIkon">❓</div>
+        <div class="onay-baslik" id="onayBaslik"></div>
+        <div class="onay-mesaj" id="onayMesaj"></div>
+        <div class="onay-butonlar">
+            <button class="onay-hayir" id="onayHayirBtn" onclick="onayKapat()">İptal</button>
+            <button class="onay-evet" id="onayEvetBtn">Evet, Devam Et</button>
+        </div>
+    </div>
+</div>
 
 <!-- HIZLI FİRMA EKLE MODAL -->
 <div id="hizliFirmaModal">
@@ -378,20 +401,53 @@
         setTimeout(() => t.className = "", 3200);
     }
 
+    // ── DEĞİŞİKLİK TAKİBİ ──
+    let formDegisti = false;
+    function formDegistiIsaretle() { formDegisti = true; }
+
+    // ── ONAY MODAL ──
+    let onayCallback = null;
+    function onayGoster(ikon, baslik, mesaj, evetYazi, cb) {
+        document.getElementById("onayIkon").textContent = ikon;
+        document.getElementById("onayBaslik").textContent = baslik;
+        document.getElementById("onayMesaj").textContent = mesaj;
+        document.getElementById("onayEvetBtn").textContent = evetYazi;
+        onayCallback = cb;
+        document.getElementById("onayEvetBtn").onclick = () => { onayKapat(); cb(); };
+        document.getElementById("onayModal").classList.add("open");
+    }
+    function onayKapat() {
+        document.getElementById("onayModal").classList.remove("open");
+        onayCallback = null;
+    }
+
     // ── ACCORDION ──
     function toggleAcc() {
         const c = document.getElementById("accContent");
-        const h = document.querySelector(".accordion-header");
-        const i = document.getElementById("accIcon");
         const acik = c.style.display === "block";
-        c.style.display = acik ? "none" : "block";
-        h.classList.toggle("active", !acik);
-        i.innerText = acik ? "▼" : "▲";
+        if(acik && formDegisti) {
+            onayGoster("⚠️", "Kaydedilmemiş değişiklikler var",
+                "Formu kapatırsanız yaptığınız değişiklikler kaybolacak. Devam etmek istiyor musunuz?",
+                "Evet, Kapat", () => { formDegisti = false; _accKapat(); });
+            return;
+        }
+        acik ? _accKapat() : _accAc();
     }
-    function accAc() {
-        document.getElementById("accContent").style.display = "block";
+    function _accAc() {
+        const c = document.getElementById("accContent");
+        c.style.display = "block";
         document.querySelector(".accordion-header").classList.add("active");
         document.getElementById("accIcon").innerText = "▲";
+    }
+    function _accKapat() {
+        const c = document.getElementById("accContent");
+        c.style.display = "none";
+        document.querySelector(".accordion-header").classList.remove("active");
+        document.getElementById("accIcon").innerText = "▼";
+    }
+    function accAc() {
+        _accAc();
+        formDegisti = false;
     }
 
     // ── FİRMA ARAMA ──
@@ -430,6 +486,7 @@
     }
 
     async function firmaSec(id, ad) {
+        formDegistiIsaretle();
         document.getElementById("secili_musteri_id").value = id;
         document.getElementById("firmaAramaInput").value = "";
         document.getElementById("firmaSonuclar").style.display = "none";
@@ -496,6 +553,7 @@
     }
 
     function cihazToggle(id) {
+        formDegistiIsaretle();
         const c = tumCihazlar.find(x => x.id == id);
         if(!c) return;
         const idx = secilenCihazlar.findIndex(s => s.musteri_cihaz_id == id);
@@ -797,8 +855,17 @@
         if(!musteriId)       return showToast("❌ Firma seçin!", true);
         if(!kabulTarihi)     return showToast("❌ Kabul tarihi girin!", true);
         if(!secilenCihazlar.length) return showToast("❌ En az bir cihaz seçin!", true);
-
-        const duzenleId = document.getElementById("duzenle_id").value;
+        const duzenleIdOnay = document.getElementById("duzenle_id").value;
+        const onayBaslikMetni = duzenleIdOnay ? "Fişi güncellemek istiyor musunuz?" : "Kabul fişini kaydetmek istiyor musunuz?";
+        const onayEvetMetni   = duzenleIdOnay ? "✅ Güncelle" : "✅ Kaydet";
+        onayGoster("💾", onayBaslikMetni,
+            `${secilenCihazlar.length} cihaz içeren fiş ${duzenleIdOnay ? "güncellenecek" : "oluşturulacak"}.`,
+            onayEvetMetni, _kaydetOnayli);
+    }
+    async function _kaydetOnayli() {
+        const musteriId   = document.getElementById("secili_musteri_id").value;
+        const kabulTarihi = document.getElementById("kabul_tarihi").value;
+        const duzenleId   = document.getElementById("duzenle_id").value;
         const cihazlar = secilenCihazlar.map(c => ({
             musteri_cihaz_id: c.musteri_cihaz_id,
             cihaz_adi:        c.cihaz_adi,
@@ -832,7 +899,7 @@
         const url    = duzenleId ? `/api/is-emirleri/${duzenleId}` : "/api/is-emirleri";
         const method = duzenleId ? "PUT" : "POST";
         const res = await fetch(url, { method, headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload) });
-        if(res.ok) { showToast(duzenleId ? "✅ Güncellendi!" : "✅ Kabul fişi oluşturuldu!"); formTemizle(); listele(); }
+        if(res.ok) { formDegisti = false; showToast(duzenleId ? "✅ Güncellendi!" : "✅ Kabul fişi oluşturuldu!"); formTemizle(); listele(); }
         else showToast("❌ Kayıt başarısız!", true);
         btn.disabled = false; btn.textContent = "💾 Kabul Fişini Kaydet";
     }
@@ -929,6 +996,7 @@
     }
 
     function formTemizle() {
+        formDegisti = false;
         document.getElementById("duzenle_id").value = "";
         firmaSifirla();
         document.getElementById("kabul_tarihi").valueAsDate = new Date();
@@ -980,6 +1048,11 @@
         document.getElementById("kabul_tarihi").valueAsDate = new Date();
         firmaAramaKur();
         listele();
+        // Form değişiklik takibi
+        ['kabul_tarihi','teslim_tarihi','notlar','teslim_eden','teslim_alan_id','teklif_id'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.addEventListener('change', formDegistiIsaretle);
+        });
     }
 
     function teklifleriDoldur(musteriId) {
