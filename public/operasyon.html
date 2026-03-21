@@ -1401,6 +1401,20 @@
         }
     }
 
+    // EronSign sonucunu bekle — status değişene kadar her 5s'de sertYukle
+    function eronSignPoll(idler, beklenenAsama, maxDeneme = 12) {
+        let deneme = 0;
+        const interval = setInterval(async () => {
+            deneme++;
+            await sertYukle();
+            const hepsiGecti = idler.every(id => tumSertifikalar.find(s=>s.id===id)?.asama === beklenenAsama);
+            if(hepsiGecti || deneme >= maxDeneme) {
+                clearInterval(interval);
+                if(hepsiGecti) showToast(`✅ ${idler.length} sertifika → ${beklenenAsama}`);
+            }
+        }, 5000);
+    }
+
     // ── TOPLU İŞLEMLER ──
     async function topluImzala() {
         const idler = secilenIdler();
@@ -1426,8 +1440,10 @@
                 method:'POST', headers:{'Content-Type':'application/json'},
                 body: JSON.stringify(dosyalar)
             });
-            if(res.ok) showToast(`✅ ${idler.length} PDF imzalama kuyruğuna alındı.`);
-            else showToast("❌ EronSign'a gönderilemedi!", true);
+            if(res.ok) {
+                showToast(`⏳ ${idler.length} PDF imzalanıyor, otomatik güncellenecek...`);
+                eronSignPoll(idler, 'imzalandı');
+            } else showToast("❌ EronSign'a gönderilemedi!", true);
         } catch(e) {
             showToast('❌ EronSign servisine ulaşılamadı (localhost:5600).', true);
         }
@@ -1455,8 +1471,10 @@
                 method:'POST', headers:{'Content-Type':'application/json'},
                 body: JSON.stringify(dosyalar)
             });
-            if(res.ok) showToast(`✅ ${imzalilar.length} PDF onay imzasına gönderildi.`);
-            else showToast("❌ EronSign'a gönderilemedi!", true);
+            if(res.ok) {
+                showToast(`⏳ ${imzalilar.length} PDF onaylanıyor, otomatik güncellenecek...`);
+                eronSignPoll(imzalilar, 'onaylandı');
+            } else showToast("❌ EronSign'a gönderilemedi!", true);
         } catch(e) {
             showToast('❌ EronSign servisine ulaşılamadı (localhost:5600).', true);
         }
