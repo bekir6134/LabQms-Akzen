@@ -593,10 +593,17 @@
                 const sonuc = await res.json();
                 const wrap = document.getElementById('importSonuc');
                 wrap.style.display = 'block';
+                const katUyari = sonuc.kategoriEslesmedi?.length
+                    ? `<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:8px 12px;margin-top:8px;color:#92400e;font-size:13px">
+                        ⚠️ Şu kategoriler sistemde bulunamadı, kayıtlar kategorisiz eklendi:<br>
+                        <b>${sonuc.kategoriEslesmedi.join(', ')}</b><br>
+                        <small>Sistemdeki kategori adlarıyla birebir eşleşmeli (büyük/küçük harf fark etmez).</small>
+                       </div>` : '';
                 wrap.innerHTML = `
                     <div class="import-ok">✅ ${sonuc.basarili} kayıt başarıyla aktarıldı.</div>
                     ${sonuc.hatali > 0 ? `<div style="color:#92400e;margin-top:4px">⚠️ ${sonuc.hatali} kayıt aktarılamadı.</div>` : ''}
                     ${sonuc.hatalar?.length ? `<div class="import-err">${sonuc.hatalar.map(h=>`• ${h}`).join('<br>')}</div>` : ''}
+                    ${katUyari}
                     <div style="margin-top:10px"><button onclick="excelModalKapat();sayfaYukle()" style="background:var(--primary);color:#fff;border:none;padding:9px 20px;border-radius:8px;font-weight:700;cursor:pointer">✅ Tamam, Listeyi Yenile</button></div>
                 `;
                 document.getElementById('excelOnizle').style.display = 'none';

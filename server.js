@@ -680,17 +680,22 @@ app.post('/api/referans-cihazlar-toplu', async (req, res) => {
         if (!Array.isArray(cihazlar) || !cihazlar.length) return res.status(400).json({ error: 'Veri yok' });
 
         // Tüm kategorileri çek (isimle eşleştirme için)
-        const katRes = await pool.query('SELECT id, LOWER(TRIM(kategori_adi)) AS ad FROM kategoriler');
+        // NOT: SQL LOWER() yerine JS toLowerCase() kullanıyoruz —
+        // PostgreSQL Türkçe locale'de LOWER('I')='ı' ama JS 'I'.toLowerCase()='i' — tutarsızlık!
+        const katRes = await pool.query('SELECT id, kategori_adi FROM kategoriler');
+        const normalize = s => (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
         const katMap = {};
-        katRes.rows.forEach(k => { katMap[k.ad] = k.id; });
+        katRes.rows.forEach(k => { katMap[normalize(k.kategori_adi)] = k.id; });
 
         let basarili = 0, hatali = 0, hatalar = [];
+        const kategoriEslesmedi = new Set();
 
         for (const c of cihazlar) {
             try {
                 if (!c.cihaz_adi) { hatali++; hatalar.push(`Satır atlandı: cihaz adı boş`); continue; }
-                const katAd = (c.kategori_adi || '').toLowerCase().trim();
-                const kategori_id = katMap[katAd] || null;
+                const katAd = normalize(c.kategori_adi);
+                let kategori_id = katAd ? (katMap[katAd] || null) : null;
+                if (katAd && !kategori_id) kategoriEslesmedi.add(c.kategori_adi);
 
                 const ins = await pool.query(
                     `INSERT INTO referans_cihazlar (kategori_id, cihaz_adi, marka, model, seri_no, envanter_no, olcme_araligi, kalibrasyon_kriteri, ara_kontrol_kriteri)
@@ -713,7 +718,7 @@ app.post('/api/referans-cihazlar-toplu', async (req, res) => {
                 hatalar.push(`"${c.cihaz_adi}": ${e.message}`);
             }
         }
-        res.json({ basarili, hatali, hatalar });
+        res.json({ basarili, hatali, hatalar, kategoriEslesmedi: [...kategoriEslesmedi] });
     } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
