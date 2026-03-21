@@ -696,6 +696,10 @@
 
             renderCihazGrid(filtreliCihazlar);
             renderSecilenler();
+            // Formu temizle, modal açık kalsın
+            ['h_cihaz_adi','h_marka','h_model','h_seri_no','h_envanter_no','h_olcum_araligi','h_cozunurluk'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('h_kategori_id').value = '';
+            document.getElementById('h_kal_yeri').value = ayarlarData.adres || '';
             showToast(`✅ "${yeni.cihaz_adi}" kaydedildi ve fişe eklendi!`);
         } catch(e) {
             showToast("❌ Kayıt başarısız!", true);
