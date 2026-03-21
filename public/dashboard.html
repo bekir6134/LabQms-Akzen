@@ -285,7 +285,7 @@
         // Referans cihaz: 30 gün veya geçmiş
         aktiviteler.forEach(r => {
             const gun = parseInt(r.kalan_gun);
-            const tip = r.islem_tipi === 'KALİBRASYON' ? '🔬 Kalibrasyon' : '🔍 Ara Kontrol';
+            const tip = r.islem_tipi?.toUpperCase().includes('KAL') ? '🔬 Kalibrasyon' : '🔍 Ara Kontrol';
             const tarih = new Date(r.sonraki_kal_tarihi).toLocaleDateString('tr-TR');
             if (gun < 0) {
                 items.push({ kritik: true, text: `${tip} VADESİ GEÇTİ! → ${r.cihaz_adi} (S/N: ${r.seri_no}) — ${tarih}` });
@@ -361,7 +361,7 @@
             const tarih = new Date(r.sonraki_kal_tarihi).toLocaleDateString('tr-TR');
             let cls = gun < 0 ? 'gun-red' : gun <= 7 ? 'gun-red' : gun <= 15 ? 'gun-orange' : gun <= 30 ? 'gun-yellow' : 'gun-green';
             const gunText = gun < 0 ? `${Math.abs(gun)} gün geçti!` : gun === 0 ? 'Bugün!' : `${gun} gün kaldı`;
-            const tip = r.islem_tipi === 'KALİBRASYON' ? '🔬' : '🔍';
+            const tip = r.islem_tipi?.toUpperCase().includes('KAL') ? '🔬' : '🔍';
             return `<div class="yakl-item">
                 <span style="font-size:1.1rem;">${tip}</span>
                 <div style="flex:1;min-width:0;">
