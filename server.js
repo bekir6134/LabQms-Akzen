@@ -733,6 +733,16 @@ app.put('/api/referans-cihazlar/:id', async (req, res) => {
     }
 });
 
+// Toplu silme
+app.delete('/api/referans-cihazlar-toplu', async (req, res) => {
+    try {
+        const { ids } = req.body;
+        if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'ID listesi boş' });
+        const result = await pool.query('DELETE FROM referans_cihazlar WHERE id = ANY($1::int[])', [ids]);
+        res.json({ silindi: result.rowCount });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.delete('/api/referans-cihazlar/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM referans_cihazlar WHERE id=$1', [req.params.id]);
