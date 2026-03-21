@@ -411,7 +411,10 @@ app.post('/api/teklifler/:id/gonder', async (req, res) => {
         const transporter = nodemailer.createTransport({
             host: ay.smtp_host, port: parseInt(ay.smtp_port)||587,
             secure: ay.smtp_secure === 'true',
-            auth: { user: ay.smtp_user, pass: ay.smtp_pass }
+            auth: { user: ay.smtp_user, pass: ay.smtp_pass },
+            connectionTimeout: 10000,
+            socketTimeout: 10000,
+            tls: { rejectUnauthorized: false }
         });
 
         await transporter.sendMail({
@@ -1928,7 +1931,10 @@ async function smtpTransporter() {
         host: a.smtp_host,
         port: parseInt(a.smtp_port || '587'),
         secure: a.smtp_secure === 'true',
-        auth: { user: a.smtp_user, pass: a.smtp_pass }
+        auth: { user: a.smtp_user, pass: a.smtp_pass },
+        connectionTimeout: 10000,
+        socketTimeout: 10000,
+        tls: { rejectUnauthorized: false }
     });
 }
 
