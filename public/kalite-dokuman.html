@@ -134,32 +134,35 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
 </div>
 
 <script>
-let tumKayitlar = [], aktifFiltre = '';
+let tumKayitlar = [], aktifFiltre = '', aktifTurFiltre = '';
 
 function showToast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.className=err?'show error':'show';setTimeout(()=>t.className='',3200)}
 function toggleAcc(){const c=document.getElementById('accContent'),h=document.getElementById('accHeader'),i=document.getElementById('accIcon');const open=c.style.display==='block';c.style.display=open?'none':'block';h.classList.toggle('active',!open);i.textContent=open?'▼':'▲'}
 
 const DUR_LABEL={taslak:'Taslak',yayinda:'Yayında',iptal:'İptal'};
 const DUR_RENK={taslak:'badge-taslak',yayinda:'badge-yayinda',iptal:'badge-iptal'};
-const DUR_ASAMALAR=['taslak','yayinda','iptal'];
+const TUR_LISTESI=['Prosedür','Talimat','Form','El Kitabı','Diğer'];
 
 function renderKanban(){
     const wrap=document.getElementById('kanban');
-    wrap.innerHTML=DUR_ASAMALAR.map(a=>{
-        const s=tumKayitlar.filter(r=>(r.durum||'taslak')===a).length;
-        const ak=aktifFiltre===a;
-        return `<div class="kol${ak?' aktif':''}" onclick="kanbanFiltrele('${a}')">
+    wrap.innerHTML=TUR_LISTESI.map(t=>{
+        const s=tumKayitlar.filter(r=>(r.tur||'')===t).length;
+        const ak=aktifTurFiltre===t;
+        return `<div class="kol${ak?' aktif':''}" onclick="kanbanFiltrele('${t}')">
             <div class="kol-sayi">${ak?'✔ ':''}${s}</div>
-            <div class="kol-label">${DUR_LABEL[a]||a}</div>
+            <div class="kol-label">${t}</div>
         </div>`;
     }).join('');
 }
 
-function kanbanFiltrele(a){aktifFiltre=aktifFiltre===a?'':a;renderKanban();uygulaFiltre()}
+function kanbanFiltrele(t){
+    aktifTurFiltre=aktifTurFiltre===t?'':t;
+    document.getElementById('turFiltre').value=aktifTurFiltre;
+    renderKanban();uygulaFiltre();
+}
 function uygulaFiltre(){
     let d=tumKayitlar;
-    if(aktifFiltre)d=d.filter(r=>(r.durum||'taslak')===aktifFiltre);
-    const tur=document.getElementById('turFiltre')?.value||'';
+    const tur=document.getElementById('turFiltre')?.value||aktifTurFiltre||'';
     if(tur)d=d.filter(r=>(r.tur||'')===tur);
     const durum=document.getElementById('durumFiltre')?.value||'';
     if(durum)d=d.filter(r=>(r.durum||'taslak')===durum);
