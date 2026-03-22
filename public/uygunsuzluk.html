@@ -60,6 +60,16 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
 .kol.aktif{border-color:var(--primary);background:#eff6ff;transform:translateY(-3px);box-shadow:0 4px 14px rgba(30,64,175,0.15)}
 .kol-sayi{font-size:1.4rem;font-weight:800;color:var(--primary)}
 .kol-label{font-size:0.72rem;font-weight:700;color:#64748b;margin-top:2px}
+/* GÖRÜNTÜLE PANEL */
+#goruntulePanel{display:none;position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,0.5);align-items:center;justify-content:center}
+#goruntulePanel.open{display:flex}
+.gor-box{background:#fff;border-radius:14px;width:92%;max-width:640px;max-height:90vh;overflow-y:auto}
+.gor-head{padding:16px 22px;border-bottom:1px solid var(--border);background:#f8fafc;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5;border-radius:14px 14px 0 0}
+.gor-body{padding:20px 22px}
+.gor-row{display:grid;grid-template-columns:140px 1fr;gap:8px;padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:0.87rem}
+.gor-row:last-child{border-bottom:none}
+.gor-lbl{font-weight:700;color:#64748b;font-size:0.78rem}
+.gor-val{color:var(--text);word-break:break-word;line-height:1.55}
 /* DÖF PANEL */
 #dofPanel{display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.5);align-items:center;justify-content:center}
 #dofPanel.open{display:flex}
@@ -73,6 +83,17 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
 </head>
 <body>
 <div id="toast"></div>
+
+<!-- GÖRÜNTÜLE PANEL -->
+<div id="goruntulePanel">
+    <div class="gor-box">
+        <div class="gor-head">
+            <span style="font-weight:700;color:var(--primary);font-size:0.95rem">👁️ Uygunsuzluk Detayı</span>
+            <button onclick="goruntuleKapat()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#64748b">✕</button>
+        </div>
+        <div class="gor-body" id="goruntuleIcerik"></div>
+    </div>
+</div>
 
 <!-- DÖF PANEL -->
 <div id="dofPanel">
@@ -236,6 +257,7 @@ function renderListe(data){
                 <div class="act-wrap" id="am-${r.id}">
                     <button class="act-btn" onclick="menuToggle(${r.id},event)">İşlemler ▾</button>
                     <div class="act-drop">
+                        <div class="act-drop-item" onclick="goruntule(${r.id});menuKapat()">👁️ Görüntüle</div>
                         <div class="act-drop-item" onclick="dofAc(${r.id});menuKapat()">🔧 DÖF Yönet</div>
                         <hr>
                         <div class="act-drop-item" onclick="duzenle(${r.id});menuKapat()">✏️ Düzenle</div>
@@ -246,6 +268,25 @@ function renderListe(data){
         </tr>`;
     }).join('');
 }
+
+function goruntule(id){
+    const r=tumKayitlar.find(x=>x.id===id);if(!r)return;
+    const tar=r.tarih?new Date(r.tarih).toLocaleDateString('tr-TR'):'-';
+    const sinifText=r.sinif==='onemli'?'<span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:8px;font-size:0.8rem;font-weight:700">Önemli</span>':r.sinif==='kucuk'?'<span style="background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:8px;font-size:0.8rem;font-weight:700">Küçük</span>':'—';
+    const durumText=`<span class="badge ${DUR_RENK[r.durum||'acik']}">${DUR_LABEL[r.durum||'acik']}</span>`;
+    document.getElementById('goruntuleIcerik').innerHTML=`
+        <div class="gor-row"><div class="gor-lbl">Kayıt No</div><div class="gor-val" style="font-weight:700;color:var(--primary)">${r.kayit_no||'—'}</div></div>
+        <div class="gor-row"><div class="gor-lbl">Tarih</div><div class="gor-val">${tar}</div></div>
+        <div class="gor-row"><div class="gor-lbl">Kaynak</div><div class="gor-val">${KAYNAK_LABEL[r.kaynak]||r.kaynak||'—'}</div></div>
+        <div class="gor-row"><div class="gor-lbl">Sınıf</div><div class="gor-val">${sinifText}</div></div>
+        <div class="gor-row"><div class="gor-lbl">Tespit Eden</div><div class="gor-val">${r.tespit_eden||'—'}</div></div>
+        <div class="gor-row"><div class="gor-lbl">Durum</div><div class="gor-val">${durumText}</div></div>
+        <div class="gor-row"><div class="gor-lbl">Esas Alınan Şart</div><div class="gor-val">${r.esas_alinan_sart||'—'}</div></div>
+        <div class="gor-row"><div class="gor-lbl">Açıklama</div><div class="gor-val" style="white-space:pre-wrap">${r.aciklama||'—'}</div></div>
+    `;
+    document.getElementById('goruntulePanel').classList.add('open');
+}
+function goruntuleKapat(){document.getElementById('goruntulePanel').classList.remove('open')}
 
 function menuToggle(id,e){
     e.stopPropagation();
