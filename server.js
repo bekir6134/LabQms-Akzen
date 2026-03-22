@@ -1409,10 +1409,16 @@ app.post('/api/kalite-dokuman/:id/revize', async (req, res) => {
         if (!parent.rows.length) return res.status(404).json({ error: 'Doküman bulunamadı' });
         const p = parent.rows[0];
         const { revizyon_no, yayin_tarihi } = req.body;
-        const r = await pool.query(
+        // Eski veriyi alt kayıt olarak iptal durumunda kaydet
+        await pool.query(
             `INSERT INTO kalite_dokuman (dok_no,baslik,tur,revizyon_no,yayin_tarihi,gecerlilik_tarihi,durum,aciklama,parent_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-            [p.dok_no, p.baslik, p.tur, revizyon_no, yayin_tarihi||null, p.gecerlilik_tarihi||null, p.durum, p.aciklama, p.id]
+             VALUES ($1,$2,$3,$4,$5,$6,'iptal',$7,$8)`,
+            [p.dok_no, p.baslik, p.tur, p.revizyon_no, p.yayin_tarihi||null, p.gecerlilik_tarihi||null, p.aciklama, p.id]
+        );
+        // Ana kaydı yeni revizyon no ve tarihle güncelle
+        const r = await pool.query(
+            `UPDATE kalite_dokuman SET revizyon_no=$1, yayin_tarihi=$2 WHERE id=$3 RETURNING *`,
+            [revizyon_no, yayin_tarihi||null, p.id]
         );
         res.json(r.rows[0]);
     } catch(e) { res.status(500).json({ error: e.message }); }

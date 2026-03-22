@@ -231,13 +231,14 @@ async function accordionToggle(id, e) {
         return;
     }
     icerik.innerHTML = `
-        <div style="font-size:0.78rem;font-weight:700;color:#64748b;margin-bottom:8px">📋 Revizyon Geçmişi</div>
+        <div style="font-size:0.78rem;font-weight:700;color:#64748b;margin-bottom:8px">📋 Eski Revizyonlar</div>
         <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
             <thead><tr style="background:#e2e8f0">
                 <th style="padding:7px 10px;text-align:left">Rev. No</th>
                 <th style="padding:7px 10px;text-align:left">Yayın Tarihi</th>
                 <th style="padding:7px 10px;text-align:left">Revizyon Tarihi</th>
                 <th style="padding:7px 10px;text-align:left">Durum</th>
+                <th style="padding:7px 10px;text-align:left">İşlemler</th>
             </tr></thead>
             <tbody>${revizyonlar.map(r=>{
                 const tar = r.yayin_tarihi?new Date(r.yayin_tarihi).toLocaleDateString('tr-TR'):'-';
@@ -248,6 +249,15 @@ async function accordionToggle(id, e) {
                     <td style="padding:7px 10px">${tar}</td>
                     <td style="padding:7px 10px">${revTar}</td>
                     <td style="padding:7px 10px"><span class="badge ${DUR_RENK[durum]||''}">${DUR_LABEL[durum]||durum}</span></td>
+                    <td style="padding:7px 10px">
+                        <div class="act-wrap" id="am-${r.id}">
+                            <button class="act-btn" onclick="menuToggle(${r.id},event)">İşlemler ▾</button>
+                            <div class="act-drop">
+                                <div class="act-drop-item" onclick="duzenle(${r.id});menuKapat()">✏️ Düzenle</div>
+                                <div class="act-drop-item danger" onclick="revSil(${r.id},${id});menuKapat()">🗑️ Sil</div>
+                            </div>
+                        </div>
+                    </td>
                 </tr>`;
             }).join('')}</tbody>
         </table>`;
@@ -287,6 +297,18 @@ async function revizeKaydet() {
         await listele();
     } else showToast('❌ Hata oluştu!', true);
     btn.disabled=false; btn.textContent='💾 Revize Kaydet';
+}
+
+async function revSil(revId, parentId) {
+    if(!confirm('Bu revizyonu silmek istediğinize emin misiniz?')) return;
+    const res = await fetch(`/api/kalite-dokuman/${revId}`, {method:'DELETE'});
+    if(res.ok) {
+        showToast('🗑️ Revizyon silindi!');
+        // Accordion'u kapat ve yeniden aç (güncelle)
+        const row = document.getElementById('acc-'+parentId);
+        row.style.display = 'none';
+        await accordionToggle(parentId, {target:document.createElement('div')});
+    } else showToast('❌ Silinemedi!', true);
 }
 
 function checkboxDegis(){
