@@ -2261,6 +2261,40 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
             printBackground: true,
             preferCSSPageSize: true,
         });
+
+        // Lab ayarlarını çek (footer için - browser açıkken)
+        const ayarRows = await pool.query('SELECT anahtar, deger FROM ayarlar');
+        const ayar = ayarRows.rows.reduce((o, r) => { o[r.anahtar] = r.deger; return o; }, {});
+        const labAdi   = ayar.lab_adi   || '';
+        const labAdres = ayar.adres     || ayar.lab_adres || '';
+        const labTel   = ayar.telefon   || ayar.lab_tel   || '';
+        const labWeb   = ayar.website   || ayar.lab_web   || '';
+        const labMail  = ayar.email     || ayar.lab_mail  || '';
+
+        // Footer HTML → PDF (Puppeteer ile, browser hâlâ açık)
+        const footerHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>*{margin:0;padding:0;box-sizing:border-box}
+        body{width:794px;height:72px;background:white;font-family:Arial,sans-serif;padding:4px 15px 2px}
+        .line1{border-top:0.6px solid #aaa;padding-top:3px;display:flex;justify-content:space-between;font-size:7px;color:#555}
+        .line2{border-top:0.3px solid #ccc;margin-top:3px;padding-top:2px;font-size:6px;color:#555;line-height:1.45}
+        </style></head><body>
+        <div class="line1"><span>${labAdi}  ${labAdres}</span><span>${[labTel?'Tel: '+labTel:'',labWeb,labMail].filter(Boolean).join('  |  ')}</span></div>
+        <div class="line2">
+          Bu sertifika, laboratuvarin yazili izni olmadan kismen kopyalanip cogaltilamaz. | Imzasiz ve TURKAK Dogrulama Kare Kodu bulunmayan sertifikalar gecersizdir.<br>
+          Bu sertifikanin kullanimindan once asist.turkak.org.tr uzerinden kare kodu okutarak dogrulayiniz.<br>
+          This certificate shall not be reproduced other than in full except with the permission of the laboratory. | Certificates unsigned or without TURKAK QR code are invalid.<br>
+          Before using this certificate, verify it by scanning the QR code via asist.turkak.org.tr.
+        </div></body></html>`;
+
+        const footerPage = await browser.newPage();
+        await footerPage.setViewport({ width: 794, height: 72 });
+        await footerPage.setContent(footerHtml, { waitUntil: 'networkidle0' });
+        const footerBuffer = await footerPage.pdf({
+            width: '794px', height: '72px',
+            margin: { top: '0', right: '0', bottom: '0', left: '0' },
+            printBackground: true,
+        });
+
         await browser.close();
         browser = null;
 
@@ -2271,67 +2305,33 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
             const olcumBytes = Buffer.from(sert.olcum_pdf_url, 'base64');
             const birlesikDoc = await PDFDocument.create();
 
-            // Lab ayarlarını çek (footer için)
-            const ayarRows = await pool.query('SELECT anahtar, deger FROM ayarlar');
-            const ayar = ayarRows.rows.reduce((o, r) => { o[r.anahtar] = r.deger; return o; }, {});
-            const labAdi   = ayar.lab_adi   || '';
-            const labAdres = ayar.adres     || ayar.lab_adres || '';
-            const labTel   = ayar.telefon   || ayar.lab_tel   || '';
-            const labWeb   = ayar.website   || ayar.lab_web   || '';
-            const labMail  = ayar.email     || ayar.lab_mail  || '';
-
             // S1+S2 sayfaları ekle
             const s1s2Doc = await PDFDocument.load(s1s2Buffer);
             const s1s2Pages = await birlesikDoc.copyPages(s1s2Doc, s1s2Doc.getPageIndices());
             s1s2Pages.forEach(p => birlesikDoc.addPage(p));
 
-            // Ölçüm PDF sayfaları: copyPages + footer damgası
-            console.log('[PDF] Ölçüm PDF işleniyor, boyut:', olcumBytes.length);
-            const olcumDoc = await PDFDocument.load(olcumBytes, { ignoreEncryption: true });
-            console.log('[PDF] Ölçüm sayfa sayısı:', olcumDoc.getPageCount());
-            const footerFont = await birlesikDoc.embedFont(StandardFonts.Helvetica);
-            const copiedPages = await birlesikDoc.copyPages(olcumDoc, olcumDoc.getPageIndices());
+            // Footer PDF'ini XObject olarak göm
+            const [embFooter] = await birlesikDoc.embedPdf(footerBuffer, [0]);
+            const footerH = 72 * (841.89 / 1122.52); // px → pt (A4 oranı)
 
-            const yasalSatirlar = [
-                'Bu sertifika, laboratuvarin yazili izni olmadan kismen kopyalanip cogaltilamaz.  |  Imzasiz ve TURKAK Dogrulama Kare Kodu bulunmayan sertifikalar gecersizdir.',
-                'Bu sertifikanin kullanimindan once asist.turkak.org.tr uzerinden kare kodu okutarak dogrulayiniz.',
-                'This certificate shall not be reproduced other than in full except with the permission of the laboratory.  |  Certificates unsigned or without TURKAK QR code are invalid.',
-                'Before using this certificate, verify it by scanning the QR code via asist.turkak.org.tr.',
-            ];
-            const ffs = 5.8, satirAraligi = ffs + 2.2;
-            const gri = rgb(0.3, 0.3, 0.3), labelGri = rgb(0.45, 0.45, 0.45);
+            // Ölçüm sayfalarını yeni A4 sayfalara XObject olarak yerleştir
+            const embOlcumPages = await birlesikDoc.embedPdf(olcumBytes);
+            const pageW = 595.28, pageH = 841.89;
+            const copiedPages = []; // compat
 
-            console.log('[PDF] Kopyalanan sayfa sayısı:', copiedPages.length);
-            for (const pg of copiedPages) {
-                birlesikDoc.addPage(pg);
-                const { width: pgW, height: pgH } = pg.getSize();
-                console.log('[PDF] Sayfa boyutu:', pgW, 'x', pgH);
-                const footerH = 58;
-
-                // Beyaz zemin - mevcut içeriğin üstüne
-                pg.drawRectangle({ x:0, y:0, width:pgW, height:footerH, color:rgb(1,1,1) });
-
-                // Üst çizgi
-                pg.drawLine({ start:{x:15, y:footerH-2}, end:{x:pgW-15, y:footerH-2}, thickness:0.5, color:rgb(0.6,0.6,0.6) });
-
-                // Lab bilgi satırı
-                const labBilgiY = footerH - 11;
-                const solMetin = [labAdi, labAdres].filter(Boolean).join('  ');
-                if(solMetin) pg.drawText(solMetin, { x:15, y:labBilgiY, size:6, font:footerFont, color:labelGri });
-                const sagMetin = [labTel ? `Tel: ${labTel}` : '', labWeb, labMail].filter(Boolean).join('  |  ');
-                if(sagMetin) {
-                    const sagW = footerFont.widthOfTextAtSize(sagMetin, 6);
-                    pg.drawText(sagMetin, { x:Math.max(15, pgW - sagW - 15), y:labBilgiY, size:6, font:footerFont, color:labelGri });
-                }
-
-                // İkinci çizgi
-                const cizgi2Y = labBilgiY - 4;
-                pg.drawLine({ start:{x:15, y:cizgi2Y}, end:{x:pgW-15, y:cizgi2Y}, thickness:0.3, color:rgb(0.8,0.8,0.8) });
-
-                // Yasal satırlar
-                yasalSatirlar.forEach((satir, i) => {
-                    pg.drawText(satir, { x:15, y:cizgi2Y - ffs - (i * satirAraligi) - 1, size:ffs, font:footerFont, color:gri });
-                });
+            // Her ölçüm sayfasını yeni A4'e XObject(ölçüm) + XObject(footer) olarak yerleştir
+            for (const embOlcum of embOlcumPages) {
+                const newPage = birlesikDoc.addPage([pageW, pageH]);
+                const contentH = pageH - footerH;
+                const { width: oW, height: oH } = embOlcum;
+                const scale = Math.min(pageW / oW, contentH / oH);
+                const scaledW = oW * scale;
+                const scaledH = oH * scale;
+                const xOff = (pageW - scaledW) / 2;
+                // Ölçüm içeriği - üst alana
+                newPage.drawPage(embOlcum, { x: xOff, y: footerH, width: scaledW, height: scaledH });
+                // Footer - alt alana (Puppeteer ile render edilmiş HTML)
+                newPage.drawPage(embFooter, { x: 0, y: 0, width: pageW, height: footerH });
             }
 
             const birlesikBytes = await birlesikDoc.save();
