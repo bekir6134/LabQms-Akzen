@@ -2271,6 +2271,15 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
             const olcumBytes = Buffer.from(sert.olcum_pdf_url, 'base64');
             const birlesikDoc = await PDFDocument.create();
 
+            // Lab ayarlarını çek (footer için)
+            const ayarRows = await pool.query('SELECT anahtar, deger FROM ayarlar');
+            const ayar = ayarRows.rows.reduce((o, r) => { o[r.anahtar] = r.deger; return o; }, {});
+            const labAdi   = ayar.lab_adi   || '';
+            const labAdres = ayar.adres     || ayar.lab_adres || '';
+            const labTel   = ayar.telefon   || ayar.lab_tel   || '';
+            const labWeb   = ayar.website   || ayar.lab_web   || '';
+            const labMail  = ayar.email     || ayar.lab_mail  || '';
+
             // S1+S2 sayfaları ekle
             const s1s2Doc = await PDFDocument.load(s1s2Buffer);
             const s1s2Pages = await birlesikDoc.copyPages(s1s2Doc, s1s2Doc.getPageIndices());
@@ -2284,26 +2293,51 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
             const tempPages = await tempDoc.copyPages(olcumDoc, olcumDoc.getPageIndices());
 
             const yasalSatirlar = [
-                'Bu sertifika, laboratuvarin yazili izni olmadan kismen kopyalanip cogaltilamaz.',
-                'This certificate shall not be reproduced other than in full except with the permission of the laboratory.',
-                'Imzasiz ve TURKAK Dogrulama Kare Kodu bulunmayan sertifikalar gecersizdir.',
-                'Certificates that are unsigned and do not contain TURKAK Certificate Verification System\'s verification QR code are invalid.',
+                'Bu sertifika, laboratuvarin yazili izni olmadan kismen kopyalanip cogaltilamaz.  |  Imzasiz ve TURKAK Dogrulama Kare Kodu bulunmayan sertifikalar gecersizdir.',
                 'Bu sertifikanin kullanimindan once asist.turkak.org.tr uzerinden kare kodu okutarak dogrulayiniz.',
+                'This certificate shall not be reproduced other than in full except with the permission of the laboratory.  |  Certificates unsigned or without TURKAK QR code are invalid.',
                 'Before using this certificate, verify it by scanning the QR code via asist.turkak.org.tr.',
             ];
-            const fs = 6;
-            const satirAraligi = fs + 2.5;
+            const fs = 5.8;
+            const satirAraligi = fs + 2.2;
             const gri = rgb(0.35, 0.35, 0.35);
+            const labelGri = rgb(0.5, 0.5, 0.5);
 
             for (const pg of tempPages) {
                 tempDoc.addPage(pg);
-                const { width, height } = pg.getSize();
-                const toplamY = yasalSatirlar.length * satirAraligi + 6;
-                const cizgiY = toplamY + 3;
-                pg.drawRectangle({ x:10, y:0, width:width-20, height:cizgiY+6, color:rgb(1,1,1), opacity:1 });
-                pg.drawLine({ start:{x:10, y:cizgiY}, end:{x:width-10, y:cizgiY}, thickness:0.5, color:rgb(0.65,0.65,0.65) });
+                const { width } = pg.getSize();
+
+                // Footer toplam yükseklik: lab bilgi satırı + ayraç + yasal satırlar + alt boşluk
+                const labBilgiYukseklik = 9;
+                const yasalYukseklik = yasalSatirlar.length * satirAraligi;
+                const toplamFooterY = labBilgiYukseklik + 5 + yasalYukseklik + 4;
+
+                // Beyaz arka plan
+                pg.drawRectangle({ x:0, y:0, width, height:toplamFooterY + 2, color:rgb(1,1,1) });
+
+                // Üst ayraç çizgisi
+                const cizgiY = toplamFooterY;
+                pg.drawLine({ start:{x:15, y:cizgiY}, end:{x:width-15, y:cizgiY}, thickness:0.5, color:rgb(0.65,0.65,0.65) });
+
+                // Lab bilgi satırı (adres sol, tel/web/mail sağ)
+                const labBilgiY = cizgiY - 7;
+                if(labAdi || labAdres) {
+                    pg.drawText(`${labAdi}  ${labAdres}`.trim(), { x:15, y:labBilgiY, size:6, font:tempFont, color:labelGri });
+                }
+                const sagMetin = [labTel ? `Tel: ${labTel}` : '', labWeb, labMail].filter(Boolean).join('  |  ');
+                if(sagMetin) {
+                    const sagGenislik = tempFont.widthOfTextAtSize(sagMetin, 6);
+                    pg.drawText(sagMetin, { x:width - sagGenislik - 15, y:labBilgiY, size:6, font:tempFont, color:labelGri });
+                }
+
+                // İkinci ayraç
+                const cizgi2Y = labBilgiY - 3;
+                pg.drawLine({ start:{x:15, y:cizgi2Y}, end:{x:width-15, y:cizgi2Y}, thickness:0.3, color:rgb(0.8,0.8,0.8) });
+
+                // Yasal satırlar
                 yasalSatirlar.forEach((satir, i) => {
-                    pg.drawText(satir, { x:12, y: toplamY - (i * satirAraligi), size:fs, font:tempFont, color:gri });
+                    const satirY = cizgi2Y - fs - (i * satirAraligi) - 1;
+                    pg.drawText(satir, { x:15, y:satirY, size:fs, font:tempFont, color:gri });
                 });
             }
 
