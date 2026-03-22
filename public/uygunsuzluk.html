@@ -120,8 +120,16 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
                 </select>
             </div>
         </div>
-        <div class="fg fg2">
+        <div class="fg fg3">
             <div><label>Tespit Eden</label><input type="text" id="tespit_eden" placeholder="Ad Soyad"></div>
+            <div>
+                <label>Uygunsuzluk Sınıfı</label>
+                <select id="sinif">
+                    <option value="">— Seçin —</option>
+                    <option value="onemli">Önemli</option>
+                    <option value="kucuk">Küçük</option>
+                </select>
+            </div>
             <div>
                 <label>Durum</label>
                 <select id="durum">
@@ -130,6 +138,9 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
                     <option value="kapali">Kapalı</option>
                 </select>
             </div>
+        </div>
+        <div class="fg">
+            <div class="full"><label>Esas Alınan Şart <span style="font-weight:400;color:#94a3b8">(Örn: Standart Maddesi)</span></label><input type="text" id="esas_alinan_sart" placeholder="Örn: ISO 17025 Madde 6.2.3"></div>
         </div>
         <div class="fg">
             <div class="full"><label>Uygunsuzluk Açıklaması *</label><textarea id="aciklama" placeholder="Uygunsuzluğun detaylı açıklaması..."></textarea></div>
@@ -149,7 +160,7 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
     <div class="kanban" id="kanban"></div>
     <div style="padding:0 18px 18px">
         <table><thead><tr>
-            <th>Kayıt No</th><th>Tarih</th><th>Kaynak</th><th>Açıklama</th><th>Tespit Eden</th><th>Durum</th><th>İşlemler</th>
+            <th>Kayıt No</th><th>Tarih</th><th>Kaynak</th><th>Sınıf</th><th>Esas Alınan Şart</th><th>Açıklama</th><th>Tespit Eden</th><th>Durum</th><th>İşlemler</th>
         </tr></thead><tbody id="liste"></tbody></table>
     </div>
 </div>
@@ -198,11 +209,18 @@ function renderListe(data){
         const durum=r.durum||'acik';
         const tar=r.tarih?new Date(r.tarih).toLocaleDateString('tr-TR'):'-';
         const ac=r.aciklama||'';
+        const sinifBadge = r.sinif==='onemli'
+            ? '<span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:8px;font-size:0.72rem;font-weight:700">Önemli</span>'
+            : r.sinif==='kucuk'
+            ? '<span style="background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:8px;font-size:0.72rem;font-weight:700">Küçük</span>'
+            : '—';
         return `<tr>
             <td style="font-weight:700;color:var(--primary)">${r.kayit_no||'—'}</td>
             <td>${tar}</td>
             <td>${KAYNAK_LABEL[r.kaynak]||r.kaynak||'—'}</td>
-            <td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${ac}">${ac}</td>
+            <td>${sinifBadge}</td>
+            <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.esas_alinan_sart||''}">${r.esas_alinan_sart||'—'}</td>
+            <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${ac}">${ac}</td>
             <td>${r.tespit_eden||'—'}</td>
             <td><span class="badge ${DUR_RENK[durum]}">${DUR_LABEL[durum]}</span></td>
             <td>
@@ -245,7 +263,9 @@ async function kaydet(){
         kaynak:document.getElementById('kaynak').value,
         aciklama,
         tespit_eden:document.getElementById('tespit_eden').value.trim(),
-        durum:document.getElementById('durum').value
+        durum:document.getElementById('durum').value,
+        esas_alinan_sart:document.getElementById('esas_alinan_sart').value.trim(),
+        sinif:document.getElementById('sinif').value
     };
     if(!confirm(duzenleId?'Güncellemek istediğinize emin misiniz?':'Kaydetmek istediğinize emin misiniz?'))return;
     const btn=document.getElementById('saveBtn');btn.disabled=true;btn.textContent='Kaydediliyor...';
@@ -266,6 +286,8 @@ function duzenle(id){
     document.getElementById('aciklama').value=r.aciklama||'';
     document.getElementById('tespit_eden').value=r.tespit_eden||'';
     document.getElementById('durum').value=r.durum||'acik';
+    document.getElementById('esas_alinan_sart').value=r.esas_alinan_sart||'';
+    document.getElementById('sinif').value=r.sinif||'';
     document.getElementById('saveBtn').textContent='💾 Güncelle';
     const c=document.getElementById('accContent');c.style.display='block';
     document.getElementById('accHeader').classList.add('active');
@@ -280,8 +302,9 @@ async function sil(id){
 }
 
 function formTemizle(){
-    ['duzenle_id','kayit_no','tarih','aciklama','tespit_eden'].forEach(id=>document.getElementById(id).value='');
+    ['duzenle_id','kayit_no','tarih','aciklama','tespit_eden','esas_alinan_sart'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('kaynak').value='';
+    document.getElementById('sinif').value='';
     document.getElementById('durum').value='acik';
     document.getElementById('saveBtn').textContent='💾 Kaydet';
     document.getElementById('accContent').style.display='none';

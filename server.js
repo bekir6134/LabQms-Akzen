@@ -1388,6 +1388,9 @@ app.listen(PORT, async () => {
     await pool.query(`UPDATE kalite_dokuman SET durum='iptal' WHERE durum='i̇ptal'`).catch(()=>{});
     // Revizyon yapısı için parent_id kolonu ekle
     await pool.query(`ALTER TABLE kalite_dokuman ADD COLUMN IF NOT EXISTS parent_id INTEGER REFERENCES kalite_dokuman(id) ON DELETE CASCADE`).catch(()=>{});
+    // Uygunsuzluk yeni alanlar
+    await pool.query(`ALTER TABLE uygunsuzluk ADD COLUMN IF NOT EXISTS esas_alinan_sart TEXT`).catch(()=>{});
+    await pool.query(`ALTER TABLE uygunsuzluk ADD COLUMN IF NOT EXISTS sinif VARCHAR(20)`).catch(()=>{});
 });
 
 // ─── KALİTE SİSTEMİ API ROTALARI ────────────────────────────────────────────
@@ -1495,21 +1498,21 @@ app.get('/api/uygunsuzluk', async (req, res) => {
 });
 app.post('/api/uygunsuzluk', async (req, res) => {
     try {
-        const { kayit_no, tarih, kaynak, aciklama, tespit_eden, durum, kapatis_tarihi } = req.body;
+        const { kayit_no, tarih, kaynak, aciklama, tespit_eden, durum, kapatis_tarihi, esas_alinan_sart, sinif } = req.body;
         const r = await pool.query(
-            `INSERT INTO uygunsuzluk (kayit_no,tarih,kaynak,aciklama,tespit_eden,durum,kapatis_tarihi)
-             VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-            [kayit_no, tarih||null, kaynak, aciklama, tespit_eden, durum||'acik', kapatis_tarihi||null]
+            `INSERT INTO uygunsuzluk (kayit_no,tarih,kaynak,aciklama,tespit_eden,durum,kapatis_tarihi,esas_alinan_sart,sinif)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+            [kayit_no, tarih||null, kaynak, aciklama, tespit_eden, durum||'acik', kapatis_tarihi||null, esas_alinan_sart||null, sinif||null]
         );
         res.json(r.rows[0]);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 app.put('/api/uygunsuzluk/:id', async (req, res) => {
     try {
-        const { kayit_no, tarih, kaynak, aciklama, tespit_eden, durum, kapatis_tarihi } = req.body;
+        const { kayit_no, tarih, kaynak, aciklama, tespit_eden, durum, kapatis_tarihi, esas_alinan_sart, sinif } = req.body;
         const r = await pool.query(
-            `UPDATE uygunsuzluk SET kayit_no=$1,tarih=$2,kaynak=$3,aciklama=$4,tespit_eden=$5,durum=$6,kapatis_tarihi=$7 WHERE id=$8 RETURNING *`,
-            [kayit_no, tarih||null, kaynak, aciklama, tespit_eden, durum, kapatis_tarihi||null, req.params.id]
+            `UPDATE uygunsuzluk SET kayit_no=$1,tarih=$2,kaynak=$3,aciklama=$4,tespit_eden=$5,durum=$6,kapatis_tarihi=$7,esas_alinan_sart=$8,sinif=$9 WHERE id=$10 RETURNING *`,
+            [kayit_no, tarih||null, kaynak, aciklama, tespit_eden, durum, kapatis_tarihi||null, esas_alinan_sart||null, sinif||null, req.params.id]
         );
         res.json(r.rows[0]);
     } catch(e) { res.status(500).json({ error: e.message }); }
