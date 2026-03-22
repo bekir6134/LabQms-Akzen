@@ -2285,10 +2285,12 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
             const s1s2Pages = await birlesikDoc.copyPages(s1s2Doc, s1s2Doc.getPageIndices());
             s1s2Pages.forEach(p => birlesikDoc.addPage(p));
 
-            // Ölçüm PDF sayfaları: her sayfayı yeni A4'e XObject olarak göm + footer ekle
-            const footerH = 58; // points (~20mm)
-            const pageW = 595.28, pageH = 841.89; // A4
+            // Ölçüm PDF sayfaları: copyPages + footer damgası
+            console.log('[PDF] Ölçüm PDF işleniyor, boyut:', olcumBytes.length);
+            const olcumDoc = await PDFDocument.load(olcumBytes, { ignoreEncryption: true });
+            console.log('[PDF] Ölçüm sayfa sayısı:', olcumDoc.getPageCount());
             const footerFont = await birlesikDoc.embedFont(StandardFonts.Helvetica);
+            const copiedPages = await birlesikDoc.copyPages(olcumDoc, olcumDoc.getPageIndices());
 
             const yasalSatirlar = [
                 'Bu sertifika, laboratuvarin yazili izni olmadan kismen kopyalanip cogaltilamaz.  |  Imzasiz ve TURKAK Dogrulama Kare Kodu bulunmayan sertifikalar gecersizdir.',
@@ -2299,44 +2301,36 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
             const ffs = 5.8, satirAraligi = ffs + 2.2;
             const gri = rgb(0.3, 0.3, 0.3), labelGri = rgb(0.45, 0.45, 0.45);
 
-            // Ölçüm PDF'ini birlesikDoc'a göm
-            const embeddedOlcumPages = await birlesikDoc.embedPdf(olcumBytes);
+            console.log('[PDF] Kopyalanan sayfa sayısı:', copiedPages.length);
+            for (const pg of copiedPages) {
+                birlesikDoc.addPage(pg);
+                const { width: pgW, height: pgH } = pg.getSize();
+                console.log('[PDF] Sayfa boyutu:', pgW, 'x', pgH);
+                const footerH = 58;
 
-            for (const embPage of embeddedOlcumPages) {
-                const newPage = birlesikDoc.addPage([pageW, pageH]);
-                const contentH = pageH - footerH;
-                const { width: oW, height: oH } = embPage;
-                const scale = Math.min(pageW / oW, contentH / oH);
-                const scaledW = oW * scale;
-                const scaledH = oH * scale;
-                const xOff = (pageW - scaledW) / 2;
-
-                // Ölçüm içeriğini üst alana çiz
-                newPage.drawPage(embPage, { x: xOff, y: footerH, width: scaledW, height: scaledH });
-
-                // Footer arka plan
-                newPage.drawRectangle({ x:0, y:0, width:pageW, height:footerH, color:rgb(1,1,1) });
+                // Beyaz zemin - mevcut içeriğin üstüne
+                pg.drawRectangle({ x:0, y:0, width:pgW, height:footerH, color:rgb(1,1,1) });
 
                 // Üst çizgi
-                newPage.drawLine({ start:{x:15, y:footerH-1}, end:{x:pageW-15, y:footerH-1}, thickness:0.5, color:rgb(0.6,0.6,0.6) });
+                pg.drawLine({ start:{x:15, y:footerH-2}, end:{x:pgW-15, y:footerH-2}, thickness:0.5, color:rgb(0.6,0.6,0.6) });
 
                 // Lab bilgi satırı
-                const labBilgiY = footerH - 10;
-                const solMetin = `${labAdi}  ${labAdres}`.trim();
-                if(solMetin) newPage.drawText(solMetin, { x:15, y:labBilgiY, size:6, font:footerFont, color:labelGri });
+                const labBilgiY = footerH - 11;
+                const solMetin = [labAdi, labAdres].filter(Boolean).join('  ');
+                if(solMetin) pg.drawText(solMetin, { x:15, y:labBilgiY, size:6, font:footerFont, color:labelGri });
                 const sagMetin = [labTel ? `Tel: ${labTel}` : '', labWeb, labMail].filter(Boolean).join('  |  ');
                 if(sagMetin) {
                     const sagW = footerFont.widthOfTextAtSize(sagMetin, 6);
-                    newPage.drawText(sagMetin, { x:Math.max(15, pageW - sagW - 15), y:labBilgiY, size:6, font:footerFont, color:labelGri });
+                    pg.drawText(sagMetin, { x:Math.max(15, pgW - sagW - 15), y:labBilgiY, size:6, font:footerFont, color:labelGri });
                 }
 
                 // İkinci çizgi
                 const cizgi2Y = labBilgiY - 4;
-                newPage.drawLine({ start:{x:15, y:cizgi2Y}, end:{x:pageW-15, y:cizgi2Y}, thickness:0.3, color:rgb(0.8,0.8,0.8) });
+                pg.drawLine({ start:{x:15, y:cizgi2Y}, end:{x:pgW-15, y:cizgi2Y}, thickness:0.3, color:rgb(0.8,0.8,0.8) });
 
                 // Yasal satırlar
                 yasalSatirlar.forEach((satir, i) => {
-                    newPage.drawText(satir, { x:15, y: cizgi2Y - ffs - (i * satirAraligi) - 1, size:ffs, font:footerFont, color:gri });
+                    pg.drawText(satir, { x:15, y:cizgi2Y - ffs - (i * satirAraligi) - 1, size:ffs, font:footerFont, color:gri });
                 });
             }
 
