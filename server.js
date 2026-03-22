@@ -2277,11 +2277,12 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
             s1s2Pages.forEach(p => birlesikDoc.addPage(p));
 
             // Ölçüm PDF sayfaları ekle (yasal footer damgası ile)
-            const olcumDoc = await PDFDocument.load(olcumBytes);
-            const olcumPages = await birlesikDoc.copyPages(olcumDoc, olcumDoc.getPageIndices());
+            // Yöntem: temp doc üzerinde işle → kaydet → yeniden yükle → birleştir
+            const olcumDoc = await PDFDocument.load(olcumBytes, { ignoreEncryption: true });
+            const tempDoc = await PDFDocument.create();
+            const tempFont = await tempDoc.embedFont(StandardFonts.Helvetica);
+            const tempPages = await tempDoc.copyPages(olcumDoc, olcumDoc.getPageIndices());
 
-            // Fontu birlesikDoc'a göm (sayfa kopyalandıktan sonra çizim için)
-            const helvetica = await birlesikDoc.embedFont(StandardFonts.Helvetica);
             const yasalSatirlar = [
                 'Bu sertifika, laboratuvarin yazili izni olmadan kismen kopyalanip cogaltilamaz.',
                 'This certificate shall not be reproduced other than in full except with the permission of the laboratory.',
@@ -2294,20 +2295,22 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
             const satirAraligi = fs + 2.5;
             const gri = rgb(0.35, 0.35, 0.35);
 
-            for (const page of olcumPages) {
-                birlesikDoc.addPage(page);
-                const { width } = page.getSize();
+            for (const pg of tempPages) {
+                tempDoc.addPage(pg);
+                const { width, height } = pg.getSize();
                 const toplamY = yasalSatirlar.length * satirAraligi + 6;
                 const cizgiY = toplamY + 3;
-                // Beyaz arka plan
-                page.drawRectangle({ x:15, y:0, width:width-30, height:cizgiY+4, color:rgb(1,1,1) });
-                // İnce çizgi
-                page.drawLine({ start:{x:15, y:cizgiY}, end:{x:width-15, y:cizgiY}, thickness:0.5, color:rgb(0.6,0.6,0.6) });
-                // Satırlar
+                pg.drawRectangle({ x:10, y:0, width:width-20, height:cizgiY+6, color:rgb(1,1,1), opacity:1 });
+                pg.drawLine({ start:{x:10, y:cizgiY}, end:{x:width-10, y:cizgiY}, thickness:0.5, color:rgb(0.65,0.65,0.65) });
                 yasalSatirlar.forEach((satir, i) => {
-                    page.drawText(satir, { x:15, y: toplamY - (i * satirAraligi), size:fs, font:helvetica, color:gri });
+                    pg.drawText(satir, { x:12, y: toplamY - (i * satirAraligi), size:fs, font:tempFont, color:gri });
                 });
             }
+
+            const tempBytes = await tempDoc.save();
+            const tempDocFinal = await PDFDocument.load(tempBytes);
+            const olcumPages = await birlesikDoc.copyPages(tempDocFinal, tempDocFinal.getPageIndices());
+            olcumPages.forEach(p => birlesikDoc.addPage(p));
 
             const birlesikBytes = await birlesikDoc.save();
             sonPdfBuffer = Buffer.from(birlesikBytes);
