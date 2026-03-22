@@ -114,6 +114,7 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
                     <option value="ic_denetim">İç Denetim</option>
                     <option value="musteri_sikayet">Müşteri Şikayeti</option>
                     <option value="ic_tetkik">İç Tetkik</option>
+                    <option value="turkak_denetimi">Türkak Denetimi</option>
                     <option value="cevresel">Çevresel</option>
                     <option value="diger">Diğer</option>
                 </select>
@@ -161,7 +162,7 @@ function toggleAcc(){const c=document.getElementById('accContent'),h=document.ge
 
 const DUR_LABEL={acik:'Açık',incelemede:'İncelemede',kapali:'Kapalı'};
 const DUR_RENK={acik:'b-acik',incelemede:'b-incelemede',kapali:'b-kapali'};
-const KAYNAK_LABEL={ic_denetim:'İç Denetim',musteri_sikayet:'Müşteri Şikayeti',ic_tetkik:'İç Tetkik',cevresel:'Çevresel',diger:'Diğer'};
+const KAYNAK_LABEL={ic_denetim:'İç Denetim',musteri_sikayet:'Müşteri Şikayeti',ic_tetkik:'İç Tetkik',turkak_denetimi:'Türkak Denetimi',cevresel:'Çevresel',diger:'Diğer'};
 
 function renderKanban(){
     const wrap=document.getElementById('kanban');
