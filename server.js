@@ -54,6 +54,7 @@ async function r2Yukle(key, buffer) {
 async function r2Indir(key) {
     return await r2Request('GET', key, null);
 }
+const puppeteer = require('puppeteer-core');
 const QRCode    = require('qrcode');
 const { PDFDocument, StandardFonts, rgb, degrees } = require('pdf-lib');
 const { Pool } = require('pg');
@@ -98,7 +99,7 @@ app.get('/api/test-footer', async (req, res) => {
 
         const execPath = process.env.CHROMIUM_PATH ||
             require('child_process').execSync('which chromium || which chromium-browser || which google-chrome || echo ""')
-            .toString().trim();
+            .toString().trim() || 'chromium';
 
         browser = await puppeteer.launch({
             executablePath: execPath,
@@ -2311,9 +2312,9 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
         // S1+S2 HTML → PDF (Puppeteer)
         const onizleUrl = `${req.protocol}://${req.get('host')}/sertifika-onizle.html?id=${req.params.id}&print=1`;
         // Railway'de sistem Chromium'unu kullan
-        const execPath = process.env.CHROMIUM_PATH || 
+        const execPath = process.env.CHROMIUM_PATH ||
             require('child_process').execSync('which chromium || which chromium-browser || which google-chrome || echo ""')
-            .toString().trim() || await chromium.executablePath();
+            .toString().trim();
 
         browser = await puppeteer.launch({
             executablePath: execPath,
