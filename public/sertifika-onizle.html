@@ -45,7 +45,7 @@
     /* HEADER */
     .s1-header { display:grid; grid-template-columns:34mm 105mm 37mm; gap:0; margin-bottom:0; }
     .logo-kutu { display:flex; align-items:center; justify-content:center; min-height:24mm; color:#aaa; font-size:7pt; text-align:center; padding:4px; }
-    .qr-kutu   { border:0.5pt solid var(--sinir); display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:30mm; color:#bbb; font-size:6pt; text-align:center; padding:4px; margin-top:1mm; }
+    .qr-kutu   { border:0.5pt solid var(--sinir); display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:26mm; color:#bbb; font-size:6pt; text-align:center; padding:4px; margin-top:1mm; }
     .orta-blok { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 4mm; }
     .lab-adi   { font-size:11pt; font-weight:700; color:var(--lacivert); text-align:center; line-height:1.3; }
     .lab-adres { font-size:7pt; color:var(--orta); text-align:center; margin-top:2mm; }
@@ -208,9 +208,9 @@ async function yukle() {
         <div class="a4">
             <div class="s1-header">
                 <div style="display:flex;flex-direction:column;gap:1mm;">
-                    <div class="logo-kutu">${ayar.lab_logo ? `<img src="${ayar.lab_logo}" style="max-width:30mm;max-height:22mm;object-fit:contain;">` : 'LAB LOGOSU'}</div>
+                    <div class="logo-kutu">${ayar.lab_logo ? `<img src="${ayar.lab_logo}" style="max-width:22mm;max-height:22mm;object-fit:contain;">` : 'LAB LOGOSU'}</div>
                     <div class="qr-kutu">
-                        ${qrData?.qr ? `<img src="${qrData.qr}" style="width:30mm;height:30mm;"><div style="font-size:5pt;color:var(--orta);text-align:center;margin-top:1.5mm;">Sertifikayı görüntüle</div>` : '<div style="font-size:6pt;color:#bbb;">QR</div>'}
+                        ${qrData?.qr ? `<img src="${qrData.qr}" style="width:22mm;height:22mm;"><div style="font-size:5pt;color:var(--orta);text-align:center;margin-top:1mm;">Sertifikayı görüntüle</div>` : '<div style="font-size:6pt;color:#bbb;">QR</div>'}
                     </div>
                 </div>
                 <div class="orta-blok">
@@ -218,7 +218,7 @@ async function yukle() {
                     <div class="sert-baslik">KALİBRASYON SERTİFİKASI</div><div class="sert-baslik-en">Calibration Certificate</div>
                 </div>
                 <div class="sag-blok">
-                    <div class="turkak-kutu">${ayar.turkak_logo ? `<img src="${ayar.turkak_logo}" style="max-width:33mm;max-height:10mm;object-fit:contain;display:block;margin:0 auto 2px;">` : ''}</div>
+                    <div class="turkak-kutu">${ayar.turkak_logo ? `<img src="${ayar.turkak_logo}" style="max-width:22mm;max-height:22mm;object-fit:contain;display:block;margin:0 auto 2px;">` : ''}</div>
                     <div class="qr-sag"><div class="qr-placeholder">QR<br>${sertNo}</div><div style="font-size:6pt;color:var(--orta);margin-top:1mm;">TÜRKAK BDS NO</div><div style="font-size:7pt;font-weight:700;color:var(--lacivert);">${sertNo}</div></div>
                 </div>
             </div>
