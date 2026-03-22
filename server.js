@@ -56,6 +56,22 @@ async function r2Indir(key) {
 }
 const puppeteer = require('puppeteer-core');
 const QRCode    = require('qrcode');
+
+function chromiumExecPath() {
+    if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
+    const candidates = [
+        '/nix/var/nix/profiles/default/bin/chromium',
+        '/run/current-system/sw/bin/chromium',
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/google-chrome',
+        '/usr/bin/google-chrome-stable',
+    ];
+    const found = candidates.find(p => { try { require('fs').accessSync(p); return true; } catch(e) { return false; } });
+    if (found) return found;
+    try { return require('child_process').execSync('which chromium || which chromium-browser || which google-chrome 2>/dev/null', { timeout: 3000 }).toString().trim(); }
+    catch(e) { return 'chromium'; }
+}
 const { PDFDocument, StandardFonts, rgb, degrees } = require('pdf-lib');
 const { Pool } = require('pg');
 const path = require('path');
@@ -97,12 +113,8 @@ app.get('/api/test-footer', async (req, res) => {
         const labWeb   = ayar.website   || '';
         const labMail  = ayar.email     || '';
 
-        const execPath = process.env.CHROMIUM_PATH ||
-            require('child_process').execSync('which chromium || which chromium-browser || which google-chrome || echo ""')
-            .toString().trim() || 'chromium';
-
         browser = await puppeteer.launch({
-            executablePath: execPath,
+            executablePath: chromiumExecPath(),
             headless: 'new',
             args: ['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage','--disable-gpu','--no-zygote','--single-process'],
         });
