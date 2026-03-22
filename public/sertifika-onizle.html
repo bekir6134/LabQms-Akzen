@@ -81,7 +81,9 @@
     .alt-sag { font-size:6pt; color:var(--orta); text-align:right; }
 
     /* YASAL */
-    .yasal { font-size:6pt; color:var(--orta); font-style:italic; text-align:center; line-height:1.4; margin-bottom:1mm; }
+    .yasal { font-size:5.8pt; color:var(--orta); text-align:center; line-height:1.5; margin-bottom:1.5mm; border-top:0.5pt solid var(--sinir); padding-top:2mm; }
+    .yasal-tr { font-style:italic; margin-bottom:1px; }
+    .yasal-en { color:#aaa; }
     .sayfa-no { font-size:6.5pt; color:var(--orta); margin-top:2mm; display:flex; justify-content:space-between; }
 
     /* ─── SAYFA 2 ─── */
@@ -253,7 +255,10 @@ async function yukle() {
                 </tr>
             </table>
             <div style="margin-top:auto;">
-                <p class="yasal">Bu sertifika dijital imzalıdır. Laboratuvarın yazılı izni olmadan kısmen kopyalanıp çoğaltılamaz. İmzasız ve mühürsüz sertifikalar geçersizdir.</p>
+                <div class="yasal">
+                    <div class="yasal-tr">Bu sertifika, laboratuvarın yazılı izni olmadan kısmen kopyalanıp çoğaltılamaz. &nbsp;|&nbsp; İmzasız ve TÜRKAK Doğrulama Kare Kodu bulunmayan sertifikalar geçersizdir. &nbsp;|&nbsp; Bu sertifikanın kullanımından önce <b>asist.turkak.org.tr</b> bağlantısı üzerinden kare kodu okutarak doğrulayınız.</div>
+                    <div class="yasal-en">This certificate shall not be reproduced other than in full except with the permission of the laboratory. &nbsp;|&nbsp; Certificates that are unsigned and do not contain TÜRKAK Certificate Verification System's verification QR code are invalid. &nbsp;|&nbsp; Before using this certificate, verify it by scanning the QR code via <b>asist.turkak.org.tr</b>.</div>
+                </div>
                 <div class="alt-bar">
                     <div class="alt-sol">${labAdi}  ${labAdres}</div><div class="alt-sag">Tel: ${labTel}  |  ${labWeb}  |  ${labMail}</div>
                 </div>
@@ -288,7 +293,10 @@ async function yukle() {
             <div class="bolum-baslik">8. UYGUNLUK DEĞERLENDİRME VE KARAR KURALI / CONFORMITY ASSESSMENT AND DECISION RULE</div><p class="s2-metin">Ölçüm sonuçları raporda belirtilmiş olup, değerlendirme kullanıcıya bırakılmıştır.</p>
             <div class="bolum-baslik">9. GÖRÜŞ VE YORUMLAR / OPINION AND COMMENTS</div><p class="s2-metin">${s.yorum||'—'}</p>
             <div style="margin-top:auto;padding-top:4mm;">
-                <p class="yasal">Bu sertifika dijital imzalıdır. Laboratuvarın yazılı izni olmadan kısmen kopyalanıp çoğaltılamaz. İmzasız ve mühürsüz sertifikalar geçersizdir.</p>
+                <div class="yasal">
+                    <div class="yasal-tr">Bu sertifika, laboratuvarın yazılı izni olmadan kısmen kopyalanıp çoğaltılamaz. &nbsp;|&nbsp; İmzasız ve TÜRKAK Doğrulama Kare Kodu bulunmayan sertifikalar geçersizdir. &nbsp;|&nbsp; Bu sertifikanın kullanımından önce <b>asist.turkak.org.tr</b> bağlantısı üzerinden kare kodu okutarak doğrulayınız.</div>
+                    <div class="yasal-en">This certificate shall not be reproduced other than in full except with the permission of the laboratory. &nbsp;|&nbsp; Certificates that are unsigned and do not contain TÜRKAK Certificate Verification System's verification QR code are invalid. &nbsp;|&nbsp; Before using this certificate, verify it by scanning the QR code via <b>asist.turkak.org.tr</b>.</div>
+                </div>
                 <div class="alt-bar"><div class="alt-sol">${labAdi}  ${labAdres}</div><div class="alt-sag">Tel: ${labTel}  |  ${labWeb}  |  ${labMail}</div></div>
                 <div class="sayfa-no"><span>${formNo}</span><span>Sayfa No: 2 / ${toplamSayfa}</span></div>
             </div>

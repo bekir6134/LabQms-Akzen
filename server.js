@@ -55,7 +55,7 @@ async function r2Indir(key) {
     return await r2Request('GET', key, null);
 }
 const QRCode    = require('qrcode');
-const { PDFDocument } = require('pdf-lib');
+const { PDFDocument, StandardFonts, rgb, degrees } = require('pdf-lib');
 const { Pool } = require('pg');
 const path = require('path');
 const cors = require('cors');
@@ -2276,8 +2276,29 @@ app.get('/api/sertifikalar/:id/pdf', async (req, res) => {
             const s1s2Pages = await birlesikDoc.copyPages(s1s2Doc, s1s2Doc.getPageIndices());
             s1s2Pages.forEach(p => birlesikDoc.addPage(p));
 
-            // Ölçüm PDF sayfaları ekle
+            // Ölçüm PDF sayfaları ekle (yasal footer damgası ile)
             const olcumDoc = await PDFDocument.load(olcumBytes);
+            const helvetica = await olcumDoc.embedFont(StandardFonts.Helvetica);
+            const yasal1 = 'This certificate shall not be reproduced other than in full except with the permission of the laboratory.';
+            const yasal2 = 'Certificates that are unsigned and do not contain TURKAK Certificate Verification System\'s verification QR code are invalid.';
+            const yasal3 = 'Before using this certificate, verify it by scanning the QR code via asist.turkak.org.tr.';
+            const yasal1tr = 'Bu sertifika, laboratuvarin yazili izni olmadan kismen kopyalanip cogaltilamaz.';
+            const yasal2tr = 'Imzasiz ve TURKAK Dogrulama Kare Kodu bulunmayan sertifikalar gecersizdir.';
+            const yasal3tr = 'Bu sertifikanin kullanimindan once asist.turkak.org.tr baglantisi uzerinden kare kodu okutarak dogrulayiniz.';
+            for (const page of olcumDoc.getPages()) {
+                const { width, height } = page.getSize();
+                const fs = 5.5;
+                const gri = rgb(0.45, 0.45, 0.45);
+                const satirlar = [yasal1tr, yasal1, yasal2tr, yasal2, yasal3tr, yasal3];
+                const satirYuksekligi = fs + 2;
+                const toplamYukseklik = satirlar.length * satirYuksekligi + 4;
+                const baslangicY = toplamYukseklik + 4;
+                // İnce çizgi
+                page.drawLine({ start:{x:20, y:baslangicY+2}, end:{x:width-20, y:baslangicY+2}, thickness:0.4, color:rgb(0.7,0.7,0.7) });
+                satirlar.forEach((satir, i) => {
+                    page.drawText(satir, { x:20, y: baslangicY - (i * satirYuksekligi) - fs, size:fs, font:helvetica, color:gri });
+                });
+            }
             const olcumPages = await birlesikDoc.copyPages(olcumDoc, olcumDoc.getPageIndices());
             olcumPages.forEach(p => birlesikDoc.addPage(p));
 
