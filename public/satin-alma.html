@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Satın Alma</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--primary:#1E40AF;--border:#e2e8f0;--bg:#f8fafc;--text:#334155}
+*{box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);padding:24px;color:var(--text);margin:0}
+
+/* ─── HEADER ─── */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.page-title{font-size:1.2rem;font-weight:700;color:var(--primary)}
+.page-title span{font-size:0.8rem;font-weight:500;color:#64748b;margin-left:8px}
+.btn-primary{background:linear-gradient(135deg,#1e3a8a,var(--primary));color:#fff;border:none;padding:10px 22px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;gap:6px}
+.btn-primary:hover{opacity:.9}
+
+/* ─── FİLTRE ─── */
+.filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.chip-group{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:0.8rem;font-weight:600;cursor:pointer;color:#64748b;transition:.15s}
+.chip:hover{border-color:#a5b4fc;color:var(--primary)}
+.chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.sep{width:1px;height:28px;background:var(--border);margin:0 4px}
+.search-box{position:relative;margin-left:auto}
+.search-box input{padding:8px 10px 8px 32px;border:1px solid var(--border);border-radius:8px;font-size:0.84rem;outline:none;width:210px;background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="%2394a3b8" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>') no-repeat 10px center}
+.search-box input:focus{border-color:var(--primary)}
+
+/* ─── KANBAN ─── */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;overflow-x:auto}
+.kb-col{background:#fff;border-radius:14px;border:1px solid var(--border);padding:14px;min-width:200px}
+.kb-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:700;font-size:0.82rem}
+.kb-dot{width:10px;height:10px;border-radius:50%}
+.kb-count{background:#f1f5f9;color:#64748b;padding:1px 8px;border-radius:10px;font-size:0.75rem;font-weight:700;margin-left:auto}
+.kb-card{background:#f8fafc;border-radius:10px;padding:11px 13px;margin-bottom:8px;border:1px solid var(--border);font-size:0.81rem;line-height:1.45;cursor:default}
+.kb-card:last-child{margin-bottom:0}
+.kb-card-title{font-weight:600;color:#0f172a;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kb-card-sub{color:#64748b;font-size:0.75rem}
+
+/* ─── TABLO ─── */
+.card{background:#fff;border-radius:14px;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.card-header{padding:14px 22px;border-bottom:1px solid var(--border);background:#f8fafc;display:flex;align-items:center;justify-content:space-between;border-radius:14px 14px 0 0}
+.card-title{font-weight:700;color:var(--primary);font-size:0.93rem}
+table{width:100%;border-collapse:collapse}
+th{background:#f8fafc;padding:10px 12px;text-align:left;color:#64748b;font-size:0.78rem;font-weight:700;border-bottom:2px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.84rem;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.empty-row td{text-align:center;color:#94a3b8;padding:32px}
+
+/* ─── BADGE'LER ─── */
+.badge{padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;white-space:nowrap}
+.b-urun{background:#dbeafe;color:#1e40af}
+.b-hizmet{background:#d1fae5;color:#065f46}
+.b-talep{background:#f1f5f9;color:#475569}
+.b-onaylandi{background:#dbeafe;color:#1e40af}
+.b-reddedildi{background:#fee2e2;color:#dc2626}
+.b-siparis{background:#fef3c7;color:#92400e}
+.b-teslim{background:#ede9fe;color:#6d28d9}
+.b-tamamlandi{background:#d1fae5;color:#065f46}
+.b-kabul{background:#d1fae5;color:#065f46}
+.b-ret{background:#fee2e2;color:#dc2626}
+.b-kismi{background:#fef3c7;color:#92400e}
+.b-beklemede{background:#f1f5f9;color:#64748b}
+
+/* ─── AKSİYON MENÜSÜ ─── */
+.act-wrap{position:relative;display:inline-block}
+.act-btn{background:#f8fafc;border:1px solid var(--border);padding:5px 12px;border-radius:7px;cursor:pointer;font-size:0.78rem;font-weight:600;color:var(--text)}
+.act-btn:hover{background:#e0e7ff;border-color:#a5b4fc;color:var(--primary)}
+.act-drop{display:none;position:fixed;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:9000;min-width:180px}
+.act-wrap.open .act-drop{display:block}
+.act-item{padding:9px 15px;cursor:pointer;font-size:0.83rem;display:flex;align-items:center;gap:8px;color:var(--text)}
+.act-item:hover{background:#f1f5f9}
+.act-item.danger{color:#dc2626}
+.act-item.danger:hover{background:#fee2e2}
+.act-drop hr{margin:4px 0;border:none;border-top:1px solid var(--border)}
+
+/* ─── MODAL ─── */
+#modal{display:none;position:fixed;inset:0;z-index:4000;background:rgba(15,23,42,.5);align-items:center;justify-content:center}
+#modal.open{display:flex}
+.modal-box{background:#fff;border-radius:16px;width:680px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-head{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:5}
+.modal-title{font-weight:700;font-size:1rem;color:var(--primary)}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#94a3b8}
+.modal-close:hover{color:#dc2626}
+.modal-body{padding:24px}
+
+/* ─── FORM ─── */
+.fg{display:grid;gap:12px;margin-bottom:14px}
+.fg2{grid-template-columns:1fr 1fr}
+.fg3{grid-template-columns:1fr 1fr 1fr}
+.full{grid-column:1/-1}
+label{display:block;font-size:0.78rem;font-weight:700;color:#64748b;margin-bottom:4px}
+label span.req{color:#dc2626}
+input,select,textarea{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;outline:none;font-family:inherit;font-size:0.88rem;background:#fff;color:var(--text)}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(30,64,175,0.1)}
+textarea{resize:vertical;min-height:60px}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid var(--border)}
+.btn-save{background:linear-gradient(135deg,#1e3a8a,var(--primary));color:#fff;border:none;padding:10px 26px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem}
+.btn-cancel{background:#f1f5f9;color:#475569;border:none;padding:10px 20px;border-radius:10px;font-weight:600;cursor:pointer;font-size:0.9rem}
+
+/* ─── DURUM AKIŞ MODAL ─── */
+#durumModal{display:none;position:fixed;inset:0;z-index:4500;background:rgba(15,23,42,.5);align-items:center;justify-content:center}
+#durumModal.open{display:flex}
+.durum-box{background:#fff;border-radius:16px;width:460px;max-width:95vw}
+.durum-head{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.durum-body{padding:20px 22px}
+.durum-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--border)}
+
+@media(max-width:768px){
+.kanban{grid-template-columns:1fr 1fr;display:none}
+.fg2,.fg3{grid-template-columns:1fr}
+.page-header{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<!-- ─── HEADER ─── -->
+<div class="page-header">
+    <div>
+        <div class="page-title">🛒 Satın Alma Yönetimi <span>ISO 17025:2017 §6.6</span></div>
+    </div>
+    <button class="btn-primary" onclick="modalAc()">+ Yeni Talep</button>
+</div>
+
+<!-- ─── FİLTRE ─── -->
+<div class="filter-row">
+    <div class="chip-group" id="durumChips">
+        <button class="chip active" onclick="durumFiltrele('',this)">Tümü</button>
+        <button class="chip" onclick="durumFiltrele('talep',this)">📋 Talep</button>
+        <button class="chip" onclick="durumFiltrele('onaylandi',this)">✅ Onaylandı</button>
+        <button class="chip" onclick="durumFiltrele('siparis_verildi',this)">📦 Sipariş</button>
+        <button class="chip" onclick="durumFiltrele('teslim_alindi',this)">🚚 Teslim</button>
+        <button class="chip" onclick="durumFiltrele('tamamlandi',this)">🏁 Tamamlandı</button>
+        <button class="chip" onclick="durumFiltrele('reddedildi',this)">❌ Reddedildi</button>
+    </div>
+    <div class="sep"></div>
+    <div class="chip-group" id="turChips">
+        <button class="chip active" onclick="turFiltrele('',this)">Tümü</button>
+        <button class="chip" onclick="turFiltrele('urun',this)">📦 Ürün</button>
+        <button class="chip" onclick="turFiltrele('hizmet',this)">🔧 Hizmet</button>
+    </div>
+    <div class="search-box">
+        <input type="text" id="aramaInput" placeholder="Konu ara..." oninput="tabloYukle()">
+    </div>
+</div>
+
+<!-- ─── KANBAN ─── -->
+<div class="kanban" id="kanban"></div>
+
+<!-- ─── TABLO ─── -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">📋 Satın Alma Kayıtları</span>
+        <span id="kayitSayisi" style="font-size:0.8rem;color:#64748b"></span>
+    </div>
+    <div style="overflow-x:auto">
+        <table>
+            <thead>
+                <tr>
+                    <th>Talep No</th>
+                    <th>Konu</th>
+                    <th>Tür</th>
+                    <th>Tedarikçi</th>
+                    <th>Talep Tarihi</th>
+                    <th>Durum</th>
+                    <th>Kabul</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody id="tabloBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ─── FORM MODAL ─── -->
+<div id="modal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <span class="modal-title" id="modalBaslik">Yeni Satın Alma Talebi</span>
+            <button class="modal-close" onclick="modalKapat()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="fg fg2">
+                <div class="full">
+                    <label>Konu <span class="req">*</span></label>
+                    <input type="text" id="fKonu" placeholder="Satın alınacak ürün veya hizmet...">
+                </div>
+                <div>
+                    <label>Tür <span class="req">*</span></label>
+                    <select id="fTur">
+                        <option value="urun">📦 Ürün</option>
+                        <option value="hizmet">🔧 Hizmet</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Talep Eden</label>
+                    <input type="text" id="fTalepEden" placeholder="Ad Soyad">
+                </div>
+                <div>
+                    <label>Talep Tarihi <span class="req">*</span></label>
+                    <input type="date" id="fTalepTarihi">
+                </div>
+                <div>
+                    <label>Tahmini Teslimat</label>
+                    <input type="date" id="fTahminiTeslimat">
+                </div>
+            </div>
+            <div class="fg fg3">
+                <div>
+                    <label>Miktar</label>
+                    <input type="number" id="fMiktar" min="0" step="any" placeholder="0">
+                </div>
+                <div>
+                    <label>Birim</label>
+                    <input type="text" id="fBirim" placeholder="adet, kg, lt...">
+                </div>
+                <div>
+                    <label>Para Birimi</label>
+                    <select id="fParaBirimi">
+                        <option value="TRY">TRY ₺</option>
+                        <option value="USD">USD $</option>
+                        <option value="EUR">EUR €</option>
+                    </select>
+                </div>
+            </div>
+            <div class="fg fg2">
+                <div>
+                    <label>Tahmini Tutar</label>
+                    <input type="number" id="fTutar" min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div>
+                    <label>Tedarikçi</label>
+                    <select id="fTedarikci">
+                        <option value="">— Seçiniz —</option>
+                    </select>
+                </div>
+                <div class="full">
+                    <label>Açıklama</label>
+                    <textarea id="fAciklama" rows="3" placeholder="Detaylar, teknik özellikler..."></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="modalKapat()">İptal</button>
+            <button class="btn-save" onclick="kaydet()">💾 Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<!-- ─── DURUM AKIŞ MODAL ─── -->
+<div id="durumModal">
+    <div class="durum-box">
+        <div class="durum-head">
+            <span style="font-weight:700;color:var(--primary)" id="durumModalBaslik">Durumu Güncelle</span>
+            <button onclick="durumModalKapat()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#94a3b8">✕</button>
+        </div>
+        <div class="durum-body" id="durumModalIcerik"></div>
+        <div class="durum-footer">
+            <button class="btn-cancel" onclick="durumModalKapat()">İptal</button>
+            <button class="btn-save" id="durumModalBtn" onclick="durumKaydet()">Güncelle</button>
+        </div>
+    </div>
+</div>
+
+<script src="dialog.js"></script>
+<script>
+let tumKayitlar = [];
+let duzenleId = null;
+let aktifDurum = '';
+let aktifTur = '';
+let durumAksiyon = null; // { id, yeniDurum, extraFields }
+
+const DURUM_ETIKET = {
+    talep:         { label: 'Talep',        cls: 'b-talep',       icon: '📋' },
+    onaylandi:     { label: 'Onaylandı',    cls: 'b-onaylandi',   icon: '✅' },
+    reddedildi:    { label: 'Reddedildi',   cls: 'b-reddedildi',  icon: '❌' },
+    siparis_verildi:{ label: 'Sipariş',     cls: 'b-siparis',     icon: '📦' },
+    teslim_alindi: { label: 'Teslim Alındı',cls: 'b-teslim',      icon: '🚚' },
+    tamamlandi:    { label: 'Tamamlandı',   cls: 'b-tamamlandi',  icon: '🏁' },
+};
+const KABUL_ETIKET = {
+    beklemede: { label: 'Beklemede', cls: 'b-beklemede' },
+    kabul:     { label: 'Kabul',     cls: 'b-kabul'     },
+    ret:       { label: 'Ret',       cls: 'b-ret'       },
+    kismi_kabul:{ label: 'Kısmi Kabul', cls: 'b-kismi' },
+};
+
+async function yukle() {
+    const res = await fetch('/api/satin-alma');
+    tumKayitlar = await res.json();
+    tedarikciYukle();
+    render();
+}
+
+async function tedarikciYukle() {
+    try {
+        const res = await fetch('/api/satin-alma/tedarikci-listesi');
+        const list = await res.json();
+        const sel = document.getElementById('fTedarikci');
+        sel.innerHTML = '<option value="">— Seçiniz —</option>' +
+            list.map(t => `<option value="${t.id}">${t.firma_adi}</option>`).join('');
+    } catch(e) {}
+}
+
+function filtrele() {
+    const arama = document.getElementById('aramaInput').value.toLowerCase();
+    return tumKayitlar.filter(r =>
+        (!aktifDurum || r.durum === aktifDurum) &&
+        (!aktifTur   || r.tur   === aktifTur) &&
+        (!arama      || r.konu.toLowerCase().includes(arama) ||
+                       (r.talep_no || '').toLowerCase().includes(arama) ||
+                       (r.tedarikci_adi || '').toLowerCase().includes(arama))
+    );
+}
+
+function render() {
+    const kayitlar = filtrele();
+    kanbanRender(kayitlar);
+    tabloRender(kayitlar);
+}
+
+function tabloYukle() { render(); }
+
+function kanbanRender(kayitlar) {
+    const grups = {
+        talep: [], onaylandi: [], siparis_verildi: [],
+        teslim_alindi_tamamlandi: []
+    };
+    kayitlar.forEach(r => {
+        if (r.durum === 'talep') grups.talep.push(r);
+        else if (r.durum === 'onaylandi') grups.onaylandi.push(r);
+        else if (r.durum === 'siparis_verildi') grups.siparis_verildi.push(r);
+        else grups.teslim_alindi_tamamlandi.push(r);
+    });
+    const cols = [
+        { key: 'talep',  label: 'Talep', color: '#94a3b8', items: grups.talep },
+        { key: 'onaylandi', label: 'Onaylandı', color: '#1E40AF', items: grups.onaylandi },
+        { key: 'siparis_verildi', label: 'Sipariş Verildi', color: '#d97706', items: grups.siparis_verildi },
+        { key: 'teslim', label: 'Teslim / Tamamlandı', color: '#7c3aed', items: grups.teslim_alindi_tamamlandi },
+    ];
+    document.getElementById('kanban').innerHTML = cols.map(col => `
+        <div class="kb-col">
+            <div class="kb-head">
+                <div class="kb-dot" style="background:${col.color}"></div>
+                ${col.label}
+                <span class="kb-count">${col.items.length}</span>
+            </div>
+            ${col.items.slice(0,5).map(r => `
+                <div class="kb-card">
+                    <div class="kb-card-title">${r.konu}</div>
+                    <div class="kb-card-sub">${r.talep_no || ''} · ${r.tur === 'urun' ? '📦 Ürün' : '🔧 Hizmet'}</div>
+                    ${r.tedarikci_adi ? `<div class="kb-card-sub">${r.tedarikci_adi}</div>` : ''}
+                </div>`).join('')}
+            ${col.items.length > 5 ? `<div style="font-size:0.75rem;color:#94a3b8;text-align:center;padding:4px">+${col.items.length-5} daha</div>` : ''}
+        </div>`).join('');
+}
+
+function tabloRender(kayitlar) {
+    document.getElementById('kayitSayisi').textContent = `${kayitlar.length} kayıt`;
+    const body = document.getElementById('tabloBody');
+    if (!kayitlar.length) {
+        body.innerHTML = '<tr class="empty-row"><td colspan="8">Kayıt bulunamadı</td></tr>';
+        return;
+    }
+    body.innerHTML = kayitlar.map(r => {
+        const de = DURUM_ETIKET[r.durum] || { label: r.durum, cls: 'b-beklemede', icon: '' };
+        const ke = KABUL_ETIKET[r.kabul_durumu] || KABUL_ETIKET.beklemede;
+        const turBadge = r.tur === 'urun'
+            ? '<span class="badge b-urun">📦 Ürün</span>'
+            : '<span class="badge b-hizmet">🔧 Hizmet</span>';
+        const akisButonlari = akisButonlariUret(r);
+        return `<tr>
+            <td style="font-weight:700;color:var(--primary);white-space:nowrap">${r.talep_no || '—'}</td>
+            <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.konu}">${r.konu}</td>
+            <td>${turBadge}</td>
+            <td style="font-size:0.82rem">${r.tedarikci_adi || '—'}</td>
+            <td style="white-space:nowrap">${tarihFormatla(r.talep_tarihi)}</td>
+            <td><span class="badge ${de.cls}">${de.icon} ${de.label}</span></td>
+            <td><span class="badge ${ke.cls}">${ke.label}</span></td>
+            <td>
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                    ${akisButonlari}
+                    <div class="act-wrap" id="aw_${r.id}">
+                        <button class="act-btn" onclick="menuToggle(${r.id},event)">⋯</button>
+                        <div class="act-drop">
+                            <div class="act-item" onclick="duzenle(${r.id});menuKapat()">✏️ Düzenle</div>
+                            <hr>
+                            <div class="act-item danger" onclick="sil(${r.id});menuKapat()">🗑️ Sil</div>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function akisButonlariUret(r) {
+    if (r.durum === 'talep') return `
+        <button class="btn-sm" style="background:#d1fae5;color:#065f46;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600" onclick="durumAksiyon_Onayla(${r.id})">✅ Onayla</button>
+        <button class="btn-sm" style="background:#fee2e2;color:#dc2626;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600" onclick="durumAksiyon_Reddet(${r.id})">❌ Reddet</button>`;
+    if (r.durum === 'onaylandi') return `
+        <button class="btn-sm" style="background:#fef3c7;color:#92400e;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600" onclick="durumAksiyon_SiparisVer(${r.id})">📦 Sipariş Ver</button>`;
+    if (r.durum === 'siparis_verildi') return `
+        <button class="btn-sm" style="background:#ede9fe;color:#6d28d9;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600" onclick="durumAksiyon_TeslimAl(${r.id})">🚚 Teslim Alındı</button>`;
+    if (r.durum === 'teslim_alindi') return `
+        <button class="btn-sm" style="background:#d1fae5;color:#065f46;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600" onclick="durumAksiyon_Kabul(${r.id},'kabul')">✔ Kabul</button>
+        <button class="btn-sm" style="background:#fee2e2;color:#dc2626;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600" onclick="durumAksiyon_Kabul(${r.id},'ret')">↩ Ret</button>`;
+    return '';
+}
+
+// ─── DURUM AKIŞ FONKSİYONLARI ───────────────────────────────────────────────
+let _durumId = null;
+
+function durumAksiyon_Onayla(id) {
+    _durumId = id;
+    document.getElementById('durumModalBaslik').textContent = '✅ Talebi Onayla';
+    document.getElementById('durumModalIcerik').innerHTML = `
+        <label style="font-size:.82rem;font-weight:700;color:#64748b;display:block;margin-bottom:4px">Onay Notu (isteğe bağlı)</label>
+        <textarea id="dOnayNotu" rows="3" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:.88rem;resize:vertical"></textarea>`;
+    document.getElementById('durumModalBtn').style.background = '#16a34a';
+    document.getElementById('durumModalBtn').textContent = '✅ Onayla';
+    durumAksiyon = { yeniDurum: 'onaylandi', extraFn: () => {
+        const notu = document.getElementById('dOnayNotu').value;
+        const kullanici = JSON.parse(localStorage.getItem('labqms_user')||'{}');
+        return { onay_notu: notu, onaylayan: kullanici.ad_soyad||'', onay_tarihi: bugun() };
+    }};
+    document.getElementById('durumModal').classList.add('open');
+}
+
+function durumAksiyon_Reddet(id) {
+    _durumId = id;
+    document.getElementById('durumModalBaslik').textContent = '❌ Talebi Reddet';
+    document.getElementById('durumModalIcerik').innerHTML = `
+        <label style="font-size:.82rem;font-weight:700;color:#64748b;display:block;margin-bottom:4px">Red Nedeni <span style="color:#dc2626">*</span></label>
+        <textarea id="dRedNot" rows="3" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:.88rem;resize:vertical" placeholder="Red gerekçesini yazın..."></textarea>`;
+    document.getElementById('durumModalBtn').style.background = '#dc2626';
+    document.getElementById('durumModalBtn').textContent = '❌ Reddet';
+    durumAksiyon = { yeniDurum: 'reddedildi', extraFn: () => {
+        const notu = document.getElementById('dRedNot').value;
+        if (!notu.trim()) { showToast('Red nedeni zorunludur!', 'warning'); return null; }
+        return { onay_notu: notu };
+    }};
+    document.getElementById('durumModal').classList.add('open');
+}
+
+function durumAksiyon_SiparisVer(id) {
+    _durumId = id;
+    document.getElementById('durumModalBaslik').textContent = '📦 Sipariş Ver';
+    document.getElementById('durumModalIcerik').innerHTML = `
+        <label style="font-size:.82rem;font-weight:700;color:#64748b;display:block;margin-bottom:4px">Sipariş Tarihi</label>
+        <input type="date" id="dSiparisTarihi" value="${bugun()}" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:.88rem">`;
+    document.getElementById('durumModalBtn').style.background = '#d97706';
+    document.getElementById('durumModalBtn').textContent = '📦 Sipariş Ver';
+    durumAksiyon = { yeniDurum: 'siparis_verildi', extraFn: () => ({
+        siparis_tarihi: document.getElementById('dSiparisTarihi').value || bugun()
+    })};
+    document.getElementById('durumModal').classList.add('open');
+}
+
+function durumAksiyon_TeslimAl(id) {
+    _durumId = id;
+    document.getElementById('durumModalBaslik').textContent = '🚚 Teslim Alındı';
+    document.getElementById('durumModalIcerik').innerHTML = `
+        <label style="font-size:.82rem;font-weight:700;color:#64748b;display:block;margin-bottom:4px">Gerçek Teslimat Tarihi</label>
+        <input type="date" id="dGercekTeslimat" value="${bugun()}" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:.88rem">
+        <label style="font-size:.82rem;font-weight:700;color:#64748b;display:block;margin:10px 0 4px">Not (isteğe bağlı)</label>
+        <textarea id="dTeslimNot" rows="2" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:.88rem;resize:vertical"></textarea>`;
+    document.getElementById('durumModalBtn').style.background = '#7c3aed';
+    document.getElementById('durumModalBtn').textContent = '🚚 Teslim Alındı';
+    durumAksiyon = { yeniDurum: 'teslim_alindi', extraFn: () => ({
+        gercek_teslimat: document.getElementById('dGercekTeslimat').value || bugun(),
+        kabul_notu: document.getElementById('dTeslimNot').value
+    })};
+    document.getElementById('durumModal').classList.add('open');
+}
+
+function durumAksiyon_Kabul(id, karar) {
+    _durumId = id;
+    const etiket = karar === 'kabul' ? '✔ Kabul' : '↩ Ret';
+    document.getElementById('durumModalBaslik').textContent = etiket;
+    document.getElementById('durumModalIcerik').innerHTML = `
+        <label style="font-size:.82rem;font-weight:700;color:#64748b;display:block;margin-bottom:4px">Kabul Notu (isteğe bağlı)</label>
+        <textarea id="dKabulNot" rows="3" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:.88rem;resize:vertical"></textarea>`;
+    const renk = karar === 'kabul' ? '#16a34a' : '#dc2626';
+    document.getElementById('durumModalBtn').style.background = renk;
+    document.getElementById('durumModalBtn').textContent = etiket;
+    const kullanici = JSON.parse(localStorage.getItem('labqms_user')||'{}');
+    durumAksiyon = { yeniDurum: 'tamamlandi', extraFn: () => ({
+        kabul_durumu: karar,
+        kabul_eden: kullanici.ad_soyad || '',
+        kabul_notu: document.getElementById('dKabulNot').value
+    })};
+    document.getElementById('durumModal').classList.add('open');
+}
+
+async function durumKaydet() {
+    if (!durumAksiyon || !_durumId) return;
+    const extra = durumAksiyon.extraFn();
+    if (extra === null) return; // validation failed
+    const mevcut = tumKayitlar.find(r => r.id === _durumId);
+    if (!mevcut) return;
+    const payload = { ...mevcut, durum: durumAksiyon.yeniDurum, ...extra };
+    // Clean up null-safe dates
+    ['onay_tarihi','siparis_tarihi','tahmini_teslimat','gercek_teslimat','talep_tarihi'].forEach(k => {
+        if (!payload[k]) payload[k] = null;
+    });
+    try {
+        const res = await fetch(`/api/satin-alma/${_durumId}`, {
+            method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            showToast('Durum güncellendi!');
+            durumModalKapat();
+            yukle();
+        } else { showToast('Güncelleme başarısız!', 'error'); }
+    } catch(e) { showToast('Bağlantı hatası!', 'error'); }
+}
+
+function durumModalKapat() {
+    document.getElementById('durumModal').classList.remove('open');
+    durumAksiyon = null;
+    _durumId = null;
+}
+
+// ─── FORM MODAL ─────────────────────────────────────────────────────────────
+function modalAc() {
+    duzenleId = null;
+    document.getElementById('modalBaslik').textContent = 'Yeni Satın Alma Talebi';
+    document.getElementById('fKonu').value = '';
+    document.getElementById('fTur').value = 'urun';
+    const kullanici = JSON.parse(localStorage.getItem('labqms_user')||'{}');
+    document.getElementById('fTalepEden').value = kullanici.ad_soyad || '';
+    document.getElementById('fTalepTarihi').value = bugun();
+    document.getElementById('fTahminiTeslimat').value = '';
+    document.getElementById('fMiktar').value = '';
+    document.getElementById('fBirim').value = '';
+    document.getElementById('fTutar').value = '';
+    document.getElementById('fParaBirimi').value = 'TRY';
+    document.getElementById('fTedarikci').value = '';
+    document.getElementById('fAciklama').value = '';
+    document.getElementById('modal').classList.add('open');
+}
+
+function duzenle(id) {
+    const r = tumKayitlar.find(x => x.id === id);
+    if (!r) return;
+    duzenleId = id;
+    document.getElementById('modalBaslik').textContent = 'Talebi Düzenle — ' + (r.talep_no || '');
+    document.getElementById('fKonu').value = r.konu || '';
+    document.getElementById('fTur').value = r.tur || 'urun';
+    document.getElementById('fTalepEden').value = r.talep_eden || '';
+    document.getElementById('fTalepTarihi').value = r.talep_tarihi ? r.talep_tarihi.slice(0,10) : '';
+    document.getElementById('fTahminiTeslimat').value = r.tahmini_teslimat ? r.tahmini_teslimat.slice(0,10) : '';
+    document.getElementById('fMiktar').value = r.miktar || '';
+    document.getElementById('fBirim').value = r.birim || '';
+    document.getElementById('fTutar').value = r.tahmini_tutar || '';
+    document.getElementById('fParaBirimi').value = r.para_birimi || 'TRY';
+    document.getElementById('fTedarikci').value = r.tedarikci_id || '';
+    document.getElementById('fAciklama').value = r.aciklama || '';
+    document.getElementById('modal').classList.add('open');
+}
+
+function modalKapat() {
+    document.getElementById('modal').classList.remove('open');
+}
+
+async function kaydet() {
+    const konu = document.getElementById('fKonu').value.trim();
+    const talep_tarihi = document.getElementById('fTalepTarihi').value;
+    if (!konu)         { showToast('Konu zorunludur!', 'warning'); return; }
+    if (!talep_tarihi) { showToast('Talep tarihi zorunludur!', 'warning'); return; }
+    const payload = {
+        konu, talep_tarihi,
+        tur:              document.getElementById('fTur').value,
+        talep_eden:       document.getElementById('fTalepEden').value,
+        tahmini_teslimat: document.getElementById('fTahminiTeslimat').value || null,
+        miktar:           document.getElementById('fMiktar').value || null,
+        birim:            document.getElementById('fBirim').value || null,
+        tahmini_tutar:    document.getElementById('fTutar').value || null,
+        para_birimi:      document.getElementById('fParaBirimi').value,
+        tedarikci_id:     document.getElementById('fTedarikci').value || null,
+        aciklama:         document.getElementById('fAciklama').value || null,
+    };
+    const url    = duzenleId ? `/api/satin-alma/${duzenleId}` : '/api/satin-alma';
+    const method = duzenleId ? 'PUT' : 'POST';
+    try {
+        const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        if (res.ok) {
+            showToast(duzenleId ? 'Talep güncellendi!' : 'Talep oluşturuldu!');
+            modalKapat();
+            yukle();
+        } else {
+            const err = await res.json();
+            showToast(err.error || 'Kayıt başarısız!', 'error');
+        }
+    } catch(e) { showToast('Bağlantı hatası!', 'error'); }
+}
+
+async function sil(id) {
+    if (!(await showConfirm('Silme Onayı', 'Bu satın alma kaydı kalıcı olarak silinecek.'))) return;
+    try {
+        const res = await fetch(`/api/satin-alma/${id}`, { method: 'DELETE' });
+        if (res.ok) { showToast('Kayıt silindi!'); yukle(); }
+        else showToast('Silme başarısız!', 'error');
+    } catch(e) { showToast('Bağlantı hatası!', 'error'); }
+}
+
+// ─── FİLTRE ─────────────────────────────────────────────────────────────────
+function durumFiltrele(durum, btn) {
+    aktifDurum = durum;
+    document.querySelectorAll('#durumChips .chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+}
+function turFiltrele(tur, btn) {
+    aktifTur = tur;
+    document.querySelectorAll('#turChips .chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+}
+
+// ─── MENÜ ────────────────────────────────────────────────────────────────────
+function menuToggle(id, e) {
+    e.stopPropagation();
+    const wrap = document.getElementById('aw_' + id);
+    const drop = wrap.querySelector('.act-drop');
+    const rect = wrap.getBoundingClientRect();
+    document.querySelectorAll('.act-wrap.open').forEach(w => { if (w !== wrap) w.classList.remove('open'); });
+    wrap.classList.toggle('open');
+    if (wrap.classList.contains('open')) {
+        drop.style.top  = (rect.bottom + 4) + 'px';
+        drop.style.left = (rect.right - 180) + 'px';
+    }
+}
+function menuKapat() { document.querySelectorAll('.act-wrap.open').forEach(w => w.classList.remove('open')); }
+document.addEventListener('click', menuKapat);
+
+// ─── YARDIMCI ────────────────────────────────────────────────────────────────
+function bugun() { return new Date().toISOString().slice(0,10); }
+function tarihFormatla(d) {
+    if (!d) return '—';
+    const t = new Date(d);
+    return t.toLocaleDateString('tr-TR');
+}
+
+window.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { modalKapat(); durumModalKapat(); }
+});
+
+yukle();
+</script>
+</body>
+</html>

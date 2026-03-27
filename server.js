@@ -828,6 +828,31 @@ async function createKaliteTables() {
             sonuc VARCHAR(50) DEFAULT 'beklemede',
             aciklama TEXT,
             olusturma_tarihi TIMESTAMP DEFAULT NOW()
+        )`,
+        `CREATE TABLE IF NOT EXISTS satin_alma (
+            id SERIAL PRIMARY KEY,
+            talep_no         VARCHAR(50),
+            talep_tarihi     DATE NOT NULL,
+            talep_eden       VARCHAR(200),
+            tur              VARCHAR(20) NOT NULL DEFAULT 'urun',
+            konu             VARCHAR(500) NOT NULL,
+            aciklama         TEXT,
+            miktar           NUMERIC(10,2),
+            birim            VARCHAR(50),
+            tahmini_tutar    NUMERIC(12,2),
+            para_birimi      VARCHAR(10) DEFAULT 'TRY',
+            tedarikci_id     INTEGER REFERENCES dis_tedarikci(id),
+            durum            VARCHAR(30) DEFAULT 'talep',
+            onay_notu        TEXT,
+            onaylayan        VARCHAR(200),
+            onay_tarihi      DATE,
+            siparis_tarihi   DATE,
+            tahmini_teslimat DATE,
+            gercek_teslimat  DATE,
+            kabul_durumu     VARCHAR(30) DEFAULT 'beklemede',
+            kabul_eden       VARCHAR(200),
+            kabul_notu       TEXT,
+            olusturma_tarihi TIMESTAMP DEFAULT NOW()
         )`
     ];
     for (const sql of sqls) { await pool.query(sql); }
@@ -1332,6 +1357,69 @@ app.put('/api/pak/:id', async (req, res) => {
 app.delete('/api/pak/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM pak WHERE id=$1', [req.params.id]);
+        res.json({ success: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- SATIN ALMA ---
+app.get('/api/satin-alma/tedarikci-listesi', async (req, res) => {
+    try {
+        const r = await pool.query('SELECT id, firma_adi FROM dis_tedarikci ORDER BY firma_adi');
+        res.json(r.rows);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/satin-alma', async (req, res) => {
+    try {
+        const r = await pool.query(`
+            SELECT sa.*, dt.firma_adi as tedarikci_adi
+            FROM satin_alma sa
+            LEFT JOIN dis_tedarikci dt ON sa.tedarikci_id = dt.id
+            ORDER BY sa.olusturma_tarihi DESC`);
+        res.json(r.rows);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/satin-alma', async (req, res) => {
+    try {
+        const { talep_tarihi, talep_eden, tur, konu, aciklama, miktar, birim,
+                tahmini_tutar, para_birimi, tedarikci_id, tahmini_teslimat } = req.body;
+        const r = await pool.query(
+            `INSERT INTO satin_alma (talep_tarihi,talep_eden,tur,konu,aciklama,miktar,birim,
+             tahmini_tutar,para_birimi,tedarikci_id,tahmini_teslimat)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+            [talep_tarihi, talep_eden, tur, konu, aciklama || null, miktar || null, birim || null,
+             tahmini_tutar || null, para_birimi || 'TRY', tedarikci_id || null, tahmini_teslimat || null]
+        );
+        const id = r.rows[0].id;
+        const year = new Date().getFullYear();
+        const talep_no = `SA-${year}-${String(id).padStart(4, '0')}`;
+        await pool.query('UPDATE satin_alma SET talep_no=$1 WHERE id=$2', [talep_no, id]);
+        res.json({ id, talep_no });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.put('/api/satin-alma/:id', async (req, res) => {
+    try {
+        const { talep_tarihi, talep_eden, tur, konu, aciklama, miktar, birim,
+                tahmini_tutar, para_birimi, tedarikci_id, durum, onay_notu, onaylayan,
+                onay_tarihi, siparis_tarihi, tahmini_teslimat, gercek_teslimat,
+                kabul_durumu, kabul_eden, kabul_notu } = req.body;
+        const r = await pool.query(
+            `UPDATE satin_alma SET talep_tarihi=$1,talep_eden=$2,tur=$3,konu=$4,aciklama=$5,
+             miktar=$6,birim=$7,tahmini_tutar=$8,para_birimi=$9,tedarikci_id=$10,durum=$11,
+             onay_notu=$12,onaylayan=$13,onay_tarihi=$14,siparis_tarihi=$15,
+             tahmini_teslimat=$16,gercek_teslimat=$17,kabul_durumu=$18,kabul_eden=$19,kabul_notu=$20
+             WHERE id=$21 RETURNING *`,
+            [talep_tarihi, talep_eden, tur, konu, aciklama || null, miktar || null, birim || null,
+             tahmini_tutar || null, para_birimi || 'TRY', tedarikci_id || null, durum || 'talep',
+             onay_notu || null, onaylayan || null, onay_tarihi || null, siparis_tarihi || null,
+             tahmini_teslimat || null, gercek_teslimat || null, kabul_durumu || 'beklemede',
+             kabul_eden || null, kabul_notu || null, req.params.id]
+        );
+        res.json(r.rows[0]);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/satin-alma/:id', async (req, res) => {
+    try {
+        await pool.query('DELETE FROM satin_alma WHERE id=$1', [req.params.id]);
         res.json({ success: true });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });

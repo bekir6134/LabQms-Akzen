@@ -249,6 +249,33 @@ CREATE TABLE IF NOT EXISTS pak (
     olusturma_tarihi TIMESTAMP DEFAULT NOW()
 );
 
+-- 21. SATIN ALMA (ISO 17025:2017 §6.6)
+CREATE TABLE IF NOT EXISTS satin_alma (
+    id               SERIAL PRIMARY KEY,
+    talep_no         VARCHAR(50),
+    talep_tarihi     DATE NOT NULL,
+    talep_eden       VARCHAR(200),
+    tur              VARCHAR(20)   NOT NULL DEFAULT 'urun',
+    konu             VARCHAR(500)  NOT NULL,
+    aciklama         TEXT,
+    miktar           NUMERIC(10,2),
+    birim            VARCHAR(50),
+    tahmini_tutar    NUMERIC(12,2),
+    para_birimi      VARCHAR(10)   DEFAULT 'TRY',
+    tedarikci_id     INTEGER REFERENCES dis_tedarikci(id),
+    durum            VARCHAR(30)   DEFAULT 'talep',
+    onay_notu        TEXT,
+    onaylayan        VARCHAR(200),
+    onay_tarihi      DATE,
+    siparis_tarihi   DATE,
+    tahmini_teslimat DATE,
+    gercek_teslimat  DATE,
+    kabul_durumu     VARCHAR(30)   DEFAULT 'beklemede',
+    kabul_eden       VARCHAR(200),
+    kabul_notu       TEXT,
+    olusturma_tarihi TIMESTAMP     DEFAULT NOW()
+);
+
 -- ── VARSAYILAN VERİLER ───────────────────────────────────────
 
 -- Admin kullanıcısı — tüm roller ve erişimler aktif
@@ -259,7 +286,7 @@ VALUES (
     'admin',
     'admin123',
     '["olcum", "onay"]',
-    '["kabul", "operasyon", "teklif", "ayarlar"]',
+    '["referans","cevre","talimat","kategoriler","personel","ayarlar","dokuman","uygunsuzluk","denetim","risk","sikayet","tedarikci","satin_alma","yeterlilik","pak","ygg"]',
     true
 )
 ON CONFLICT (kullanici_adi) DO NOTHING;
