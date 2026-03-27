@@ -193,61 +193,15 @@
     <span id="hosgeldin" style="font-size:0.85rem;color:#64748b;font-weight:600;"></span>
 </div>
 
-<div class="kpi-grid">
-    <div class="kpi" style="border-color:#3b82f6;">
-        <div class="kpi-val" style="color:#1E40AF;" id="k1">—</div>
-        <div class="kpi-lbl">📥 Kabul Edildi</div>
-    </div>
-    <div class="kpi" style="border-color:#f59e0b;">
-        <div class="kpi-val" style="color:#d97706;" id="k2">—</div>
-        <div class="kpi-lbl">⚙️ Kalibrasyonda</div>
-    </div>
-    <div class="kpi" style="border-color:#8b5cf6;">
-        <div class="kpi-val" style="color:#7c3aed;" id="k3">—</div>
-        <div class="kpi-lbl">🏅 Onay Bekleyen</div>
-    </div>
-    <div class="kpi" style="border-color:#10B981;">
-        <div class="kpi-val" style="color:#059669;" id="k4">—</div>
-        <div class="kpi-lbl">✅ Tamamlanan (Bu Yıl)</div>
-    </div>
-    <div class="kpi" style="border-color:#64748b;">
-        <div class="kpi-val" style="color:#475569;" id="k5">—</div>
-        <div class="kpi-lbl">🏢 Toplam Müşteri</div>
-    </div>
-</div>
 
-<!-- ORTA BÖLÜM -->
-<div class="main-grid">
-
-    <!-- YAKLAŞAN AKTİVİTELER -->
-    <div class="card">
-        <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;">
-            <div class="card-title">🔔 Güncel Durum & Bildirimler</div>
-            <span id="yaklasanRozet" style="display:none;background:#ef4444;color:#fff;border-radius:12px;padding:2px 9px;font-size:0.72rem;font-weight:700;animation:pulse 1.5s infinite;"></span>
-        </div>
-        <div class="card-body" id="yaklasanListesi">
-            <div style="color:#94a3b8;font-size:0.85rem;text-align:center;padding:10px;">Yükleniyor...</div>
-        </div>
+<!-- GÜNCEL DURUM -->
+<div class="card full" style="margin-bottom:16px;">
+    <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="card-title">🔔 Güncel Durum & Bildirimler</div>
+        <span id="yaklasanRozet" style="display:none;background:#ef4444;color:#fff;border-radius:12px;padding:2px 9px;font-size:0.72rem;font-weight:700;animation:pulse 1.5s infinite;"></span>
     </div>
-
-    <!-- HIZLI İŞLEMLER + SON İŞ EMİRLERİ -->
-    <div style="display:flex;flex-direction:column;gap:16px;">
-        <div class="card">
-            <div class="card-head"><div class="card-title">💡 Hızlı İşlemler</div></div>
-            <div class="card-body">
-                <a href="kabul.html" target="ekran" class="quick-btn" onclick="parent.aktifYap && parent.document.querySelector('[href=\'kabul.html\']') && parent.aktifYap(parent.document.querySelector('[href=\'kabul.html\']'))">📥 Yeni Kabul Fişi Aç</a>
-                <a href="teklif.html" target="ekran" class="quick-btn">📄 Yeni Teklif Hazırla</a>
-                <a href="musteriler.html" target="ekran" class="quick-btn">🏢 Yeni Müşteri Ekle</a>
-                <a href="operasyon.html" target="ekran" class="quick-btn">🔄 Operasyon Merkezi</a>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-head"><div class="card-title">🔔 Son İş Emirleri</div></div>
-            <div class="card-body" id="sonIsEmirleri">
-                <div style="color:#94a3b8;font-size:0.85rem;">Yükleniyor...</div>
-            </div>
-        </div>
+    <div class="card-body" id="yaklasanListesi">
+        <div style="color:#94a3b8;font-size:0.85rem;text-align:center;padding:10px;">Yükleniyor...</div>
     </div>
 </div>
 
@@ -308,11 +262,6 @@
         try {
             const res = await fetch('/api/dashboard');
             const d = await res.json();
-            document.getElementById("k1").textContent = d.kabul_edildi;
-            document.getElementById("k2").textContent = d.kalibrasyonda;
-            document.getElementById("k3").textContent = d.onay_bekleyen;
-            document.getElementById("k4").textContent = d.bu_yil;
-            document.getElementById("k5").textContent = d.musteri_sayisi;
             renderYaklasan(d.yaklasan_aktiviteler || [], d.son_revizyonlar || []);
             renderBildirimler(d.yaklasan_aktiviteler || [], d.yaklasan_etkinlikler || []);
         } catch(e) { console.error(e); }
@@ -424,27 +373,6 @@
                 <span class="gun-badge ${cls}">${gunText}</span>
             </div>`;
         }).join('') + revHtml;
-    }
-
-    // ── SON İŞ EMİRLERİ ──
-    async function sonIsEmirleriYukle() {
-        try {
-            const res = await fetch('/api/is-emirleri');
-            const data = await res.json();
-            const son5 = data.slice(0, 5);
-            const ASAMA_LABEL = { kabul_edildi:'Kabul', 'hazırlanıyor':'Hazırlanıyor', 'tamamlandı':'Tamamlandı', imzalandı:'İmzalandı', 'onaylandı':'Onaylandı', sertifika_gönderildi:'Gönderildi' };
-            const el = document.getElementById("sonIsEmirleri");
-            if (!son5.length) { el.innerHTML='<div style="color:#94a3b8;font-size:0.85rem;">Henüz iş emri yok.</div>'; return; }
-            el.innerHTML = son5.map(r => {
-                const asama = r.asama || 'kabul_edildi';
-                const renk = { kabul_edildi:'#64748b', 'hazırlanıyor':'#d97706', 'tamamlandı':'#1e40af', imzalandı:'#7c3aed', 'onaylandı':'#059669', sertifika_gönderildi:'#166534' }[asama] || '#64748b';
-                return `<div class="act-item">
-                    <div class="act-dot" style="background:${renk};"></div>
-                    <div><strong>${r.ie_no}</strong> · ${r.firma_adi}</div>
-                    <span style="background:#f1f5f9;color:${renk};padding:2px 7px;border-radius:8px;font-size:0.72rem;font-weight:700;margin-left:auto;">${ASAMA_LABEL[asama]||asama}</span>
-                </div>`;
-            }).join('');
-        } catch(e) {}
     }
 
     // ── TAKVİM ──
@@ -640,7 +568,6 @@
         hosgeldinGoster();
         await personelYukle();
         dashboardYukle();
-        sonIsEmirleriYukle();
         takvimiYukle();
         renklerRender();
     }
