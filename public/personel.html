@@ -1,331 +1,416 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-
-    <meta charset="UTF-8"> <script>
-    // GÜVENLİK KONTROLÜ: Kullanıcı giriş yapmış mı?
+    <meta charset="UTF-8">
+    <script>
     const aktifKullanici = localStorage.getItem("labqms_user");
-    if (!aktifKullanici) {
-        // Eğer giriş yapmamışsa, anında login sayfasına şutla!
-        window.location.href = "login.html";
-    }
+    if (!aktifKullanici) window.location.href = "login.html";
     </script>
-
-    
-    <title>Sistem Ayarları</title>
     <title>Personel Yönetimi - LabQMS</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary:#1E40AF; --border:#e2e8f0; --bg:#f8fafc; --success:#10B981; --danger:#ef4444; }
+        *{box-sizing:border-box}
         body { font-family:'Inter',sans-serif; background:var(--bg); margin:0; padding:24px; color:#334155; }
-        
-        .card { background:#fff; padding:25px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
-        .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-        
-        h2 { margin-top:0; color:var(--primary); font-size: 1.4rem; margin-bottom: 20px;}
-        h3 { font-size:1.1rem; color:var(--primary); margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:10px; }
-        
-        label { display:block; font-size:0.85rem; font-weight:600; color:#64748b; margin-bottom:5px; }
-        input[type="text"], input[type="password"] { width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; box-sizing:border-box; outline:none; transition:0.2s; font-family:inherit;}
+        .card { background:#fff; padding:25px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px; box-shadow:0 2px 6px rgba(0,0,0,0.05); }
+        .grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+        h2 { margin-top:0; color:var(--primary); font-size:1.4rem; margin-bottom:20px; }
+        h3 { font-size:0.93rem; font-weight:700; color:var(--primary); margin:0 0 12px; border-bottom:1px solid var(--border); padding-bottom:8px; }
+        label { display:block; font-size:0.83rem; font-weight:600; color:#64748b; margin-bottom:5px; }
+        input[type="text"], input[type="password"] { width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; outline:none; transition:0.2s; font-family:inherit; font-size:0.88rem; }
         input[type="text"]:focus, input[type="password"]:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(30,64,175,0.1); }
-        
-        .role-box { background:#f8fafc; padding:15px; border-radius:8px; border:1px solid var(--border); }
-        .check-label { display:flex; gap:10px; align-items:center; cursor:pointer; font-weight:500; margin-bottom:10px; color:#334155; }
-        
-        .btn { background:var(--primary); color:white; padding:12px 20px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; margin-top:20px; transition:0.2s;}
+        .form-grp { margin-bottom:14px; }
+        .role-box { background:#f8fafc; padding:14px; border-radius:8px; border:1px solid var(--border); }
+        .check-label { display:flex; gap:10px; align-items:center; cursor:pointer; font-weight:500; margin-bottom:10px; color:#334155; font-size:0.88rem; }
+        .btn { background:var(--primary); color:white; padding:12px 20px; border:none; border-radius:8px; font-weight:700; cursor:pointer; width:100%; margin-top:20px; transition:0.2s; font-size:0.92rem; }
         .btn:hover { background:#1e3a8a; }
-
-        /* ARAMA ÇUBUĞU VE TABLO */
-        .search-box { margin-bottom: 15px; display:flex; justify-content:flex-end; }
-        .search-box input { width: 300px; padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border); outline: none; transition: 0.2s; }
-        .search-box input:focus { border-color: var(--primary); }
-
-        table { width:100%; border-collapse:collapse; margin-top:10px; }
-        th { background:#f8fafc; text-align:left; padding:12px; border-bottom:2px solid var(--border); color:#64748b; font-size:0.85rem; }
-        td { padding:12px; border-bottom:1px solid var(--border); font-size:0.9rem; vertical-align:middle; }
-        
-        .btn-edit { background:#e0e7ff; color:#4338ca; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:600; margin-right:5px; }
-        .btn-del { background:#fee2e2; color:var(--danger); border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:600; }
-        
-        .badge-role { display:inline-block; padding:3px 8px; background:#e0e7ff; color:#4338ca; border-radius:12px; font-size:0.75rem; font-weight:600; margin:2px; }
+        .search-box { margin-bottom:15px; display:flex; justify-content:flex-end; }
+        .search-box input { width:280px; padding:9px 14px; border-radius:8px; border:1px solid var(--border); outline:none; font-size:0.85rem; }
+        table { width:100%; border-collapse:collapse; }
+        th { background:#f8fafc; text-align:left; padding:11px 12px; border-bottom:2px solid var(--border); color:#64748b; font-size:0.78rem; }
+        td { padding:11px 12px; border-bottom:1px solid var(--border); font-size:0.88rem; vertical-align:middle; }
+        .btn-edit { background:#e0e7ff; color:#4338ca; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.78rem; font-weight:600; margin-right:5px; }
+        .btn-del { background:#fee2e2; color:var(--danger); border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.78rem; font-weight:600; }
+        .badge-role { display:inline-block; padding:3px 8px; background:#e0e7ff; color:#4338ca; border-radius:12px; font-size:0.72rem; font-weight:600; margin:2px; }
         .badge-star { background:#fef9c3; color:#854d0e; }
-
-        /* TOAST BİLDİRİMİ */
-        #toast { visibility:hidden; min-width:260px; background-color:var(--success); color:#fff; text-align:center; border-radius:8px; padding:16px; position:fixed; z-index:9999; right:30px; top:30px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.15); opacity:0; transition:opacity 0.3s, top 0.3s; }
-        #toast.show { visibility:visible; opacity:1; top:40px; }
+        #toast { visibility:hidden; min-width:260px; background-color:var(--success); color:#fff; text-align:center; border-radius:8px; padding:16px; position:fixed; z-index:9999; right:30px; top:30px; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.15); opacity:0; transition:opacity 0.3s; }
+        #toast.show { visibility:visible; opacity:1; }
         #toast.error { background-color:var(--danger); }
-        /* DROPDOWN MENÜ */
         .act-wrap { position:relative; display:inline-block; }
-        .act-btn { background:#f8fafc; border:1px solid var(--border); padding:5px 11px; border-radius:6px; cursor:pointer; font-size:0.78rem; font-weight:600; color:var(--text); white-space:nowrap; }
+        .act-btn { background:#f8fafc; border:1px solid var(--border); padding:5px 11px; border-radius:6px; cursor:pointer; font-size:0.78rem; font-weight:600; color:#334155; white-space:nowrap; }
         .act-btn:hover { background:#e0e7ff; border-color:#a5b4fc; color:var(--primary); }
-        .act-drop { display:none; position:absolute; right:0; top:calc(100% + 4px); background:#fff; border:1px solid var(--border); border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,0.12); z-index:200; min-width:160px; overflow:hidden; }
+        .act-drop { display:none; position:absolute; right:0; top:calc(100% + 4px); background:#fff; border:1px solid var(--border); border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,0.12); z-index:200; min-width:150px; overflow:hidden; }
         .act-wrap.open .act-drop { display:block; }
-        .act-drop-item { padding:9px 15px; cursor:pointer; font-size:0.83rem; display:flex; align-items:center; gap:8px; color:var(--text); }
+        .act-drop-item { padding:9px 15px; cursor:pointer; font-size:0.83rem; display:flex; align-items:center; gap:8px; }
         .act-drop-item:hover { background:#f1f5f9; }
         .act-drop-item.danger { color:#dc2626; }
         .act-drop-item.danger:hover { background:#fee2e2; }
-        .act-drop hr { margin:4px 0; border:none; border-top:1px solid var(--border); }
+
+        /* ── ROL KARTLARI ── */
+        .rol-kartlar { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+        .rol-kart { border:2px solid var(--border); border-radius:10px; padding:12px 10px; cursor:pointer; text-align:center; transition:0.18s; background:#fff; user-select:none; }
+        .rol-kart:hover { border-color:#93c5fd; background:#f0f9ff; }
+        .rol-kart.secili { border-color:var(--primary); background:#eff6ff; }
+        .rol-kart .rk-icon { font-size:1.5rem; margin-bottom:4px; }
+        .rol-kart .rk-adi { font-size:0.82rem; font-weight:700; color:#1e293b; }
+        .rol-kart .rk-acik { font-size:0.7rem; color:#94a3b8; margin-top:2px; }
+        .rol-kart.secili .rk-adi { color:var(--primary); }
+
+        /* ── MODÜL TOGGLE ── */
+        .modul-grup { margin-bottom:10px; }
+        .modul-grup-baslik { font-size:0.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:6px; }
+        .modul-satir { display:flex; align-items:center; justify-content:space-between; padding:7px 10px; border-radius:7px; transition:0.15s; }
+        .modul-satir:hover { background:#f8fafc; }
+        .modul-adi { font-size:0.83rem; font-weight:500; color:#334155; display:flex; align-items:center; gap:7px; }
+        /* iOS toggle */
+        .tog { position:relative; display:inline-block; width:40px; height:22px; flex-shrink:0; }
+        .tog input { opacity:0; width:0; height:0; }
+        .tog-slider { position:absolute; cursor:pointer; inset:0; background:#cbd5e1; border-radius:22px; transition:0.25s; }
+        .tog-slider:before { position:absolute; content:""; height:16px; width:16px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:0.25s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+        .tog input:checked + .tog-slider { background:var(--primary); }
+        .tog input:checked + .tog-slider:before { transform:translateX(18px); }
     </style>
 </head>
 <body>
+<div id="toast"></div>
 
-    <div id="toast"></div>
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 id="formBaslik">➕ Yeni Personel Ekle</h2>
+        <button onclick="formSifirla()" style="background:none;border:none;color:#64748b;cursor:pointer;font-weight:600;text-decoration:underline;font-size:0.85rem;">Temizle / Yeni Kayıt</button>
+    </div>
 
-    <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 id="formBaslik">➕ Yeni Personel Ekle</h2>
-            <button onclick="formSifirla()" style="background:none; border:none; color:#64748b; cursor:pointer; font-weight:600; text-decoration:underline;">Temizle / Yeni Kayıt</button>
-        </div>
-        
-        <form id="personelForm">
-            <input type="hidden" id="duzenle_id">
-            <div class="grid">
-                <div>
-                    <h3>Kimlik ve Giriş Bilgileri</h3>
-                    <div style="margin-bottom:15px;">
-                        <label>Ad Soyad</label>
-                        <input type="text" id="ad_soyad" placeholder="Örn: Ahmet Yılmaz" required autocomplete="off">
+    <form id="personelForm">
+        <input type="hidden" id="duzenle_id">
+        <div class="grid">
+
+            <!-- SOL: Kimlik + Roller -->
+            <div>
+                <h3>Kimlik ve Giriş Bilgileri</h3>
+                <div class="form-grp"><label>Ad Soyad</label><input type="text" id="ad_soyad" placeholder="Örn: Ahmet Yılmaz" required autocomplete="off"></div>
+                <div class="form-grp"><label>Kullanıcı Adı</label><input type="text" id="kullanici_adi" placeholder="Örn: ahmetyilmaz" required autocomplete="off"></div>
+                <div class="form-grp"><label>Şifre</label><input type="password" id="sifre" placeholder="Sisteme giriş şifresi" required></div>
+
+                <h3 style="margin-top:18px;">Sertifika & İşlem Rolleri</h3>
+                <div class="role-box">
+                    <label class="check-label" style="color:var(--primary);">
+                        <input type="checkbox" id="rol_olcum"> Ölçüm Yapan Personel (Operatör)
+                    </label>
+                    <label class="check-label" style="color:#9d174d;">
+                        <input type="checkbox" id="rol_onay" onchange="document.getElementById('varsayilan_kutu').style.display=this.checked?'block':'none'">
+                        Onaylayan Personel (İmzacı)
+                    </label>
+                    <div id="varsayilan_kutu" style="display:none;margin-left:24px;margin-top:4px;padding:8px;background:#fff;border-radius:6px;border:1px solid #fef08a;">
+                        <label class="check-label" style="color:#854d0e;margin:0;">
+                            <input type="checkbox" id="varsayilan_onaylayici"> 🌟 Varsayılan Onaylayıcı Yap
+                        </label>
                     </div>
-                    <div style="margin-bottom:15px;">
-                        <label>Kullanıcı Adı (Giriş İçin)</label>
-                        <input type="text" id="kullanici_adi" placeholder="Örn: ahmetyilmaz" required autocomplete="off">
+                </div>
+            </div>
+
+            <!-- SAĞ: Yetki Seviyeleri + Modül Toggle -->
+            <div>
+                <h3>Menü Erişim Yetkileri</h3>
+
+                <!-- 3 Rol Kartı -->
+                <div class="rol-kartlar">
+                    <div class="rol-kart" id="rol-tam" onclick="rolUygula('tam')">
+                        <div class="rk-icon">👑</div>
+                        <div class="rk-adi">Tam Yetki</div>
+                        <div class="rk-acik">Tüm modüller</div>
                     </div>
-                    <div style="margin-bottom:15px;">
-                        <label>Şifre</label>
-                        <input type="password" id="sifre" placeholder="Sisteme giriş şifresi" required>
+                    <div class="rol-kart" id="rol-kalite" onclick="rolUygula('kalite')">
+                        <div class="rk-icon">🏅</div>
+                        <div class="rk-adi">Kalite Personeli</div>
+                        <div class="rk-acik">Kalite sistemi</div>
+                    </div>
+                    <div class="rol-kart" id="rol-teknik" onclick="rolUygula('teknik')">
+                        <div class="rk-icon">🔬</div>
+                        <div class="rk-adi">Teknik Personel</div>
+                        <div class="rk-acik">Teknik modüller</div>
                     </div>
                 </div>
 
-                <div>
-                    <h3>Sertifika & İşlem Rolleri</h3>
-                    <div class="role-box">
-                        <label class="check-label" style="color:var(--primary);">
-                            <input type="checkbox" id="rol_olcum" value="olcum" checked> Ölçüm Yapan Personel (Operatör)
-                        </label>
-                        <label class="check-label" style="color:#9d174d;">
-                            <input type="checkbox" id="rol_onay" value="onay" onchange="document.getElementById('varsayilan_kutu').style.display = this.checked ? 'block' : 'none'"> 
-                            Onaylayan Personel (İmzacı)
-                        </label>
-                        
-                        <div id="varsayilan_kutu" style="display:none; margin-left: 25px; margin-top: 5px; padding: 10px; background: #fff; border-radius: 6px; border:1px solid #fef08a;">
-                            <label class="check-label" style="color:#854d0e; margin:0;">
-                                <input type="checkbox" id="varsayilan_onaylayici"> 🌟 Sertifikalarda Varsayılan Onaylayıcı Yap
-                            </label>
+                <!-- Modül Toggle'ları -->
+                <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px 14px;max-height:320px;overflow-y:auto;">
+
+                    <div class="modul-grup">
+                        <div class="modul-grup-baslik">📐 Teknik & Referans</div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">📏 Referans Cihazlar</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="referans"><span class="tog-slider"></span></label>
+                        </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">🌡️ Çevre Koşulları</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="cevre"><span class="tog-slider"></span></label>
+                        </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">📜 Kalibrasyon Talimatları</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="talimat"><span class="tog-slider"></span></label>
                         </div>
                     </div>
 
-                    <h3 style="margin-top:20px;">Menü Erişim Yetkileri</h3>
-                    <div class="role-box" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <label class="check-label"><input type="checkbox" class="erisim" value="kabul" checked> Cihaz Kabul</label>
-                        <label class="check-label"><input type="checkbox" class="erisim" value="operasyon" checked> Operasyon</label>
-                        <label class="check-label"><input type="checkbox" class="erisim" value="teklif"> Teklif Modülü</label>
-                        <label class="check-label"><input type="checkbox" class="erisim" value="ayarlar"> Ayarlar & Tanımlar</label>
+                    <div class="modul-grup">
+                        <div class="modul-grup-baslik">⚙️ Yönetici Paneli</div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">📁 Kategori Yönetimi</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="kategoriler"><span class="tog-slider"></span></label>
+                        </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">👤 Personel ve Yetkiler</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="personel"><span class="tog-slider"></span></label>
+                        </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">🔧 Sistem Ayarları</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="ayarlar"><span class="tog-slider"></span></label>
+                        </div>
                     </div>
+
+                    <div class="modul-grup">
+                        <div class="modul-grup-baslik">🏅 Kalite Sistemi</div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">📂 Doküman Yönetimi</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="dokuman"><span class="tog-slider"></span></label>
+                        </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">⚠️ Uygunsuzluk & DÖF</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="uygunsuzluk"><span class="tog-slider"></span></label>
+                        </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">🔍 İç Denetim</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="denetim"><span class="tog-slider"></span></label>
+                        </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">📊 Risk & Fırsat</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="risk"><span class="tog-slider"></span></label>
+                        </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">💬 Müşteri Şikayeti</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="sikayet"><span class="tog-slider"></span></label>
+                        </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">🤝 Dış Tedarikçi</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="tedarikci"><span class="tog-slider"></span></label>
+                        </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">🧪 Yeterlilik Testi</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="yeterlilik"><span class="tog-slider"></span></label>
+                        </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">👥 Personel Arası Karşılaştırma</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="pak"><span class="tog-slider"></span></label>
+                        </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">📋 Yön. Gözden Geçirme</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="ygg"><span class="tog-slider"></span></label>
+                        </div>
+                    </div>
+
                 </div>
             </div>
-            <button type="submit" id="submitBtn" class="btn">💾 Personeli Sisteme Kaydet</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
-            <h2 style="margin:0;">👥 Kayıtlı Personeller ve Kullanıcılar</h2>
-            <div class="search-box">
-                <input type="text" id="aramaKutusu" oninput="personelAra()" placeholder="🔍 Ad Soyad veya Kullanıcı Adı ara...">
-            </div>
         </div>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>Ad Soyad</th>
-                    <th>Kullanıcı Adı</th>
-                    <th>Sertifika Rolleri</th>
-                    <th style="text-align:right;">İşlem</th>
-                </tr>
-            </thead>
-            <tbody id="personelListesi">
-                <tr><td colspan="4" style="text-align:center;">Yükleniyor...</td></tr>
-            </tbody>
-        </table>
+        <button type="submit" id="submitBtn" class="btn">💾 Personeli Sisteme Kaydet</button>
+    </form>
+</div>
+
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h2 style="margin:0;">👥 Kayıtlı Personeller</h2>
+        <div class="search-box">
+            <input type="text" id="aramaKutusu" oninput="personelAra()" placeholder="🔍 Ad veya kullanıcı adı ara...">
+        </div>
     </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Ad Soyad</th>
+                <th>Kullanıcı Adı</th>
+                <th>Roller</th>
+                <th style="text-align:right;">İşlem</th>
+            </tr>
+        </thead>
+        <tbody id="personelListesi">
+            <tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:20px;">Yükleniyor...</td></tr>
+        </tbody>
+    </table>
+</div>
 
-    <script>
-        let tumPersoneller = [];
+<script>
+let tumPersoneller = [];
 
-        // --- TOAST BİLDİRİM FONKSİYONU ---
-        function showToast(msg, isError = false) {
-            const t = document.getElementById("toast");
-            t.textContent = msg;
-            t.className = isError ? "show error" : "show";
-            setTimeout(() => t.className = t.className.replace("show", ""), 3000);
+// Rol presetleri
+const ROL_PRESET = {
+    tam:    ['referans','cevre','talimat','kategoriler','personel','ayarlar','dokuman','uygunsuzluk','denetim','risk','sikayet','tedarikci','yeterlilik','pak','ygg'],
+    kalite: ['dokuman','uygunsuzluk','denetim','risk','sikayet','tedarikci','yeterlilik','pak','ygg'],
+    teknik: ['referans','cevre','talimat']
+};
+
+function rolUygula(rol) {
+    // Kart seçimi
+    document.querySelectorAll('.rol-kart').forEach(k => k.classList.remove('secili'));
+    document.getElementById('rol-' + rol).classList.add('secili');
+    // Toggle'ları ayarla
+    const secili = ROL_PRESET[rol];
+    document.querySelectorAll('.erisim').forEach(cb => {
+        cb.checked = secili.includes(cb.value);
+    });
+}
+
+// Toggle değişince aktif rol kartını temizle
+document.addEventListener('change', e => {
+    if (e.target.classList.contains('erisim')) {
+        const seciliDegerler = Array.from(document.querySelectorAll('.erisim:checked')).map(c => c.value).sort().join(',');
+        let eslesen = null;
+        for (const [rol, degerler] of Object.entries(ROL_PRESET)) {
+            if ([...degerler].sort().join(',') === seciliDegerler) { eslesen = rol; break; }
         }
+        document.querySelectorAll('.rol-kart').forEach(k => k.classList.remove('secili'));
+        if (eslesen) document.getElementById('rol-' + eslesen)?.classList.add('secili');
+    }
+});
 
-        async function personelleriGetir() {
-            try {
-                const res = await fetch('/api/personeller');
-                tumPersoneller = await res.json();
-                tabloCiz(tumPersoneller);
-            } catch (err) { console.error(err); }
+function showToast(msg, isError=false) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = isError ? "show error" : "show";
+    setTimeout(() => t.className = "", 3000);
+}
+
+async function personelleriGetir() {
+    try {
+        const res = await fetch('/api/personeller');
+        tumPersoneller = await res.json();
+        tabloCiz(tumPersoneller);
+    } catch(err) { console.error(err); }
+}
+
+function tabloCiz(liste) {
+    const tbody = document.getElementById("personelListesi");
+    if (!liste.length) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:20px;">Kayıt bulunamadı.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = liste.map(p => {
+        const roller = p.roller || [];
+        let rolHtml = '';
+        if (roller.includes("olcum")) rolHtml += `<span class="badge-role">🔬 Ölçümcü</span>`;
+        if (roller.includes("onay"))  rolHtml += `<span class="badge-role" style="background:#fce7f3;color:#9d174d;">✍️ Onaylayıcı</span>`;
+        if (p.varsayilan_onaylayici)  rolHtml += `<span class="badge-role badge-star">🌟 Varsayılan</span>`;
+        return `<tr>
+            <td><b>${p.ad_soyad}</b></td>
+            <td><span style="background:#f1f5f9;padding:3px 8px;border-radius:6px;font-family:monospace;font-size:0.82rem;">${p.kullanici_adi}</span></td>
+            <td>${rolHtml || '<span style="color:#94a3b8;">—</span>'}</td>
+            <td style="text-align:right;">
+                <div class="act-wrap" id="am-${p.id}">
+                    <button class="act-btn" onclick="menuToggle(${p.id},event)">İşlemler ▾</button>
+                    <div class="act-drop">
+                        <div class="act-drop-item" onclick="personelDuzenle(${p.id});menuKapat()">✏️ Düzenle</div>
+                        <div class="act-drop-item danger" onclick="personelSil(${p.id});menuKapat()">🗑️ Sil</div>
+                    </div>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function personelAra() {
+    const metin = document.getElementById("aramaKutusu").value.toLocaleUpperCase('tr-TR');
+    tabloCiz(tumPersoneller.filter(p =>
+        (p.ad_soyad||'').toLocaleUpperCase('tr-TR').includes(metin) ||
+        (p.kullanici_adi||'').toLocaleUpperCase('tr-TR').includes(metin)
+    ));
+}
+
+function personelDuzenle(id) {
+    const p = tumPersoneller.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById("formBaslik").innerHTML = "✏️ Personel Düzenle";
+    document.getElementById("submitBtn").innerHTML = "💾 Değişiklikleri Güncelle";
+    document.getElementById("submitBtn").style.background = "#f59e0b";
+    document.getElementById("duzenle_id").value = p.id;
+    document.getElementById("ad_soyad").value = p.ad_soyad;
+    document.getElementById("kullanici_adi").value = p.kullanici_adi;
+    document.getElementById("sifre").value = p.sifre;
+
+    const roller = p.roller || [];
+    document.getElementById("rol_olcum").checked = roller.includes("olcum");
+    const onayCb = document.getElementById("rol_onay");
+    onayCb.checked = roller.includes("onay");
+    document.getElementById('varsayilan_kutu').style.display = onayCb.checked ? 'block' : 'none';
+    document.getElementById("varsayilan_onaylayici").checked = !!p.varsayilan_onaylayici;
+
+    const erisimler = p.erisimler || [];
+    document.querySelectorAll('.erisim').forEach(cb => { cb.checked = erisimler.includes(cb.value); });
+
+    // Eşleşen rol kartını seç
+    const seciliDegerler = [...erisimler].sort().join(',');
+    let eslesen = null;
+    for (const [rol, degerler] of Object.entries(ROL_PRESET)) {
+        if ([...degerler].sort().join(',') === seciliDegerler) { eslesen = rol; break; }
+    }
+    document.querySelectorAll('.rol-kart').forEach(k => k.classList.remove('secili'));
+    if (eslesen) document.getElementById('rol-' + eslesen)?.classList.add('secili');
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function formSifirla() {
+    document.getElementById("personelForm").reset();
+    document.getElementById("duzenle_id").value = "";
+    document.getElementById("formBaslik").innerHTML = "➕ Yeni Personel Ekle";
+    document.getElementById("submitBtn").innerHTML = "💾 Personeli Sisteme Kaydet";
+    document.getElementById("submitBtn").style.background = "var(--primary)";
+    document.getElementById('varsayilan_kutu').style.display = 'none';
+    document.querySelectorAll('.rol-kart').forEach(k => k.classList.remove('secili'));
+}
+
+document.getElementById("personelForm").onsubmit = async (e) => {
+    e.preventDefault();
+    const roller = [];
+    if (document.getElementById("rol_olcum").checked) roller.push("olcum");
+    if (document.getElementById("rol_onay").checked) roller.push("onay");
+    const erisimler = Array.from(document.querySelectorAll('.erisim:checked')).map(cb => cb.value);
+    const duzenle_id = document.getElementById("duzenle_id").value;
+    const payload = {
+        ad_soyad: document.getElementById("ad_soyad").value,
+        kullanici_adi: document.getElementById("kullanici_adi").value,
+        sifre: document.getElementById("sifre").value,
+        roller, erisimler,
+        varsayilan_onaylayici: document.getElementById("varsayilan_onaylayici").checked
+    };
+    try {
+        const res = await fetch(
+            duzenle_id ? `/api/personeller/${duzenle_id}` : '/api/personeller',
+            { method: duzenle_id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) }
+        );
+        if (res.ok) {
+            showToast(duzenle_id ? "✅ Personel güncellendi!" : "✅ Personel eklendi!");
+            formSifirla();
+            personelleriGetir();
+        } else {
+            const err = await res.json();
+            showToast("❌ " + (err.error || "Kayıt hatası!"), true);
         }
+    } catch(err) { showToast("❌ Sunucuya bağlanılamadı!", true); }
+};
 
-        // --- TABLO ÇİZİMİ ---
-        function tabloCiz(liste) {
-            const tbody = document.getElementById("personelListesi");
-            tbody.innerHTML = "";
+async function personelSil(id) {
+    if (!confirm("Bu personeli silmek istediğinize emin misiniz?")) return;
+    const res = await fetch(`/api/personeller/${id}`, { method:'DELETE' });
+    if (res.ok) { showToast("🗑️ Silindi!"); personelleriGetir(); }
+    else showToast("❌ Silme başarısız!", true);
+}
 
-            if(liste.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:20px;">Kayıt bulunamadı.</td></tr>`;
-                return;
-            }
+function menuToggle(id, e) {
+    e.stopPropagation();
+    document.querySelectorAll('.act-wrap.open').forEach(m => { if (m.id !== 'am-'+id) m.classList.remove('open'); });
+    document.getElementById('am-'+id).classList.toggle('open');
+}
+function menuKapat() { document.querySelectorAll('.act-wrap.open').forEach(m => m.classList.remove('open')); }
+document.addEventListener('click', menuKapat);
 
-            liste.forEach(p => {
-                let rollerHtml = "";
-                const roller = p.roller || [];
-                if(roller.includes("olcum")) rollerHtml += `<span class="badge-role">🔬 Ölçümcü</span>`;
-                if(roller.includes("onay")) rollerHtml += `<span class="badge-role" style="background:#fce7f3; color:#9d174d;">✍️ Onaylayıcı</span>`;
-                if(p.varsayilan_onaylayici) rollerHtml += `<span class="badge-role badge-star">🌟 Varsayılan İmza</span>`;
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${p.ad_soyad}</b></td>
-                        <td><span style="background:#f1f5f9; padding:4px 8px; border-radius:6px; font-family:monospace;">${p.kullanici_adi}</span></td>
-                        <td>${rollerHtml || '-'}</td>
-                        <td style="text-align:right;">
-                            <div class="act-wrap" id="am-${p.id}">
-                                <button class="act-btn" onclick="menuToggle(${p.id},event)">İşlemler ▾</button>
-                                <div class="act-drop">
-                                    <div class="act-drop-item" onclick="personelDuzenle(${p.id});menuKapat()">✏️ Düzenle</div>
-                                    <div class="act-drop-item danger" onclick="personelSil(${p.id});menuKapat()">🗑️ Sil</div>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        // --- ARAMA FONKSİYONU ---
-        function personelAra() {
-            const metin = document.getElementById("aramaKutusu").value.toLocaleUpperCase('tr-TR');
-            const filtrelenmis = tumPersoneller.filter(p => 
-                (p.ad_soyad || "").toLocaleUpperCase('tr-TR').includes(metin) ||
-                (p.kullanici_adi || "").toLocaleUpperCase('tr-TR').includes(metin)
-            );
-            tabloCiz(filtrelenmis);
-        }
-
-        // --- DÜZENLEME MODUNA GEÇİŞ ---
-        function personelDuzenle(id) {
-            const p = tumPersoneller.find(x => x.id === id);
-            if(!p) return;
-
-            document.getElementById("formBaslik").innerHTML = "✏️ Personel Düzenle";
-            document.getElementById("submitBtn").innerHTML = "💾 Değişiklikleri Güncelle";
-            document.getElementById("submitBtn").style.background = "#f59e0b"; // Turuncu
-
-            document.getElementById("duzenle_id").value = p.id;
-            document.getElementById("ad_soyad").value = p.ad_soyad;
-            document.getElementById("kullanici_adi").value = p.kullanici_adi;
-            document.getElementById("sifre").value = p.sifre;
-
-            const roller = p.roller || [];
-            document.getElementById("rol_olcum").checked = roller.includes("olcum");
-            
-            const onayCb = document.getElementById("rol_onay");
-            onayCb.checked = roller.includes("onay");
-            document.getElementById('varsayilan_kutu').style.display = onayCb.checked ? 'block' : 'none';
-            document.getElementById("varsayilan_onaylayici").checked = p.varsayilan_onaylayici;
-
-            const erisimler = p.erisimler || [];
-            document.querySelectorAll('.erisim').forEach(cb => {
-                cb.checked = erisimler.includes(cb.value);
-            });
-
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-
-        // --- FORMU SIFIRLAMA ---
-        function formSifirla() {
-            document.getElementById("personelForm").reset();
-            document.getElementById("duzenle_id").value = "";
-            document.getElementById("formBaslik").innerHTML = "➕ Yeni Personel Ekle";
-            document.getElementById("submitBtn").innerHTML = "💾 Personeli Sisteme Kaydet";
-            document.getElementById("submitBtn").style.background = "var(--primary)";
-            document.getElementById('varsayilan_kutu').style.display = 'none';
-        }
-
-        // --- KAYDET / GÜNCELLE ---
-        document.getElementById("personelForm").onsubmit = async (e) => {
-            e.preventDefault();
-
-            const roller = [];
-            if(document.getElementById("rol_olcum").checked) roller.push("olcum");
-            if(document.getElementById("rol_onay").checked) roller.push("onay");
-
-            const erisimler = Array.from(document.querySelectorAll('.erisim:checked')).map(cb => cb.value);
-            const duzenle_id = document.getElementById("duzenle_id").value;
-
-            const payload = {
-                ad_soyad: document.getElementById("ad_soyad").value,
-                kullanici_adi: document.getElementById("kullanici_adi").value,
-                sifre: document.getElementById("sifre").value,
-                roller: roller,
-                erisimler: erisimler,
-                varsayilan_onaylayici: document.getElementById("varsayilan_onaylayici").checked
-            };
-
-            const url = duzenle_id ? `/api/personeller/${duzenle_id}` : '/api/personeller';
-            const method = duzenle_id ? 'PUT' : 'POST';
-
-            try {
-                const res = await fetch(url, {
-                    method: method,
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
-                });
-                
-                if(res.ok) {
-                    showToast(duzenle_id ? "✅ Personel başarıyla güncellendi!" : "✅ Personel başarıyla eklendi!");
-                    formSifirla();
-                    personelleriGetir();
-                } else {
-                    const errorData = await res.json();
-                    showToast("❌ " + (errorData.error || "Kayıt sırasında hata oluştu!"), true);
-                }
-            } catch (err) { 
-                showToast("❌ Sunucuya bağlanılamadı!", true);
-                console.error(err); 
-            }
-        };
-
-        // --- SİLME ---
-        async function personelSil(id) {
-            if(!confirm("Bu personeli silmek istediğinize emin misiniz?")) return;
-            try {
-                const res = await fetch(`/api/personeller/${id}`, { method: 'DELETE' });
-                if(res.ok) {
-                    showToast("🗑️ Personel silindi!");
-                    personelleriGetir();
-                } else {
-                    showToast("❌ Silme işlemi başarısız!", true);
-                }
-            } catch(e) { 
-                showToast("❌ Sunucu hatası!", true);
-                console.error(e); 
-            }
-        }
-
-        function menuToggle(id, e) {
-            e.stopPropagation();
-            document.querySelectorAll('.act-wrap.open').forEach(m => { if(m.id !== 'am-'+id) m.classList.remove('open'); });
-            document.getElementById('am-'+id).classList.toggle('open');
-        }
-        function menuKapat() { document.querySelectorAll('.act-wrap.open').forEach(m => m.classList.remove('open')); }
-        document.addEventListener('click', menuKapat);
-
-        window.onload = personelleriGetir;
-    </script>
+window.onload = personelleriGetir;
+</script>
 <script src="sort-utils.js"></script>
 </body>
 </html>
