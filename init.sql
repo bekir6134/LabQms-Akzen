@@ -251,9 +251,17 @@ CREATE TABLE IF NOT EXISTS pak (
 
 -- ── VARSAYILAN VERİLER ───────────────────────────────────────
 
--- Varsayılan admin kullanıcısı (şifre: admin123)
+-- Admin kullanıcısı — tüm roller ve erişimler aktif
+-- Kullanıcı adı: admin  |  Şifre: admin123
 INSERT INTO personeller (ad_soyad, kullanici_adi, sifre, roller, erisimler, varsayilan_onaylayici)
-VALUES ('Sistem Yöneticisi', 'admin', 'admin123', '["admin"]', '[]', true)
+VALUES (
+    'Sistem Yöneticisi',
+    'admin',
+    'admin123',
+    '["olcum", "onay"]',
+    '["kabul", "operasyon", "teklif", "ayarlar"]',
+    true
+)
 ON CONFLICT (kullanici_adi) DO NOTHING;
 
 -- Varsayılan ayarlar
