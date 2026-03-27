@@ -189,7 +189,7 @@ async function kaydet(){
         durum:document.getElementById('durum').value,
         bir_sonraki_tarih:document.getElementById('bir_sonraki_tarih').value||null
     };
-    if(!confirm(duzenleId?'Güncellemek istediğinize emin misiniz?':'Kaydetmek istediğinize emin misiniz?'))return;
+    
     const btn=document.getElementById('saveBtn');btn.disabled=true;btn.textContent='Kaydediliyor...';
     const url=duzenleId?`/api/ygg-toplanti/${duzenleId}`:'/api/ygg-toplanti';
     const res=await fetch(url,{method:duzenleId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -233,7 +233,7 @@ function detayAc(id){
 function detayKapat(){document.getElementById('detayModal').classList.remove('open')}
 
 async function sil(id){
-    if(!confirm('Bu toplantı kaydını silmek istediğinize emin misiniz?'))return;
+    if(!(await showConfirm('Silme Onayı', 'Bu toplantı kaydı kalıcı olarak silinecek.'))) return;
     const res=await fetch(`/api/ygg-toplanti/${id}`,{method:'DELETE'});
     if(res.ok){showToast('🗑️ Silindi!');listele()}else showToast('❌ Silinemedi!',true);
 }
@@ -250,5 +250,6 @@ function formTemizle(){
 listele();
 </script>
 <script src="sort-utils.js"></script>
+    <script src="dialog.js"></script>
 </body>
 </html>

@@ -395,7 +395,7 @@ document.getElementById("personelForm").onsubmit = async (e) => {
 };
 
 async function personelSil(id) {
-    if (!confirm("Bu personeli silmek istediğinize emin misiniz?")) return;
+    if (!(await showConfirm('Silme Onayı', 'Bu personel kaydı kalıcı olarak silinecek.'))) return;
     const res = await fetch(`/api/personeller/${id}`, { method:'DELETE' });
     if (res.ok) { showToast("🗑️ Silindi!"); personelleriGetir(); }
     else showToast("❌ Silme başarısız!", true);
@@ -412,5 +412,6 @@ document.addEventListener('click', menuKapat);
 window.onload = personelleriGetir;
 </script>
 <script src="sort-utils.js"></script>
+    <script src="dialog.js"></script>
 </body>
 </html>

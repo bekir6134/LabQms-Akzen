@@ -208,7 +208,7 @@ async function kaydet(){
         onay_durumu:document.getElementById('onay_durumu').value,
         aciklama:document.getElementById('aciklama').value.trim()
     };
-    if(!confirm(duzenleId?'Güncellemek istediğinize emin misiniz?':'Kaydetmek istediğinize emin misiniz?'))return;
+    
     const btn=document.getElementById('saveBtn');btn.disabled=true;btn.textContent='Kaydediliyor...';
     const url=duzenleId?`/api/dis-tedarikci/${duzenleId}`:'/api/dis-tedarikci';
     const res=await fetch(url,{method:duzenleId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -233,7 +233,7 @@ function duzenle(id){
 }
 
 async function sil(id){
-    if(!confirm('Bu tedarikçiyi silmek istediğinize emin misiniz?'))return;
+    if(!(await showConfirm('Silme Onayı', 'Bu tedarikçi kaydı kalıcı olarak silinecek.'))) return;
     const res=await fetch(`/api/dis-tedarikci/${id}`,{method:'DELETE'});
     if(res.ok){showToast('🗑️ Silindi!');listele()}else showToast('❌ Silinemedi!',true);
 }
@@ -297,7 +297,7 @@ async function degKaydet(){
 }
 
 async function degSil(id){
-    if(!confirm('Bu değerlendirmeyi silmek istediğinize emin misiniz?'))return;
+    if(!(await showConfirm('Silme Onayı', 'Bu değerlendirme kaydı kalıcı olarak silinecek.'))) return;
     const res=await fetch(`/api/dis-tedarikci-degerlendirme/${id}`,{method:'DELETE'});
     if(res.ok){showToast('🗑️ Silindi!');degListele()}else showToast('❌ Silinemedi!',true);
 }
@@ -305,5 +305,6 @@ async function degSil(id){
 listele();
 </script>
 <script src="sort-utils.js"></script>
+    <script src="dialog.js"></script>
 </body>
 </html>

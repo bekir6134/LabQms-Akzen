@@ -133,7 +133,7 @@
             document.getElementById("saveBtn").innerText = "➕ Kategori Ekle";
             showToast(duzenleId ? "✅ Kategori güncellendi!" : "✅ Kategori eklendi!");
             listeYukle();
-        } else { const err = await res.json(); alert(err.error || "Bir hata oluştu"); }
+        } else { const err = await res.json(); showToast(err.error || 'Bir hata oluştu', 'error'); }
     }
 
     function duzenle(id, ad) {
@@ -148,7 +148,7 @@
     }
 
     async function sil(id) {
-        if (!confirm("Bu kategoriyi silmek istediğinize emin misiniz?")) return;
+        if (!(await showConfirm('Silme Onayı', 'Bu kategori kalıcı olarak silinecek.'))) return;
         const res = await fetch(`/api/kategoriler/${id}`, { method: 'DELETE' });
         if (res.ok) { showToast("🗑️ Kategori silindi!"); listeYukle(); }
         else showToast("❌ Silme başarısız!", true);
@@ -164,5 +164,6 @@
 
     window.onload = listeYukle;
 </script>
+    <script src="dialog.js"></script>
 </body>
 </html>

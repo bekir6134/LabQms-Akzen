@@ -243,7 +243,7 @@ async function kaydet(){
         termin:document.getElementById('termin').value||null,
         durum:document.getElementById('durum').value
     };
-    if(!confirm(duzenleId?'Güncellemek istediğinize emin misiniz?':'Kaydetmek istediğinize emin misiniz?'))return;
+    
     const btn=document.getElementById('saveBtn');btn.disabled=true;btn.textContent='Kaydediliyor...';
     const url=duzenleId?`/api/risk-kaydi/${duzenleId}`:'/api/risk-kaydi';
     const res=await fetch(url,{method:duzenleId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -274,7 +274,7 @@ function duzenle(id){
 }
 
 async function sil(id){
-    if(!confirm('Bu kaydı silmek istediğinize emin misiniz?'))return;
+    if(!(await showConfirm('Silme Onayı', 'Bu risk kaydı kalıcı olarak silinecek.'))) return;
     const res=await fetch(`/api/risk-kaydi/${id}`,{method:'DELETE'});
     if(res.ok){showToast('🗑️ Silindi!');listele()}else showToast('❌ Silinemedi!',true);
 }
@@ -293,5 +293,6 @@ function formTemizle(){
 listele();
 </script>
 <script src="sort-utils.js"></script>
+    <script src="dialog.js"></script>
 </body>
 </html>

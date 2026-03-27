@@ -249,7 +249,7 @@ async function kaydet(){
         durum:document.getElementById('durum').value,
         aciklama:document.getElementById('aciklama').value.trim()
     };
-    if(!confirm(duzenleId?'Güncellemek istediğinize emin misiniz?':'Kaydetmek istediğinize emin misiniz?'))return;
+    
     const btn=document.getElementById('saveBtn');btn.disabled=true;btn.textContent='Kaydediliyor...';
     const url=duzenleId?`/api/ic-denetim/${duzenleId}`:'/api/ic-denetim';
     const res=await fetch(url,{method:duzenleId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -276,7 +276,7 @@ function duzenle(id){
 }
 
 async function sil(id){
-    if(!confirm('Bu denetimi silmek istediğinize emin misiniz?'))return;
+    if(!(await showConfirm('Silme Onayı', 'Bu denetim kaydı kalıcı olarak silinecek.'))) return;
     const res=await fetch(`/api/ic-denetim/${id}`,{method:'DELETE'});
     if(res.ok){showToast('🗑️ Silindi!');listele()}else showToast('❌ Silinemedi!',true);
 }
@@ -364,7 +364,7 @@ async function bulguKaydet(){
 }
 
 async function bulguSil(id){
-    if(!confirm('Bu bulguyu silmek istediğinize emin misiniz?'))return;
+    if(!(await showConfirm('Silme Onayı', 'Bu bulgu kaydı kalıcı olarak silinecek.'))) return;
     const res=await fetch(`/api/ic-denetim-bulgu/${id}`,{method:'DELETE'});
     if(res.ok){showToast('🗑️ Silindi!');bulguListele()}else showToast('❌ Silinemedi!',true);
 }
@@ -379,5 +379,6 @@ function bulguFormTemizle(){
 listele();
 </script>
 <script src="sort-utils.js"></script>
+    <script src="dialog.js"></script>
 </body>
 </html>

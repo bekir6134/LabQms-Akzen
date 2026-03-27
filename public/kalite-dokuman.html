@@ -488,7 +488,7 @@ function excelOku(file) {
             const wb = XLSX.read(data, { type: 'array', cellDates: false });
             const ws = wb.Sheets[wb.SheetNames[0]];
             const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-            if (rows.length < 2) { alert('Excel boş veya yalnızca başlık satırı var.'); return; }
+            if (rows.length < 2) { showToast('Excel boş veya yalnızca başlık satırı var.', 'warning'); return; }
             // A=dok_no B=baslik C=tur D=revizyon_no E=yayin_tarihi F=gecerlilik_tarihi G=durum H=aciklama
             excelVerisi = [];
             for (let i = 1; i < rows.length; i++) {
@@ -509,7 +509,7 @@ function excelOku(file) {
             document.getElementById('excelSatirSayisi').textContent = `${excelVerisi.length} kayıt bulundu`;
             document.getElementById('excelOnizle').style.display = 'block';
             document.getElementById('importSonuc').style.display = 'none';
-        } catch(err) { alert('Excel okunamadı: ' + err.message); }
+        } catch(err) { showToast('Excel okunamadı: ' + err.message, 'error'); }
     };
     reader.readAsArrayBuffer(file);
 }
@@ -535,7 +535,7 @@ async function excelImport() {
             </div>`;
         document.getElementById('excelOnizle').style.display = 'none';
         document.getElementById('dropZone').style.display = 'none';
-    } catch(e) { alert('Aktarım sırasında hata: ' + e.message); }
+    } catch(e) { showToast('Aktarım sırasında hata: ' + e.message, 'error'); }
     btn.disabled = false; btn.textContent = '⬆️ Sisteme Aktar';
 }
 
@@ -644,5 +644,6 @@ function sablonIndir() {
 
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="sort-utils.js"></script>
+    <script src="dialog.js"></script>
 </body>
 </html>

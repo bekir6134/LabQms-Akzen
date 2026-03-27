@@ -326,7 +326,7 @@
         async function topluSil() {
             const ids = [...document.querySelectorAll('.ref-cb:checked')].map(cb => parseInt(cb.value));
             if (!ids.length) return;
-            if (!confirm(`Seçilen ${ids.length} kayıt ve bunlara ait tüm kalibrasyon/ara kontrol geçmişi silinecek. Emin misiniz?`)) return;
+            if (!(await showConfirm('Toplu Silme', `Seçilen ${ids.length} kayıt ve tüm kalibrasyon geçmişi kalıcı olarak silinecek.`, 'warning'))) return;
             try {
                 const res = await fetch('/api/referans-cihazlar-toplu', {
                     method: 'DELETE',
@@ -334,11 +334,11 @@
                     body: JSON.stringify({ ids })
                 });
                 const sonuc = await res.json();
-                alert(`${sonuc.silindi} kayıt silindi.`);
+                showToast(`${sonuc.silindi} kayıt silindi!`);
                 secimiTemizle();
                 referansYukle();
             } catch(e) {
-                alert('Silme hatası: ' + e.message);
+                showToast('Silme hatası: ' + e.message, 'error');
             }
         }
 
@@ -531,7 +531,7 @@
         }
 
         async function cihazSil(id) {
-            if (!confirm("Bu cihazı silmek istediğinize emin misiniz?")) return;
+            if (!(await showConfirm('Silme Onayı', 'Bu cihaz kalıcı olarak silinecek.'))) return;
             const res = await fetch(`/api/referans-cihazlar/${id}`, { method: 'DELETE' });
             if (res.ok) { bildirimGoster("🗑️ Cihaz silindi!"); referansYukle(); }
             else bildirimGoster("❌ Silme başarısız!", true);
@@ -594,7 +594,7 @@
                     const wb = XLSX.read(data, { type: 'array', cellDates: false });
                     const ws = wb.Sheets[wb.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-                    if (rows.length < 2) { alert('Excel boş veya yalnızca başlık satırı var.'); return; }
+                    if (rows.length < 2) { showToast('Excel boş veya yalnızca başlık satırı var.', 'warning'); return; }
 
                     // Her zaman 1. satır başlık, 2. satırdan itibaren veri — kolon sırası sabittir
                     // A=cihaz_adi B=kategori_adi C=marka D=model E=seri_no F=envanter_no
@@ -629,7 +629,7 @@
                     document.getElementById('excelOnizle').style.display = 'block';
                     document.getElementById('importSonuc').style.display = 'none';
                 } catch(err) {
-                    alert('Excel okunamadı: ' + err.message);
+                    showToast('Excel okunamadı: ' + err.message, 'error');
                 }
             };
             reader.readAsArrayBuffer(file);
@@ -664,7 +664,7 @@
                 document.getElementById('excelOnizle').style.display = 'none';
                 document.getElementById('dropZone').style.display = 'none';
             } catch(e) {
-                alert('Aktarım sırasında hata: ' + e.message);
+                showToast('Aktarım sırasında hata: ' + e.message, 'error');
             }
             btn.disabled = false; btn.textContent = '⬆️ Sisteme Aktar';
         }
@@ -688,5 +688,6 @@
     <!-- SheetJS -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="sort-utils.js"></script>
+    <script src="dialog.js"></script>
 </body>
 </html>

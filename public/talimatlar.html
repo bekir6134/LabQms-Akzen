@@ -133,7 +133,7 @@
             talimat_kodu: document.getElementById("t_kod").value,
             olcme_araligi: document.getElementById("t_aralik").value
         };
-        if (!payload.talimat_adi || !payload.talimat_kodu) return alert("Ad ve Kod zorunludur!");
+        if (!payload.talimat_adi || !payload.talimat_kodu) { showToast('Ad ve Kod zorunludur!', 'warning'); return; }
         btn.disabled = true; btn.innerText = "...";
         const url = duzenleId ? `/api/talimatlar/${duzenleId}` : '/api/talimatlar';
         const method = duzenleId ? 'PUT' : 'POST';
@@ -164,7 +164,7 @@
     }
 
     async function sil(id) {
-        if (!confirm("Bu talimatı silmek istediğinize emin misiniz?")) return;
+        if (!(await showConfirm('Silme Onayı', 'Bu talimat kalıcı olarak silinecek.'))) return;
         const res = await fetch(`/api/talimatlar/${id}`, { method: 'DELETE' });
         if (res.ok) { showToast("🗑️ Talimat silindi!"); listele(); }
         else showToast("❌ Silme başarısız!", true);
@@ -189,5 +189,6 @@
     window.onload = listele;
 </script>
 <script src="sort-utils.js"></script>
+    <script src="dialog.js"></script>
 </body>
 </html>

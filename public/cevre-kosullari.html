@@ -346,7 +346,7 @@
 
     // ── SİL ──
     async function sil(id) {
-        if(!confirm("Bu çevre koşulunu silmek istediğinize emin misiniz?")) return;
+        if(!(await showConfirm('Silme Onayı', 'Bu çevre koşulu kalıcı olarak silinecek.'))) return;
         const res = await fetch(`/api/cevre-kosullari/${id}`, {method:'DELETE'});
         if(res.ok) { showToast("🗑️ Silindi!"); listele(); }
         else showToast("❌ Silinemedi!", true);
@@ -383,5 +383,6 @@
 
     window.onload = yukle;
 </script>
+    <script src="dialog.js"></script>
 </body>
 </html>

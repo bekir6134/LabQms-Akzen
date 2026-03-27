@@ -538,7 +538,7 @@
     }
 
     async function etkinlikSil(id) {
-        if (!confirm("Bu etkinliği silmek istediğinize emin misiniz?")) return;
+        if (!(await showConfirm('Silme Onayı', 'Bu etkinlik kalıcı olarak silinecek.'))) return;
         const res = await fetch(`/api/takvim/${id}`, { method:'DELETE' });
         if (res.ok) { showToast("🗑️ Silindi!"); await takvimiYukle(); }
         else showToast("❌ Silinemedi!", true);
@@ -628,5 +628,6 @@
         kutu.scrollTop = kutu.scrollHeight;
     }
 </script>
+    <script src="dialog.js"></script>
 </body>
 </html>

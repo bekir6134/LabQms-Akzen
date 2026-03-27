@@ -210,7 +210,7 @@ async function kaydet(){
         kapatis_tarihi:document.getElementById('kapatis_tarihi').value||null,
         sonuc:document.getElementById('sonuc').value.trim()
     };
-    if(!confirm(duzenleId?'Güncellemek istediğinize emin misiniz?':'Kaydetmek istediğinize emin misiniz?'))return;
+    
     const btn=document.getElementById('saveBtn');btn.disabled=true;btn.textContent='Kaydediliyor...';
     const url=duzenleId?`/api/musteri-sikayet/${duzenleId}`:'/api/musteri-sikayet';
     const res=await fetch(url,{method:duzenleId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -238,7 +238,7 @@ function duzenle(id){
 }
 
 async function sil(id){
-    if(!confirm('Bu kaydı silmek istediğinize emin misiniz?'))return;
+    if(!(await showConfirm('Silme Onayı', 'Bu şikayet kaydı kalıcı olarak silinecek.'))) return;
     const res=await fetch(`/api/musteri-sikayet/${id}`,{method:'DELETE'});
     if(res.ok){showToast('🗑️ Silindi!');listele()}else showToast('❌ Silinemedi!',true);
 }
@@ -255,5 +255,6 @@ function formTemizle(){
 listele();
 </script>
 <script src="sort-utils.js"></script>
+    <script src="dialog.js"></script>
 </body>
 </html>
