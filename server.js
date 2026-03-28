@@ -1484,6 +1484,165 @@ app.delete('/api/satin-alma/:id', async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/api/satin-alma/:id/pdf', async (req, res) => {
+    let browser;
+    try {
+        // 1. Kayıt + tedarikçi
+        const kr = await pool.query(`
+            SELECT sa.*, dt.firma_adi as tedarikci_adi
+            FROM satin_alma sa
+            LEFT JOIN dis_tedarikci dt ON sa.tedarikci_id = dt.id
+            WHERE sa.id = $1`, [req.params.id]);
+        if (!kr.rows.length) return res.status(404).send('Kayıt bulunamadı');
+        const k = kr.rows[0];
+
+        // 2. Ayarlar
+        const ar = await pool.query('SELECT anahtar, deger FROM ayarlar');
+        const ay = ar.rows.reduce((o, r) => { o[r.anahtar] = r.deger; return o; }, {});
+
+        const labAdi      = ay.lab_adi      || '';
+        const labLogo     = ay.lab_logo     || '';
+        const formNo      = ay.satin_alma_form_no      || '—';
+        const yayimTarihi = ay.satin_alma_yayin_tarihi || '—';
+        const revNo       = ay.satin_alma_rev_no       || '—';
+        const revTarihi   = ay.satin_alma_rev_tarihi   || '—';
+
+        function fmt(d) {
+            if (!d) return '—';
+            const t = new Date(d);
+            if (isNaN(t)) return d;
+            return t.toLocaleDateString('tr-TR');
+        }
+        const DURUM = {talep:'Talep',onaylandi:'Onaylandı',siparis_verildi:'Sipariş Verildi',
+                       teslim_alindi:'Teslim Alındı',tamamlandi:'Tamamlandı',reddedildi:'Reddedildi'};
+        const KABUL = {beklemede:'Beklemede',kabul:'Kabul',ret:'Ret',kismi_kabul:'Kısmi Kabul'};
+        const TUR   = {urun:'Ürün',hizmet:'Hizmet'};
+
+        const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:10pt;color:#1e293b;background:#fff;padding:18mm 18mm 22mm}
+.header{display:grid;grid-template-columns:1fr 1.8fr 1fr;align-items:center;border:1.5px solid #1E40AF;margin-bottom:0}
+.header-logo{padding:8px 12px;border-right:1.5px solid #1E40AF;text-align:center;min-height:64px;display:flex;align-items:center;justify-content:center}
+.header-logo img{max-height:52px;max-width:120px;object-fit:contain}
+.header-title{padding:8px 14px;text-align:center;border-right:1.5px solid #1E40AF}
+.header-title .form-name{font-size:11.5pt;font-weight:700;color:#1E40AF;text-transform:uppercase;letter-spacing:0.5px}
+.header-title .lab-name{font-size:8pt;color:#64748b;margin-top:4px}
+.header-meta{padding:6px 10px}
+.meta-row{display:flex;font-size:8pt;margin-bottom:2px}
+.meta-label{color:#64748b;width:92px;flex-shrink:0}
+.meta-val{font-weight:600;color:#1e293b}
+.section{border:1px solid #cbd5e1;margin-top:10px;border-radius:4px;overflow:hidden}
+.section-title{background:#1E40AF;color:#fff;font-size:8.5pt;font-weight:700;padding:5px 10px;letter-spacing:0.3px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.field{padding:6px 10px;border-bottom:1px solid #e2e8f0;border-right:1px solid #e2e8f0}
+.field:nth-child(even){border-right:none}
+.field.full{grid-column:1/-1;border-right:none}
+.field-label{font-size:7.5pt;color:#64748b;font-weight:600;margin-bottom:2px}
+.field-val{font-size:9.5pt;color:#1e293b;font-weight:500}
+.footer-bar{display:grid;grid-template-columns:1fr 1fr;border:1.5px solid #1E40AF;margin-top:14px}
+.footer-cell{padding:12px 14px}
+.footer-cell:first-child{border-right:1.5px solid #1E40AF}
+.footer-label{font-size:7.5pt;color:#64748b;font-weight:700;margin-bottom:6px}
+.footer-name{font-size:9.5pt;font-weight:600;color:#1e293b;margin-bottom:18px}
+.sig-line{border-top:1px solid #94a3b8;width:160px;margin-top:2px}
+</style></head><body>
+
+<div class="header">
+  <div class="header-logo">${labLogo ? `<img src="${labLogo}">` : `<span style="font-size:8pt;color:#94a3b8">${labAdi}</span>`}</div>
+  <div class="header-title">
+    <div class="form-name">Satın Alma Talebi Formu</div>
+    <div class="lab-name">${labAdi}</div>
+  </div>
+  <div class="header-meta">
+    <div class="meta-row"><span class="meta-label">Döküman No</span><span class="meta-val">: ${formNo}</span></div>
+    <div class="meta-row"><span class="meta-label">Yayım Tarihi</span><span class="meta-val">: ${yayimTarihi}</span></div>
+    <div class="meta-row"><span class="meta-label">Revizyon No</span><span class="meta-val">: ${revNo}</span></div>
+    <div class="meta-row"><span class="meta-label">Revizyon Tarihi</span><span class="meta-val">: ${revTarihi}</span></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">TALEP BİLGİLERİ</div>
+  <div class="fields">
+    <div class="field"><div class="field-label">Talep No</div><div class="field-val">${k.talep_no||'—'}</div></div>
+    <div class="field"><div class="field-label">Talep Tarihi</div><div class="field-val">${fmt(k.talep_tarihi)}</div></div>
+    <div class="field"><div class="field-label">Talep Eden</div><div class="field-val">${k.talep_eden||'—'}</div></div>
+    <div class="field"><div class="field-label">Tür</div><div class="field-val">${TUR[k.tur]||k.tur||'—'}</div></div>
+    <div class="field full"><div class="field-label">Konu</div><div class="field-val">${k.konu||'—'}</div></div>
+    ${k.aciklama?`<div class="field full"><div class="field-label">Açıklama</div><div class="field-val">${k.aciklama}</div></div>`:''}
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">MİKTAR VE TEDARİKÇİ</div>
+  <div class="fields">
+    <div class="field"><div class="field-label">Miktar</div><div class="field-val">${k.miktar||'—'} ${k.birim||''}</div></div>
+    <div class="field"><div class="field-label">Tahmini Tutar</div><div class="field-val">${k.tahmini_tutar?Number(k.tahmini_tutar).toLocaleString('tr-TR')+' '+(k.para_birimi||'TRY'):'—'}</div></div>
+    <div class="field full"><div class="field-label">Tedarikçi</div><div class="field-val">${k.tedarikci_adi||'—'}</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">ONAY BİLGİLERİ</div>
+  <div class="fields">
+    <div class="field"><div class="field-label">Durum</div><div class="field-val">${DURUM[k.durum]||k.durum||'—'}</div></div>
+    <div class="field"><div class="field-label">Onaylayan</div><div class="field-val">${k.onaylayan||'—'}</div></div>
+    <div class="field"><div class="field-label">Onay Tarihi</div><div class="field-val">${fmt(k.onay_tarihi)}</div></div>
+    ${k.onay_notu?`<div class="field full"><div class="field-label">Onay Notu</div><div class="field-val">${k.onay_notu}</div></div>`:''}
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">TESLİMAT VE KABUL</div>
+  <div class="fields">
+    <div class="field"><div class="field-label">Sipariş Tarihi</div><div class="field-val">${fmt(k.siparis_tarihi)}</div></div>
+    <div class="field"><div class="field-label">Tahmini Teslimat</div><div class="field-val">${fmt(k.tahmini_teslimat)}</div></div>
+    <div class="field"><div class="field-label">Gerçek Teslimat</div><div class="field-val">${fmt(k.gercek_teslimat)}</div></div>
+    <div class="field"><div class="field-label">Kabul Durumu</div><div class="field-val">${KABUL[k.kabul_durumu]||k.kabul_durumu||'—'}</div></div>
+    <div class="field"><div class="field-label">Kabul Eden</div><div class="field-val">${k.kabul_eden||'—'}</div></div>
+    ${k.kabul_notu?`<div class="field full"><div class="field-label">Kabul Notu</div><div class="field-val">${k.kabul_notu}</div></div>`:''}
+  </div>
+</div>
+
+<div class="footer-bar">
+  <div class="footer-cell">
+    <div class="footer-label">FORMU OLUŞTURAN</div>
+    <div class="footer-name">${k.talep_eden||'—'}</div>
+    <div class="sig-line"></div>
+  </div>
+  <div class="footer-cell">
+    <div class="footer-label">ONAYLAYAN</div>
+    <div class="footer-name">${k.onaylayan||'—'}</div>
+    <div class="sig-line"></div>
+  </div>
+</div>
+
+</body></html>`;
+
+        browser = await puppeteer.launch({
+            executablePath: chromiumExecPath(),
+            headless: 'new',
+            args: ['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage','--disable-gpu','--no-zygote','--single-process'],
+        });
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            margin: { top: '0', right: '0', bottom: '0', left: '0' },
+            printBackground: true,
+        });
+        await browser.close(); browser = null;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="satin-alma-${k.talep_no||req.params.id}.pdf"`);
+        res.send(pdfBuffer);
+    } catch(err) {
+        if (browser) try { await browser.close(); } catch(e) {}
+        res.status(500).send('PDF oluşturma hatası: ' + err.message);
+    }
+});
+
 // --- YÖNETİMİN GÖZDEN GEÇİRMESİ ---
 app.get('/api/ygg-toplanti', async (req, res) => {
     try {

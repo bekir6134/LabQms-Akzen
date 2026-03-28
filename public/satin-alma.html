@@ -389,14 +389,15 @@ function tabloRender(kayitlar) {
             <td>
                 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
                     ${akisButonlari}
-                    ${window._erisimMod==='duzenle'?`<div class="act-wrap" id="aw_${r.id}">
+                    <div class="act-wrap" id="aw_${r.id}">
                         <button class="act-btn" onclick="menuToggle(${r.id},event)">⋯</button>
                         <div class="act-drop">
+                            <div class="act-item" onclick="pdfGoster(${r.id});menuKapat()">📄 PDF Görüntüle</div>
+                            ${window._erisimMod==='duzenle'?`<hr>
                             <div class="act-item" onclick="duzenle(${r.id});menuKapat()">✏️ Düzenle</div>
-                            <hr>
-                            <div class="act-item danger" onclick="sil(${r.id});menuKapat()">🗑️ Sil</div>
+                            <div class="act-item danger" onclick="sil(${r.id});menuKapat()">🗑️ Sil</div>`:''}
                         </div>
-                    </div>`:''}
+                    </div>
                 </div>
             </td>
         </tr>`;
@@ -643,6 +644,10 @@ function menuToggle(id, e) {
 }
 function menuKapat() { document.querySelectorAll('.act-wrap.open').forEach(w => w.classList.remove('open')); }
 document.addEventListener('click', menuKapat);
+
+function pdfGoster(id) {
+    window.open(`/api/satin-alma/${id}/pdf`, '_blank');
+}
 
 // ─── YARDIMCI ────────────────────────────────────────────────────────────────
 function bugun() { return new Date().toISOString().slice(0,10); }

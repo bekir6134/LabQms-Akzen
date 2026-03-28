@@ -216,6 +216,33 @@
 
         <div class="card" style="margin-bottom:16px;">
             <div class="card-header">
+                <div class="card-icon">🛒</div>
+                <div class="card-title">Satın Alma Form Bilgileri</div>
+            </div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div>
+                        <label>Döküman No</label>
+                        <input type="text" id="satin_alma_form_no" placeholder="Örn: FR-SA-001">
+                    </div>
+                    <div>
+                        <label>Yayımlanma Tarihi</label>
+                        <input type="text" id="satin_alma_yayin_tarihi" placeholder="Örn: 01.01.2025">
+                    </div>
+                    <div>
+                        <label>Revizyon No</label>
+                        <input type="text" id="satin_alma_rev_no" placeholder="Örn: 00">
+                    </div>
+                    <div>
+                        <label>Revizyon Tarihi</label>
+                        <input type="text" id="satin_alma_rev_tarihi" placeholder="Örn: 15.06.2025">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px;">
+            <div class="card-header">
                 <div class="card-icon">📧</div>
                 <div class="card-title">Mail (SMTP) Ayarları</div>
             </div>
@@ -429,6 +456,10 @@
             set('kd_sayac', 'kd_sayac');
             set('kd_basamak', 'kd_basamak');
             set('kd_rezerve_gun', 'kd_rezerve_gun');
+            set('satin_alma_form_no', 'satin_alma_form_no');
+            set('satin_alma_yayin_tarihi', 'satin_alma_yayin_tarihi');
+            set('satin_alma_rev_no', 'satin_alma_rev_no');
+            set('satin_alma_rev_tarihi', 'satin_alma_rev_tarihi');
             set('smtp_pass', 'smtp_pass'); // Şifre göster
             onizlemeGuncelle();
             kdOnizlemeGuncelle();
@@ -524,6 +555,10 @@
             kd_sayac: document.getElementById("kd_sayac").value,
             kd_basamak: document.getElementById("kd_basamak").value,
             kd_rezerve_gun: document.getElementById("kd_rezerve_gun").value,
+            satin_alma_form_no: document.getElementById("satin_alma_form_no").value,
+            satin_alma_yayin_tarihi: document.getElementById("satin_alma_yayin_tarihi").value,
+            satin_alma_rev_no: document.getElementById("satin_alma_rev_no").value,
+            satin_alma_rev_tarihi: document.getElementById("satin_alma_rev_tarihi").value,
             lab_logo: logoBase64.lab,
             turkak_logo: logoBase64.turkak,
             muhur_logo: logoBase64.muhur
