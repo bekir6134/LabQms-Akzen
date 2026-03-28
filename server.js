@@ -59,6 +59,8 @@ const QRCode    = require('qrcode');
 
 function chromiumExecPath() {
     if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
+    const fs = require('fs');
+    const { execSync } = require('child_process');
     const candidates = [
         '/nix/var/nix/profiles/default/bin/chromium',
         '/run/current-system/sw/bin/chromium',
@@ -67,10 +69,22 @@ function chromiumExecPath() {
         '/usr/bin/google-chrome',
         '/usr/bin/google-chrome-stable',
     ];
-    const found = candidates.find(p => { try { require('fs').accessSync(p); return true; } catch(e) { return false; } });
-    if (found) return found;
-    try { return require('child_process').execSync('which chromium || which chromium-browser || which google-chrome 2>/dev/null', { timeout: 3000 }).toString().trim(); }
-    catch(e) { return 'chromium'; }
+    for (const p of candidates) {
+        try { fs.accessSync(p); return p; } catch(e) {}
+    }
+    // Nix store'da dinamik ara (Railway'de hash'li path'te olabilir)
+    try {
+        const p = execSync(
+            'find /nix/store -maxdepth 5 -name "chromium" -type f 2>/dev/null | grep "/bin/chromium$" | head -1',
+            { timeout: 8000, shell: true }
+        ).toString().trim();
+        if (p) return p;
+    } catch(e) {}
+    try {
+        const p = execSync('which chromium || which chromium-browser || which google-chrome 2>/dev/null', { timeout: 3000, shell: true }).toString().trim();
+        if (p) return p;
+    } catch(e) {}
+    return 'chromium';
 }
 const { PDFDocument, StandardFonts, rgb, degrees } = require('pdf-lib');
 const { Pool } = require('pg');
