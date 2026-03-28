@@ -3,30 +3,17 @@
 <head>
 
     <meta charset="UTF-8"> <script>
-    // GÜVENLİK KONTROLÜ: Kullanıcı giriş yapmış mı?
     const aktifKullanici = localStorage.getItem("labqms_user");
-    if (!aktifKullanici) {
-        // Eğer giriş yapmamışsa, anında login sayfasına şutla!
-        window.location.href = "login.html";
-    }
+    if (!aktifKullanici) { window.location.href = "login.html"; }
     </script>
 
-    
-    <title>Sistem Ayarları</title>
     <title>Kalibrasyon Talimatları</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #1E40AF; --border: #e2e8f0; --bg: #f8fafc; --success: #10B981; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 20px; color: #334155; }
-        .accordion { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .accordion-header { background: #fff; padding: 15px 25px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid transparent; }
-        .accordion-header.active { border-bottom-color: var(--border); background: #f1f5f9; }
-        .accordion-content { padding: 25px; display: none; }
-        .input-group { display: grid; grid-template-columns: 2fr 1fr 1.5fr auto; gap: 10px; background: #f1f5f9; padding: 15px; border-radius: 8px; }
-        input { padding: 10px; border: 1px solid var(--border); border-radius: 6px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; }
-        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
-        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; white-space: nowrap; }
-        .btn:hover { background: #1e3a8a; }
+        input, select, textarea { padding: 10px; border: 1px solid var(--border); border-radius: 6px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; }
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
         .card { background: #fff; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .search-box { width: 300px; }
@@ -35,8 +22,6 @@
         th { background: #f8fafc; padding: 12px; text-align: left; color: #64748b; font-size: 0.85rem; border-bottom: 2px solid var(--border); }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
         .code-badge { background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; font-family: monospace; }
-        .btn-edit { background: #e0e7ff; color: #4338ca; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-right: 4px; }
-        .btn-del { background: #fee2e2; color: #dc2626; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
         #toast { visibility: hidden; min-width: 250px; background-color: var(--success); color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 3000; right: 30px; top: 30px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         #toast.show { visibility: visible; }
         #toast.error { background-color: #ef4444; }
@@ -51,25 +36,61 @@
         .act-drop-item.danger { color:#dc2626; }
         .act-drop-item.danger:hover { background:#fee2e2; }
         .act-drop hr { margin:4px 0; border:none; border-top:1px solid var(--border); }
+        /* PAGE HEADER */
+        .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+        .page-title { font-size:1.2rem; font-weight:700; color:var(--primary); }
+        .btn-yeni { background:var(--primary); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9rem; }
+        .btn-yeni:hover { opacity:0.9; }
+        /* MODAL */
+        #modal { display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; }
+        #modal.open { display:flex; }
+        .modal-box { background:#fff; border-radius:16px; width:92%; max-width:560px; box-shadow:0 20px 50px rgba(0,0,0,0.25); animation:fadeUp 0.25s; }
+        .modal-head { padding:18px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+        .modal-title { font-size:1rem; font-weight:700; color:var(--primary); }
+        .modal-close { background:none; border:none; font-size:1.3rem; cursor:pointer; color:#64748b; }
+        .modal-body { padding:24px; display:flex; flex-direction:column; gap:14px; }
+        .modal-footer { padding:16px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
+        .btn-cancel { background:#f1f5f9; color:#64748b; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; }
+        .btn-save { background:var(--primary); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; }
+        label { display:block; font-size:0.8rem; font-weight:600; color:#64748b; margin-bottom:5px; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
     </style>
 </head>
 <body>
 <div id="toast">✅ İşlem Başarılı!</div>
 
-<div class="accordion">
-    <div class="accordion-header" onclick="toggleAccordion()">
-        <h3 style="margin:0; color:var(--primary);">➕ Yeni Talimat Tanımla / Düzenleme</h3>
-        <span id="accIcon">▼</span>
-    </div>
-    <div class="accordion-content" id="accContent">
-        <input type="hidden" id="duzenle_id" value="">
-        <div class="input-group">
-            <input type="text" id="t_ad" placeholder="Talimat Adı">
-            <input type="text" id="t_kod" placeholder="Kod (Örn: TL-01)">
-            <input type="text" id="t_aralik" placeholder="Ölçme Aralığı">
-            <button class="btn" id="saveBtn" onclick="kaydet()">➕ Ekle</button>
+<!-- MODAL -->
+<div id="modal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <span class="modal-title" id="modalBaslik">Yeni Talimat</span>
+            <button class="modal-close" onclick="modalKapat()">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="duzenle_id" value="">
+            <div>
+                <label>Talimat Adı *</label>
+                <input type="text" id="t_ad" placeholder="Talimat adını girin">
+            </div>
+            <div>
+                <label>Kod *</label>
+                <input type="text" id="t_kod" placeholder="Örn: TL-01">
+            </div>
+            <div>
+                <label>Ölçme Aralığı</label>
+                <input type="text" id="t_aralik" placeholder="Örn: 0...100 °C">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="modalKapat()">İptal</button>
+            <button class="btn-save" id="saveBtn" onclick="kaydet()">💾 Kaydet</button>
         </div>
     </div>
+</div>
+
+<div class="page-header">
+    <div class="page-title">📜 Kalibrasyon Talimatları</div>
+    <button class="btn-yeni" onclick="modalAc()">+ Yeni Talimat</button>
 </div>
 
 <div class="card">
@@ -84,16 +105,24 @@
 </div>
 
 <script>
-    function toggleAccordion() {
-        const content = document.getElementById("accContent");
-        const header = document.querySelector(".accordion-header");
-        const icon = document.getElementById("accIcon");
-        if (content.style.display === "block") {
-            content.style.display = "none"; header.classList.remove("active"); icon.innerText = "▼";
-        } else {
-            content.style.display = "block"; header.classList.add("active"); icon.innerText = "▲";
-        }
+    function modalAc() {
+        document.getElementById("modalBaslik").textContent = "Yeni Talimat";
+        document.getElementById("duzenle_id").value = "";
+        document.getElementById("t_ad").value = "";
+        document.getElementById("t_kod").value = "";
+        document.getElementById("t_aralik").value = "";
+        document.getElementById("saveBtn").textContent = "💾 Kaydet";
+        document.getElementById("modal").classList.add("open");
+        setTimeout(() => document.getElementById("t_ad").focus(), 100);
     }
+
+    function modalKapat() {
+        document.getElementById("modal").classList.remove("open");
+    }
+
+    document.getElementById("modal").addEventListener("click", function(e) {
+        if (e.target === this) modalKapat();
+    });
 
     function showToast(msg, isError = false) {
         const t = document.getElementById("toast");
@@ -134,20 +163,16 @@
             olcme_araligi: document.getElementById("t_aralik").value
         };
         if (!payload.talimat_adi || !payload.talimat_kodu) { showToast('Ad ve Kod zorunludur!', 'warning'); return; }
-        btn.disabled = true; btn.innerText = "...";
+        btn.disabled = true; btn.textContent = "...";
         const url = duzenleId ? `/api/talimatlar/${duzenleId}` : '/api/talimatlar';
         const method = duzenleId ? 'PUT' : 'POST';
         const res = await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
         if (res.ok) {
-            document.getElementById("t_ad").value = "";
-            document.getElementById("t_kod").value = "";
-            document.getElementById("t_aralik").value = "";
-            document.getElementById("duzenle_id").value = "";
-            btn.innerText = "➕ Ekle";
+            modalKapat();
             showToast(duzenleId ? "✅ Talimat güncellendi!" : "✅ Talimat kaydedildi!");
             listele();
         }
-        btn.disabled = false; btn.innerText = "➕ Ekle";
+        btn.disabled = false; btn.textContent = "💾 Kaydet";
     }
 
     function duzenle(id, ad, kod, aralik) {
@@ -155,12 +180,10 @@
         document.getElementById("t_ad").value = ad;
         document.getElementById("t_kod").value = kod;
         document.getElementById("t_aralik").value = aralik;
-        document.getElementById("saveBtn").innerText = "💾 Güncelle";
-        const content = document.getElementById("accContent");
-        const header = document.querySelector(".accordion-header");
-        content.style.display = "block"; header.classList.add("active");
-        document.getElementById("accIcon").innerText = "▲";
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById("modalBaslik").textContent = "Talimat Düzenle";
+        document.getElementById("saveBtn").textContent = "💾 Güncelle";
+        document.getElementById("modal").classList.add("open");
+        setTimeout(() => document.getElementById("t_ad").focus(), 100);
     }
 
     async function sil(id) {

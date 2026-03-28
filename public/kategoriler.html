@@ -3,31 +3,18 @@
 <head>
 
     <meta charset="UTF-8"> <script>
-    // GÜVENLİK KONTROLÜ: Kullanıcı giriş yapmış mı?
     const aktifKullanici = localStorage.getItem("labqms_user");
-    if (!aktifKullanici) {
-        // Eğer giriş yapmamışsa, anında login sayfasına şutla!
-        window.location.href = "login.html";
-    }
+    if (!aktifKullanici) { window.location.href = "login.html"; }
     </script>
 
-    
-    <title>Sistem Ayarları</title>
     <title>LabQMS Pro - Kategori Yönetimi</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #1E40AF; --border: #e2e8f0; --bg: #f8fafc; --success: #10B981; --danger: #ef4444; }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg); padding: 20px; color: #334155; }
         .container { max-width: 800px; margin: auto; }
-        .accordion { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .accordion-header { background: #fff; padding: 15px 25px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid transparent; }
-        .accordion-header.active { border-bottom-color: var(--border); background: #f1f5f9; }
-        .accordion-content { padding: 25px; display: none; }
-        .form-row { display: flex; gap: 10px; }
-        input { flex: 1; padding: 12px 15px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; outline: none; transition: 0.2s; font-family: inherit; }
+        input { flex: 1; padding: 12px 15px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; outline: none; transition: 0.2s; font-family: inherit; width: 100%; box-sizing: border-box; }
         input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1); }
-        .btn-add { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 0 25px; cursor: pointer; font-weight: 600; transition: 0.2s; white-space: nowrap; font-family: inherit; }
-        .btn-add:hover { opacity: 0.9; }
         .card { background: #fff; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .list-group { list-style: none; padding: 0; margin: 0; }
         .list-item { background: #fff; padding: 15px 20px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
@@ -49,25 +36,51 @@
         .act-drop-item.danger { color:#dc2626; }
         .act-drop-item.danger:hover { background:#fee2e2; }
         .act-drop hr { margin:4px 0; border:none; border-top:1px solid var(--border); }
+        /* PAGE HEADER */
+        .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+        .page-title { font-size:1.2rem; font-weight:700; color:var(--primary); }
+        .btn-yeni { background:var(--primary); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9rem; }
+        .btn-yeni:hover { opacity:0.9; }
+        /* MODAL */
+        #modal { display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; }
+        #modal.open { display:flex; }
+        .modal-box { background:#fff; border-radius:16px; width:92%; max-width:480px; box-shadow:0 20px 50px rgba(0,0,0,0.25); animation:fadeUp 0.25s; }
+        .modal-head { padding:18px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+        .modal-title { font-size:1rem; font-weight:700; color:var(--primary); }
+        .modal-close { background:none; border:none; font-size:1.3rem; cursor:pointer; color:#64748b; }
+        .modal-body { padding:24px; }
+        .modal-footer { padding:16px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
+        .btn-cancel { background:#f1f5f9; color:#64748b; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; }
+        .btn-save { background:var(--primary); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
     </style>
 </head>
 <body>
 <div id="toast">✅ İşlem Başarılı!</div>
 
-<div class="container">
-    <div class="accordion">
-        <div class="accordion-header" onclick="toggleAccordion()">
-            <h3 style="margin:0; color:var(--primary);">➕ Yeni Kategori Ekle / Düzenleme</h3>
-            <span id="accIcon">▼</span>
+<!-- MODAL -->
+<div id="modal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <span class="modal-title" id="modalBaslik">Yeni Kategori</span>
+            <button class="modal-close" onclick="modalKapat()">✕</button>
         </div>
-        <div class="accordion-content" id="accContent">
+        <div class="modal-body">
             <input type="hidden" id="duzenle_id" value="">
-            <p style="color:#64748b; font-size:0.9rem; margin-top:0;">Cihaz kütüphanesinde kullanacağınız ana grupları buradan yönetebilirsiniz.</p>
-            <div class="form-row">
-                <input type="text" id="kategoriInput" placeholder="Örn: Basınç Ölçerler, Elektriksel Cihazlar...">
-                <button class="btn-add" id="saveBtn" onclick="kategoriKaydet()">➕ Kategori Ekle</button>
-            </div>
+            <p style="color:#64748b; font-size:0.9rem; margin:0 0 12px;">Cihaz kütüphanesinde kullanacağınız ana grupları buradan yönetebilirsiniz.</p>
+            <input type="text" id="kategoriInput" placeholder="Örn: Basınç Ölçerler, Elektriksel Cihazlar...">
         </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="modalKapat()">İptal</button>
+            <button class="btn-save" id="saveBtn" onclick="kategoriKaydet()">💾 Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="page-header">
+        <div class="page-title">📁 Kategori Yönetimi</div>
+        <button class="btn-yeni" onclick="modalAc()">+ Yeni Kategori</button>
     </div>
 
     <div class="card">
@@ -78,16 +91,22 @@
 </div>
 
 <script>
-    function toggleAccordion() {
-        const content = document.getElementById("accContent");
-        const header = document.querySelector(".accordion-header");
-        const icon = document.getElementById("accIcon");
-        if (content.style.display === "block") {
-            content.style.display = "none"; header.classList.remove("active"); icon.innerText = "▼";
-        } else {
-            content.style.display = "block"; header.classList.add("active"); icon.innerText = "▲";
-        }
+    function modalAc() {
+        document.getElementById("modalBaslik").textContent = "Yeni Kategori";
+        document.getElementById("duzenle_id").value = "";
+        document.getElementById("kategoriInput").value = "";
+        document.getElementById("saveBtn").textContent = "💾 Kaydet";
+        document.getElementById("modal").classList.add("open");
+        setTimeout(() => document.getElementById("kategoriInput").focus(), 100);
     }
+
+    function modalKapat() {
+        document.getElementById("modal").classList.remove("open");
+    }
+
+    document.getElementById("modal").addEventListener("click", function(e) {
+        if (e.target === this) modalKapat();
+    });
 
     function showToast(msg, isError = false) {
         const t = document.getElementById("toast");
@@ -128,9 +147,7 @@
         const method = duzenleId ? 'PUT' : 'POST';
         const res = await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ kategori_adi: ad }) });
         if (res.ok) {
-            input.value = "";
-            document.getElementById("duzenle_id").value = "";
-            document.getElementById("saveBtn").innerText = "➕ Kategori Ekle";
+            modalKapat();
             showToast(duzenleId ? "✅ Kategori güncellendi!" : "✅ Kategori eklendi!");
             listeYukle();
         } else { const err = await res.json(); showToast(err.error || 'Bir hata oluştu', 'error'); }
@@ -139,12 +156,10 @@
     function duzenle(id, ad) {
         document.getElementById("duzenle_id").value = id;
         document.getElementById("kategoriInput").value = ad;
-        document.getElementById("saveBtn").innerText = "💾 Güncelle";
-        const content = document.getElementById("accContent");
-        const header = document.querySelector(".accordion-header");
-        content.style.display = "block"; header.classList.add("active");
-        document.getElementById("accIcon").innerText = "▲";
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById("modalBaslik").textContent = "Kategori Düzenle";
+        document.getElementById("saveBtn").textContent = "💾 Güncelle";
+        document.getElementById("modal").classList.add("open");
+        setTimeout(() => document.getElementById("kategoriInput").focus(), 100);
     }
 
     async function sil(id) {

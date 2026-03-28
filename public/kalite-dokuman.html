@@ -8,10 +8,21 @@
 :root{--primary:#1E40AF;--border:#e2e8f0;--bg:#f8fafc;--success:#10B981;--text:#334155}
 *{box-sizing:border-box}
 body{font-family:'Inter',sans-serif;background:var(--bg);padding:24px;color:var(--text);margin:0}
-.accordion{background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
-.accordion-header{padding:15px 24px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
-.accordion-header.active{border-bottom:1px solid var(--border);background:#f1f5f9}
-.accordion-content{padding:24px;display:none}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.page-title{font-size:1.2rem;font-weight:700;color:var(--primary)}
+.btn-yeni{background:var(--primary);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.9rem}
+.btn-yeni:hover{opacity:0.9}
+#mainModal{display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);align-items:center;justify-content:center}
+#mainModal.open{display:flex}
+.main-modal-box{background:#fff;border-radius:16px;width:94%;max-width:600px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.25);animation:fadeUp 0.25s}
+.modal-head-m{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1}
+.modal-title-m{font-size:1rem;font-weight:700;color:var(--primary)}
+.modal-close-m{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b}
+.modal-body-m{padding:24px}
+.modal-footer-m{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:#fff}
+.btn-cancel-m{background:#f1f5f9;color:#64748b;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600}
+.btn-save-m{background:var(--primary);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .card{background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 2px 6px rgba(0,0,0,0.04)}
 .card-header{padding:14px 22px;border-bottom:1px solid var(--border);background:#f8fafc;display:flex;align-items:center;justify-content:space-between}
 .card-title{font-weight:700;color:var(--primary);font-size:0.93rem}
@@ -70,48 +81,56 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
 <body>
 <div id="toast"></div>
 
-<div class="accordion">
-    <div class="accordion-header" onclick="toggleAcc()" id="accHeader">
-        <h3 style="margin:0;color:var(--primary)">📂 Yeni Doküman Kaydı</h3>
-        <span id="accIcon">▼</span>
-    </div>
-    <div class="accordion-content" id="accContent">
-        <input type="hidden" id="duzenle_id">
-        <div class="fg fg3">
-            <div><label>Doküman No</label><input type="text" id="dok_no" placeholder="KY-PR-001"></div>
-            <div class="full" style="grid-column:2/4"><label>Başlık *</label><input type="text" id="baslik" placeholder="Doküman başlığı..."></div>
+<!-- MAIN MODAL -->
+<div id="mainModal">
+    <div class="main-modal-box">
+        <div class="modal-head-m">
+            <span class="modal-title-m" id="modalBaslik">Yeni Doküman Kaydı</span>
+            <button class="modal-close-m" onclick="modalKapat()">✕</button>
         </div>
-        <div class="fg fg3">
-            <div>
-                <label>Tür</label>
-                <select id="tur">
-                    <option value="">— Seçin —</option>
-                    <option>Prosedür</option><option>Talimat</option><option>Form</option>
-                    <option>El Kitabı</option><option>Diğer</option>
-                </select>
+        <div class="modal-body-m">
+            <input type="hidden" id="duzenle_id">
+            <div class="fg fg3">
+                <div><label>Doküman No</label><input type="text" id="dok_no" placeholder="KY-PR-001"></div>
+                <div class="full" style="grid-column:2/4"><label>Başlık *</label><input type="text" id="baslik" placeholder="Doküman başlığı..."></div>
             </div>
-            <div><label>Revizyon No</label><input type="text" id="revizyon_no" placeholder="Rev.0"></div>
-            <div>
-                <label>Durum</label>
-                <select id="durum">
-                    <option value="taslak">Taslak</option>
-                    <option value="yayinda">Yayında</option>
-                    <option value="iptal">İptal</option>
-                </select>
+            <div class="fg fg3">
+                <div>
+                    <label>Tür</label>
+                    <select id="tur">
+                        <option value="">— Seçin —</option>
+                        <option>Prosedür</option><option>Talimat</option><option>Form</option>
+                        <option>El Kitabı</option><option>Diğer</option>
+                    </select>
+                </div>
+                <div><label>Revizyon No</label><input type="text" id="revizyon_no" placeholder="Rev.0"></div>
+                <div>
+                    <label>Durum</label>
+                    <select id="durum">
+                        <option value="taslak">Taslak</option>
+                        <option value="yayinda">Yayında</option>
+                        <option value="iptal">İptal</option>
+                    </select>
+                </div>
+            </div>
+            <div class="fg fg2">
+                <div><label>Yayın Tarihi</label><input type="date" id="yayin_tarihi"></div>
+                <div><label>Revizyon Tarihi</label><input type="date" id="gecerlilik_tarihi"></div>
+            </div>
+            <div class="fg">
+                <div class="full"><label>Açıklama</label><textarea id="aciklama" placeholder="Kısa açıklama..."></textarea></div>
             </div>
         </div>
-        <div class="fg fg2">
-            <div><label>Yayın Tarihi</label><input type="date" id="yayin_tarihi"></div>
-            <div><label>Revizyon Tarihi</label><input type="date" id="gecerlilik_tarihi"></div>
-        </div>
-        <div class="fg">
-            <div class="full"><label>Açıklama</label><textarea id="aciklama" placeholder="Kısa açıklama..."></textarea></div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px">
-            <button onclick="formTemizle()" style="background:#f1f5f9;color:#475569;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer">İptal</button>
-            <button class="btn-save" onclick="kaydet()" id="saveBtn">💾 Kaydet</button>
+        <div class="modal-footer-m">
+            <button class="btn-cancel-m" onclick="modalKapat()">İptal</button>
+            <button class="btn-save-m" onclick="kaydet()" id="saveBtn">💾 Kaydet</button>
         </div>
     </div>
+</div>
+
+<div class="page-header">
+    <div class="page-title">📂 Doküman Yönetimi</div>
+    <button class="btn-yeni" onclick="modalAc()">+ Yeni Doküman</button>
 </div>
 
 <div class="card">
@@ -148,7 +167,9 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
 let tumKayitlar = [], aktifFiltre = '', aktifTurFiltre = '';
 
 function showToast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.className=err?'show error':'show';setTimeout(()=>t.className='',3200)}
-function toggleAcc(){const c=document.getElementById('accContent'),h=document.getElementById('accHeader'),i=document.getElementById('accIcon');const open=c.style.display==='block';c.style.display=open?'none':'block';h.classList.toggle('active',!open);i.textContent=open?'▼':'▲'}
+function modalAc(){document.getElementById('modalBaslik').textContent='Yeni Doküman Kaydı';formTemizle();document.getElementById('mainModal').classList.add('open')}
+function modalKapat(){document.getElementById('mainModal').classList.remove('open')}
+document.getElementById('mainModal').addEventListener('click',function(e){if(e.target===this)modalKapat()})
 
 const DUR_LABEL={taslak:'Taslak',yayinda:'Yayında',iptal:'İptal'};
 const DUR_RENK={taslak:'badge-taslak',yayinda:'badge-yayinda',iptal:'badge-iptal'};
@@ -389,7 +410,7 @@ async function kaydet(){
     const url=duzenleId?`/api/kalite-dokuman/${duzenleId}`:'/api/kalite-dokuman';
     const method=duzenleId?'PUT':'POST';
     const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    if(res.ok){showToast(duzenleId?'✅ Güncellendi!':'✅ Kaydedildi!');formTemizle();listele()}
+    if(res.ok){showToast(duzenleId?'✅ Güncellendi!':'✅ Kaydedildi!');modalKapat();listele()}
     else showToast('❌ Hata oluştu!',true);
     btn.disabled=false;btn.textContent='💾 Kaydet';
 }
@@ -406,11 +427,8 @@ function duzenle(id){
     document.getElementById('durum').value=r.durum||'taslak';
     document.getElementById('aciklama').value=r.aciklama||'';
     document.getElementById('saveBtn').textContent='💾 Güncelle';
-    const c=document.getElementById('accContent');
-    c.style.display='block';
-    document.getElementById('accHeader').classList.add('active');
-    document.getElementById('accIcon').textContent='▲';
-    window.scrollTo({top:0,behavior:'smooth'});
+    document.getElementById('modalBaslik').textContent='Doküman Düzenle';
+    document.getElementById('mainModal').classList.add('open');
 }
 
 async function sil(id){
@@ -424,9 +442,6 @@ function formTemizle(){
     document.getElementById('tur').value='';
     document.getElementById('durum').value='taslak';
     document.getElementById('saveBtn').textContent='💾 Kaydet';
-    document.getElementById('accContent').style.display='none';
-    document.getElementById('accHeader').classList.remove('active');
-    document.getElementById('accIcon').textContent='▼';
 }
 
 listele();

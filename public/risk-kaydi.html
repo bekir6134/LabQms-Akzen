@@ -8,10 +8,21 @@
 :root{--primary:#1E40AF;--border:#e2e8f0;--bg:#f8fafc;--success:#10B981;--text:#334155}
 *{box-sizing:border-box}
 body{font-family:'Inter',sans-serif;background:var(--bg);padding:24px;color:var(--text);margin:0}
-.accordion{background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
-.accordion-header{padding:15px 24px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
-.accordion-header.active{border-bottom:1px solid var(--border);background:#f1f5f9}
-.accordion-content{padding:24px;display:none}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.page-title{font-size:1.2rem;font-weight:700;color:var(--primary)}
+.btn-yeni{background:var(--primary);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.9rem}
+.btn-yeni:hover{opacity:0.9}
+#modal{display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);align-items:center;justify-content:center}
+#modal.open{display:flex}
+.modal-box{background:#fff;border-radius:16px;width:94%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.25);animation:fadeUp 0.25s}
+.modal-head{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1}
+.modal-title{font-size:1rem;font-weight:700;color:var(--primary)}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b}
+.modal-body{padding:24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:#fff}
+.btn-cancel{background:#f1f5f9;color:#64748b;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600}
+.btn-save-m{background:var(--primary);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .card{background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 2px 6px rgba(0,0,0,0.04)}
 .card-header{padding:14px 22px;border-bottom:1px solid var(--border);background:#f8fafc;display:flex;align-items:center;justify-content:space-between}
 .card-title{font-weight:700;color:var(--primary);font-size:0.93rem}
@@ -62,73 +73,81 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
 <body>
 <div id="toast"></div>
 
-<div class="accordion">
-    <div class="accordion-header" onclick="toggleAcc()" id="accHeader">
-        <h3 style="margin:0;color:var(--primary)">📊 Yeni Risk / Fırsat Kaydı</h3>
-        <span id="accIcon">▼</span>
+<!-- MODAL -->
+<div id="modal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <span class="modal-title" id="modalBaslik">Yeni Risk / Fırsat Kaydı</span>
+            <button class="modal-close" onclick="modalKapat()">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="duzenle_id">
+            <div class="fg fg3">
+                <div><label>Risk No</label><input type="text" id="risk_no" placeholder="RSK-2026-001"></div>
+                <div><label>Tarih</label><input type="date" id="tarih"></div>
+                <div>
+                    <label>Tür</label>
+                    <select id="tur">
+                        <option value="risk">Risk</option>
+                        <option value="firsat">Fırsat</option>
+                    </select>
+                </div>
+            </div>
+            <div class="fg fg3">
+                <div>
+                    <label>Kategori</label>
+                    <select id="kategori">
+                        <option value="">— Seçin —</option>
+                        <option>Teknik</option><option>İdari</option><option>Çevre</option>
+                        <option>Güvenlik</option><option>Diğer</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Durum</label>
+                    <select id="durum">
+                        <option value="acik">Açık</option>
+                        <option value="izleniyor">İzleniyor</option>
+                        <option value="kapali">Kapalı</option>
+                    </select>
+                </div>
+                <div><label>Sorumlu</label><input type="text" id="sorumlu" placeholder="Ad Soyad"></div>
+            </div>
+            <div class="fg fg3">
+                <div>
+                    <label>Etki (1-5)</label>
+                    <select id="etki">
+                        <option value="">—</option>
+                        <option value="1">1 - Çok Düşük</option><option value="2">2 - Düşük</option>
+                        <option value="3">3 - Orta</option><option value="4">4 - Yüksek</option>
+                        <option value="5">5 - Çok Yüksek</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Olasılık (1-5)</label>
+                    <select id="olasilik">
+                        <option value="">—</option>
+                        <option value="1">1 - Çok Düşük</option><option value="2">2 - Düşük</option>
+                        <option value="3">3 - Orta</option><option value="4">4 - Yüksek</option>
+                        <option value="5">5 - Çok Yüksek</option>
+                    </select>
+                </div>
+                <div><label>Termin</label><input type="date" id="termin"></div>
+            </div>
+            <div class="fg">
+                <div class="full"><label>Tanım *</label><textarea id="tanim" placeholder="Risk / fırsat tanımı..."></textarea></div>
+                <div class="full"><label>Önlem / Aksiyon</label><textarea id="onlem" placeholder="Alınacak önlem veya aksiyon planı..."></textarea></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="modalKapat()">İptal</button>
+            <button class="btn-save-m" onclick="kaydet()" id="saveBtn">💾 Kaydet</button>
+        </div>
     </div>
-    <div class="accordion-content" id="accContent">
-        <input type="hidden" id="duzenle_id">
-        <div class="fg fg3">
-            <div><label>Risk No</label><input type="text" id="risk_no" placeholder="RSK-2026-001"></div>
-            <div><label>Tarih</label><input type="date" id="tarih"></div>
-            <div>
-                <label>Tür</label>
-                <select id="tur">
-                    <option value="risk">Risk</option>
-                    <option value="firsat">Fırsat</option>
-                </select>
-            </div>
-        </div>
-        <div class="fg fg3">
-            <div>
-                <label>Kategori</label>
-                <select id="kategori">
-                    <option value="">— Seçin —</option>
-                    <option>Teknik</option><option>İdari</option><option>Çevre</option>
-                    <option>Güvenlik</option><option>Diğer</option>
-                </select>
-            </div>
-            <div>
-                <label>Durum</label>
-                <select id="durum">
-                    <option value="acik">Açık</option>
-                    <option value="izleniyor">İzleniyor</option>
-                    <option value="kapali">Kapalı</option>
-                </select>
-            </div>
-            <div><label>Sorumlu</label><input type="text" id="sorumlu" placeholder="Ad Soyad"></div>
-        </div>
-        <div class="fg fg3">
-            <div>
-                <label>Etki (1-5)</label>
-                <select id="etki">
-                    <option value="">—</option>
-                    <option value="1">1 - Çok Düşük</option><option value="2">2 - Düşük</option>
-                    <option value="3">3 - Orta</option><option value="4">4 - Yüksek</option>
-                    <option value="5">5 - Çok Yüksek</option>
-                </select>
-            </div>
-            <div>
-                <label>Olasılık (1-5)</label>
-                <select id="olasilik">
-                    <option value="">—</option>
-                    <option value="1">1 - Çok Düşük</option><option value="2">2 - Düşük</option>
-                    <option value="3">3 - Orta</option><option value="4">4 - Yüksek</option>
-                    <option value="5">5 - Çok Yüksek</option>
-                </select>
-            </div>
-            <div><label>Termin</label><input type="date" id="termin"></div>
-        </div>
-        <div class="fg">
-            <div class="full"><label>Tanım *</label><textarea id="tanim" placeholder="Risk / fırsat tanımı..."></textarea></div>
-            <div class="full"><label>Önlem / Aksiyon</label><textarea id="onlem" placeholder="Alınacak önlem veya aksiyon planı..."></textarea></div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px">
-            <button onclick="formTemizle()" style="background:#f1f5f9;color:#475569;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer">İptal</button>
-            <button class="btn-save" onclick="kaydet()" id="saveBtn">💾 Kaydet</button>
-        </div>
-    </div>
+</div>
+
+<div class="page-header">
+    <div class="page-title">📊 Risk & Fırsat</div>
+    <button class="btn-yeni" onclick="modalAc()">+ Yeni Kayıt</button>
 </div>
 
 <div class="card">
@@ -148,7 +167,9 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
 let tumKayitlar=[], aktifFiltre='';
 
 function showToast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.className=err?'show error':'show';setTimeout(()=>t.className='',3200)}
-function toggleAcc(){const c=document.getElementById('accContent'),h=document.getElementById('accHeader'),i=document.getElementById('accIcon');const open=c.style.display==='block';c.style.display=open?'none':'block';h.classList.toggle('active',!open);i.textContent=open?'▼':'▲'}
+function modalAc(){document.getElementById('modalBaslik').textContent='Yeni Risk / Fırsat Kaydı';formTemizle();document.getElementById('modal').classList.add('open');setTimeout(()=>document.getElementById('tanim').focus(),100)}
+function modalKapat(){document.getElementById('modal').classList.remove('open')}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)modalKapat()})
 
 const DUR_LABEL={acik:'Açık',izleniyor:'İzleniyor',kapali:'Kapalı'};
 const DUR_RENK={acik:'b-acik',izleniyor:'b-izleniyor',kapali:'b-kapali'};
@@ -247,7 +268,7 @@ async function kaydet(){
     const btn=document.getElementById('saveBtn');btn.disabled=true;btn.textContent='Kaydediliyor...';
     const url=duzenleId?`/api/risk-kaydi/${duzenleId}`:'/api/risk-kaydi';
     const res=await fetch(url,{method:duzenleId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    if(res.ok){showToast(duzenleId?'✅ Güncellendi!':'✅ Kaydedildi!');formTemizle();listele()}
+    if(res.ok){showToast(duzenleId?'✅ Güncellendi!':'✅ Kaydedildi!');modalKapat();listele()}
     else showToast('❌ Hata!',true);
     btn.disabled=false;btn.textContent='💾 Kaydet';
 }
@@ -266,11 +287,9 @@ function duzenle(id){
     document.getElementById('sorumlu').value=r.sorumlu||'';
     document.getElementById('termin').value=r.termin?r.termin.substring(0,10):'';
     document.getElementById('durum').value=r.durum||'acik';
+    document.getElementById('modalBaslik').textContent='Risk / Fırsat Düzenle';
     document.getElementById('saveBtn').textContent='💾 Güncelle';
-    const c=document.getElementById('accContent');c.style.display='block';
-    document.getElementById('accHeader').classList.add('active');
-    document.getElementById('accIcon').textContent='▲';
-    window.scrollTo({top:0,behavior:'smooth'});
+    document.getElementById('modal').classList.add('open');
 }
 
 async function sil(id){
@@ -285,9 +304,6 @@ function formTemizle(){
     document.getElementById('etki').value='';document.getElementById('olasilik').value='';
     document.getElementById('durum').value='acik';
     document.getElementById('saveBtn').textContent='💾 Kaydet';
-    document.getElementById('accContent').style.display='none';
-    document.getElementById('accHeader').classList.remove('active');
-    document.getElementById('accIcon').textContent='▼';
 }
 
 listele();
