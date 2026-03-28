@@ -853,6 +853,18 @@ async function createKaliteTables() {
             kabul_eden       VARCHAR(200),
             kabul_notu       TEXT,
             olusturma_tarihi TIMESTAMP DEFAULT NOW()
+        )`,
+        `CREATE TABLE IF NOT EXISTS personel_egitim (
+            id                SERIAL PRIMARY KEY,
+            personel_id       INTEGER REFERENCES personeller(id) ON DELETE CASCADE,
+            egitim_adi        VARCHAR(300) NOT NULL,
+            egitim_turu       VARCHAR(50),
+            kurum             VARCHAR(200),
+            tarih             DATE,
+            gecerlilik_tarihi DATE,
+            sonuc             VARCHAR(30) DEFAULT 'tamamlandi',
+            aciklama          TEXT,
+            olusturma_tarihi  TIMESTAMP DEFAULT NOW()
         )`
     ];
     for (const sql of sqls) { await pool.query(sql); }
@@ -1357,6 +1369,54 @@ app.put('/api/pak/:id', async (req, res) => {
 app.delete('/api/pak/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM pak WHERE id=$1', [req.params.id]);
+        res.json({ success: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- EĞİTİM & YETERLİLİK KAYITLARI (ISO 17025:2017 §6.2) ---
+app.get('/api/egitim/personel-listesi', async (req, res) => {
+    try {
+        const r = await pool.query('SELECT id, ad_soyad FROM personeller ORDER BY ad_soyad ASC');
+        res.json(r.rows);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/egitim', async (req, res) => {
+    try {
+        const r = await pool.query(`
+            SELECT pe.*, p.ad_soyad
+            FROM personel_egitim pe
+            LEFT JOIN personeller p ON pe.personel_id = p.id
+            ORDER BY pe.olusturma_tarihi DESC`);
+        res.json(r.rows);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/egitim', async (req, res) => {
+    try {
+        const { personel_id, egitim_adi, egitim_turu, kurum, tarih, gecerlilik_tarihi, sonuc, aciklama } = req.body;
+        const r = await pool.query(
+            `INSERT INTO personel_egitim (personel_id,egitim_adi,egitim_turu,kurum,tarih,gecerlilik_tarihi,sonuc,aciklama)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+            [personel_id||null, egitim_adi, egitim_turu||null, kurum||null,
+             tarih||null, gecerlilik_tarihi||null, sonuc||'tamamlandi', aciklama||null]
+        );
+        res.json(r.rows[0]);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.put('/api/egitim/:id', async (req, res) => {
+    try {
+        const { personel_id, egitim_adi, egitim_turu, kurum, tarih, gecerlilik_tarihi, sonuc, aciklama } = req.body;
+        const r = await pool.query(
+            `UPDATE personel_egitim SET personel_id=$1,egitim_adi=$2,egitim_turu=$3,kurum=$4,
+             tarih=$5,gecerlilik_tarihi=$6,sonuc=$7,aciklama=$8 WHERE id=$9 RETURNING *`,
+            [personel_id||null, egitim_adi, egitim_turu||null, kurum||null,
+             tarih||null, gecerlilik_tarihi||null, sonuc||'tamamlandi', aciklama||null, req.params.id]
+        );
+        res.json(r.rows[0]);
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/egitim/:id', async (req, res) => {
+    try {
+        await pool.query('DELETE FROM personel_egitim WHERE id=$1', [req.params.id]);
         res.json({ success: true });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });

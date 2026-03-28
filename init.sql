@@ -276,6 +276,20 @@ CREATE TABLE IF NOT EXISTS satin_alma (
     olusturma_tarihi TIMESTAMP     DEFAULT NOW()
 );
 
+-- 22. PERSONEL EĞİTİM & YETERLİLİK (ISO 17025:2017 §6.2)
+CREATE TABLE IF NOT EXISTS personel_egitim (
+    id                SERIAL PRIMARY KEY,
+    personel_id       INTEGER REFERENCES personeller(id) ON DELETE CASCADE,
+    egitim_adi        VARCHAR(300) NOT NULL,
+    egitim_turu       VARCHAR(50),
+    kurum             VARCHAR(200),
+    tarih             DATE,
+    gecerlilik_tarihi DATE,
+    sonuc             VARCHAR(30)  DEFAULT 'tamamlandi',
+    aciklama          TEXT,
+    olusturma_tarihi  TIMESTAMP    DEFAULT NOW()
+);
+
 -- ── VARSAYILAN VERİLER ───────────────────────────────────────
 
 -- Admin kullanıcısı — tüm roller ve erişimler aktif
@@ -286,7 +300,7 @@ VALUES (
     'admin',
     'admin123',
     '["olcum", "onay"]',
-    '["referans","cevre","talimat","kategoriler","personel","ayarlar","dokuman","uygunsuzluk","denetim","risk","sikayet","tedarikci","satin_alma","yeterlilik","pak","ygg"]',
+    '["referans","cevre","talimat","kategoriler","personel","ayarlar","dokuman","uygunsuzluk","denetim","risk","sikayet","tedarikci","satin_alma","yeterlilik","pak","ygg","egitim"]',
     true
 )
 ON CONFLICT (kullanici_adi) DO NOTHING;

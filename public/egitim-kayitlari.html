@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Eğitim & Yeterlilik Kayıtları</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--primary:#1E40AF;--border:#e2e8f0;--bg:#f8fafc;--text:#334155}
+*{box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);padding:24px;color:var(--text);margin:0}
+
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.page-title{font-size:1.2rem;font-weight:700;color:var(--primary)}
+.page-title span{font-size:0.8rem;font-weight:500;color:#64748b;margin-left:8px}
+.btn-primary{background:linear-gradient(135deg,#1e3a8a,var(--primary));color:#fff;border:none;padding:10px 22px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;gap:6px}
+.btn-primary:hover{opacity:.9}
+
+.filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.chip-group{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:0.8rem;font-weight:600;cursor:pointer;color:#64748b;transition:.15s}
+.chip:hover{border-color:#a5b4fc;color:var(--primary)}
+.chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.sep{width:1px;height:28px;background:var(--border);margin:0 4px}
+.search-box{position:relative;margin-left:auto}
+.search-box input{padding:8px 10px 8px 32px;border:1px solid var(--border);border-radius:8px;font-size:0.84rem;outline:none;width:210px;background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="%2394a3b8" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>') no-repeat 10px center}
+.search-box input:focus{border-color:var(--primary)}
+
+.ozet-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.ozet-kart{background:#fff;border-radius:14px;border:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+.ozet-sayi{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.35rem;font-weight:800}
+.ozet-etiket{font-size:0.8rem;font-weight:600;color:#64748b;line-height:1.3}
+
+.card{background:#fff;border-radius:14px;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.card-header{padding:14px 22px;border-bottom:1px solid var(--border);background:#f8fafc;display:flex;align-items:center;justify-content:space-between;border-radius:14px 14px 0 0}
+.card-title{font-weight:700;color:var(--primary);font-size:0.93rem}
+table{width:100%;border-collapse:collapse}
+th{background:#f8fafc;padding:10px 12px;text-align:left;color:#64748b;font-size:0.78rem;font-weight:700;border-bottom:2px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.84rem;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.empty-row td{text-align:center;color:#94a3b8;padding:32px}
+
+.badge{padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;white-space:nowrap}
+.b-tamamlandi  {background:#d1fae5;color:#065f46}
+.b-devam_ediyor{background:#dbeafe;color:#1e40af}
+.b-basarisiz   {background:#fee2e2;color:#dc2626}
+.b-ic_egitim     {background:#ede9fe;color:#6d28d9}
+.b-dis_egitim    {background:#fef3c7;color:#92400e}
+.b-sertifikasyon {background:#d1fae5;color:#065f46}
+.b-yetkilendirme {background:#dbeafe;color:#1e40af}
+.warn-badge{display:inline-block;background:#fef9c3;color:#854d0e;border:1px solid #fde68a;padding:2px 7px;border-radius:8px;font-size:0.7rem;font-weight:700;margin-left:5px}
+.warn-badge.expired{background:#fee2e2;color:#dc2626;border-color:#fca5a5}
+
+.act-wrap{position:relative;display:inline-block}
+.act-btn{background:#f8fafc;border:1px solid var(--border);padding:5px 12px;border-radius:7px;cursor:pointer;font-size:0.78rem;font-weight:600;color:var(--text)}
+.act-btn:hover{background:#e0e7ff;border-color:#a5b4fc;color:var(--primary)}
+.act-drop{display:none;position:fixed;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:9000;min-width:160px}
+.act-wrap.open .act-drop{display:block}
+.act-item{padding:9px 15px;cursor:pointer;font-size:0.83rem;display:flex;align-items:center;gap:8px;color:var(--text)}
+.act-item:hover{background:#f1f5f9}
+.act-item.danger{color:#dc2626}
+.act-item.danger:hover{background:#fee2e2}
+.act-drop hr{margin:4px 0;border:none;border-top:1px solid var(--border)}
+
+#modal{display:none;position:fixed;inset:0;z-index:4000;background:rgba(15,23,42,.5);align-items:center;justify-content:center}
+#modal.open{display:flex}
+.modal-box{background:#fff;border-radius:16px;width:620px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-head{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:5}
+.modal-title{font-weight:700;font-size:1rem;color:var(--primary)}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#94a3b8}
+.modal-close:hover{color:#dc2626}
+.modal-body{padding:24px}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid var(--border)}
+
+.fg{display:grid;gap:12px;margin-bottom:14px}
+.fg2{grid-template-columns:1fr 1fr}
+.full{grid-column:1/-1}
+label{display:block;font-size:0.78rem;font-weight:700;color:#64748b;margin-bottom:4px}
+label span.req{color:#dc2626}
+input,select,textarea{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;outline:none;font-family:inherit;font-size:0.88rem;background:#fff;color:var(--text)}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(30,64,175,.1)}
+textarea{resize:vertical;min-height:60px}
+.btn-save{background:linear-gradient(135deg,#1e3a8a,var(--primary));color:#fff;border:none;padding:10px 26px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem}
+.btn-cancel{background:#f1f5f9;color:#475569;border:none;padding:10px 20px;border-radius:10px;font-weight:600;cursor:pointer;font-size:0.9rem}
+
+@media(max-width:768px){
+.ozet-grid{grid-template-columns:1fr 1fr}
+.fg2{grid-template-columns:1fr}
+.page-header{flex-direction:column;align-items:flex-start}
+.filter-row{flex-direction:column;align-items:flex-start}
+.search-box{margin-left:0;width:100%}
+.search-box input{width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">🎓 Eğitim & Yeterlilik Kayıtları <span>ISO 17025:2017 §6.2</span></div>
+    </div>
+    <button class="btn-primary" onclick="modalAc()">+ Yeni Kayıt</button>
+</div>
+
+<div class="filter-row">
+    <div class="chip-group" id="turChips">
+        <button class="chip active" onclick="turFiltrele('',this)">Tümü</button>
+        <button class="chip" onclick="turFiltrele('ic_egitim',this)">🏠 İç Eğitim</button>
+        <button class="chip" onclick="turFiltrele('dis_egitim',this)">🌐 Dış Eğitim</button>
+        <button class="chip" onclick="turFiltrele('sertifikasyon',this)">🏆 Sertifikasyon</button>
+        <button class="chip" onclick="turFiltrele('yetkilendirme',this)">✅ Yetkilendirme</button>
+    </div>
+    <div class="sep"></div>
+    <div class="chip-group" id="sonucChips">
+        <button class="chip active" onclick="sonucFiltrele('',this)">Tümü</button>
+        <button class="chip" onclick="sonucFiltrele('tamamlandi',this)">✅ Tamamlandı</button>
+        <button class="chip" onclick="sonucFiltrele('devam_ediyor',this)">🔄 Devam</button>
+        <button class="chip" onclick="sonucFiltrele('basarisiz',this)">❌ Başarısız</button>
+    </div>
+    <div class="sep"></div>
+    <select id="personelFiltre" onchange="tabloYukle()"
+        style="padding:7px 14px;border:1.5px solid var(--border);border-radius:20px;font-size:0.8rem;font-weight:600;color:#64748b;background:#fff;cursor:pointer;outline:none">
+        <option value="">👤 Tüm Personel</option>
+    </select>
+    <div class="search-box">
+        <input type="text" id="aramaInput" placeholder="Eğitim adı veya kurum ara..." oninput="tabloYukle()">
+    </div>
+</div>
+
+<div class="ozet-grid" id="ozetGrid"></div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">📋 Eğitim Kayıtları</span>
+        <span id="kayitSayisi" style="font-size:0.8rem;color:#64748b"></span>
+    </div>
+    <div style="overflow-x:auto">
+        <table>
+            <thead>
+                <tr>
+                    <th>Personel</th>
+                    <th>Eğitim Adı</th>
+                    <th>Tür</th>
+                    <th>Kurum</th>
+                    <th>Tarih</th>
+                    <th>Geçerlilik</th>
+                    <th>Sonuç</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody id="tabloBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- FORM MODAL -->
+<div id="modal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <span class="modal-title" id="modalBaslik">Yeni Eğitim Kaydı</span>
+            <button class="modal-close" onclick="modalKapat()">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="fId">
+            <div class="fg fg2">
+                <div>
+                    <label>Personel <span class="req">*</span></label>
+                    <select id="fPersonel"><option value="">— Seçiniz —</option></select>
+                </div>
+                <div>
+                    <label>Eğitim Türü</label>
+                    <select id="fTur">
+                        <option value="">— Seçiniz —</option>
+                        <option value="ic_egitim">🏠 İç Eğitim</option>
+                        <option value="dis_egitim">🌐 Dış Eğitim</option>
+                        <option value="sertifikasyon">🏆 Sertifikasyon</option>
+                        <option value="yetkilendirme">✅ Yetkilendirme</option>
+                    </select>
+                </div>
+                <div class="full">
+                    <label>Eğitim Adı <span class="req">*</span></label>
+                    <input type="text" id="fEgitimAdi" placeholder="Eğitim / kurs / sertifika adı...">
+                </div>
+                <div>
+                    <label>Kurum / Organizatör</label>
+                    <input type="text" id="fKurum" placeholder="Kurum adı...">
+                </div>
+                <div>
+                    <label>Sonuç</label>
+                    <select id="fSonuc">
+                        <option value="tamamlandi">✅ Tamamlandı</option>
+                        <option value="devam_ediyor">🔄 Devam Ediyor</option>
+                        <option value="basarisiz">❌ Başarısız</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Eğitim Tarihi</label>
+                    <input type="date" id="fTarih">
+                </div>
+                <div>
+                    <label>Geçerlilik Tarihi</label>
+                    <input type="date" id="fGecerlilik">
+                </div>
+                <div class="full">
+                    <label>Açıklama / Notlar</label>
+                    <textarea id="fAciklama" rows="3" placeholder="Eğitim içeriği, belgeler, notlar..."></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="modalKapat()">İptal</button>
+            <button class="btn-save" id="saveBtn" onclick="kaydet()">💾 Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<script src="dialog.js"></script>
+<script>
+let tumKayitlar = [];
+let aktifTur = '', aktifSonuc = '';
+
+const TUR_LABEL = {
+    ic_egitim: 'İç Eğitim', dis_egitim: 'Dış Eğitim',
+    sertifikasyon: 'Sertifikasyon', yetkilendirme: 'Yetkilendirme'
+};
+const SON_LABEL = {
+    tamamlandi: 'Tamamlandı', devam_ediyor: 'Devam Ediyor', basarisiz: 'Başarısız'
+};
+
+async function init() {
+    // Personel dropdown yükle
+    try {
+        const r = await fetch('/api/egitim/personel-listesi');
+        const liste = await r.json();
+        const fSel = document.getElementById('fPersonel');
+        const fFil = document.getElementById('personelFiltre');
+        liste.forEach(p => {
+            const opt = `<option value="${p.id}">${p.ad_soyad}</option>`;
+            fSel.insertAdjacentHTML('beforeend', opt);
+            fFil.insertAdjacentHTML('beforeend', opt);
+        });
+    } catch(e) {}
+
+    // URL param ile pre-filtrele (personel.html'den gelen bağlantı)
+    const params = new URLSearchParams(window.location.search);
+    const pid = params.get('personel_id');
+    if (pid) document.getElementById('personelFiltre').value = pid;
+
+    await listele();
+}
+
+async function listele() {
+    try {
+        const r = await fetch('/api/egitim');
+        tumKayitlar = await r.json();
+        renderOzet();
+        tabloYukle();
+    } catch(e) { showToast('Veriler yüklenemedi!', 'error'); }
+}
+
+function renderOzet() {
+    const bugun = new Date(); bugun.setHours(0,0,0,0);
+    const otuzGun = new Date(bugun); otuzGun.setDate(otuzGun.getDate() + 30);
+
+    const toplam     = tumKayitlar.length;
+    const tamamlandi = tumKayitlar.filter(r => r.sonuc === 'tamamlandi').length;
+    const devam      = tumKayitlar.filter(r => r.sonuc === 'devam_ediyor').length;
+    const yaklasan   = tumKayitlar.filter(r => {
+        if (!r.gecerlilik_tarihi) return false;
+        const g = new Date(r.gecerlilik_tarihi);
+        return g >= bugun && g <= otuzGun;
+    }).length;
+
+    const kartlar = [
+        { sayi: toplam,     etiket: 'Toplam Kayıt',         renk: '#1E40AF', bg: '#dbeafe' },
+        { sayi: tamamlandi, etiket: 'Tamamlandı',            renk: '#065f46', bg: '#d1fae5' },
+        { sayi: devam,      etiket: 'Devam Ediyor',          renk: '#1e40af', bg: '#eff6ff' },
+        { sayi: yaklasan,   etiket: '⚠ Geçerlilik Yaklaşan', renk: '#854d0e', bg: '#fef9c3' },
+    ];
+    document.getElementById('ozetGrid').innerHTML = kartlar.map(k =>
+        `<div class="ozet-kart">
+            <div class="ozet-sayi" style="background:${k.bg};color:${k.renk}">${k.sayi}</div>
+            <div class="ozet-etiket">${k.etiket}</div>
+        </div>`
+    ).join('');
+}
+
+function filtrele() {
+    let d = tumKayitlar;
+    if (aktifTur)   d = d.filter(r => r.egitim_turu === aktifTur);
+    if (aktifSonuc) d = d.filter(r => (r.sonuc || 'tamamlandi') === aktifSonuc);
+    const pid = document.getElementById('personelFiltre').value;
+    if (pid) d = d.filter(r => String(r.personel_id) === pid);
+    const ara = document.getElementById('aramaInput').value.toLocaleLowerCase('tr-TR');
+    if (ara) d = d.filter(r =>
+        (r.egitim_adi || '').toLocaleLowerCase('tr-TR').includes(ara) ||
+        (r.kurum || '').toLocaleLowerCase('tr-TR').includes(ara) ||
+        (r.ad_soyad || '').toLocaleLowerCase('tr-TR').includes(ara)
+    );
+    return d;
+}
+
+function tabloYukle() {
+    const d = filtrele();
+    document.getElementById('kayitSayisi').textContent = `${d.length} kayıt`;
+    const tb = document.getElementById('tabloBody');
+    if (!d.length) {
+        tb.innerHTML = '<tr class="empty-row"><td colspan="8">Kayıt bulunamadı</td></tr>';
+        return;
+    }
+    const bugun = new Date(); bugun.setHours(0,0,0,0);
+    const otuzGun = new Date(bugun); otuzGun.setDate(otuzGun.getDate() + 30);
+
+    tb.innerHTML = d.map(r => {
+        const tur   = r.egitim_turu || '';
+        const sonuc = r.sonuc || 'tamamlandi';
+        const tarih = r.tarih ? new Date(r.tarih).toLocaleDateString('tr-TR') : '—';
+
+        let gecStr = '—';
+        if (r.gecerlilik_tarihi) {
+            const g = new Date(r.gecerlilik_tarihi);
+            gecStr = g.toLocaleDateString('tr-TR');
+            if (g < bugun)
+                gecStr += '<span class="warn-badge expired">Süresi Dolmuş</span>';
+            else if (g <= otuzGun)
+                gecStr += '<span class="warn-badge">⚠ Yaklaşıyor</span>';
+        }
+
+        return `<tr>
+            <td style="font-weight:600">${r.ad_soyad || '—'}</td>
+            <td>${r.egitim_adi}</td>
+            <td>${tur ? `<span class="badge b-${tur}">${TUR_LABEL[tur]||tur}</span>` : '—'}</td>
+            <td style="font-size:0.82rem">${r.kurum || '—'}</td>
+            <td style="white-space:nowrap">${tarih}</td>
+            <td style="white-space:nowrap">${gecStr}</td>
+            <td><span class="badge b-${sonuc}">${SON_LABEL[sonuc]||sonuc}</span></td>
+            <td>
+                <div class="act-wrap" id="aw_${r.id}">
+                    <button class="act-btn" onclick="menuToggle(${r.id},event)">⋯</button>
+                    <div class="act-drop">
+                        <div class="act-item" onclick="duzenle(${r.id});menuKapat()">✏️ Düzenle</div>
+                        <hr>
+                        <div class="act-item danger" onclick="sil(${r.id});menuKapat()">🗑️ Sil</div>
+                    </div>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function turFiltrele(tur, el) {
+    aktifTur = tur;
+    document.querySelectorAll('#turChips .chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    tabloYukle();
+}
+function sonucFiltrele(s, el) {
+    aktifSonuc = s;
+    document.querySelectorAll('#sonucChips .chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    tabloYukle();
+}
+
+function menuToggle(id, e) {
+    e.stopPropagation();
+    const wrap = document.getElementById('aw_' + id);
+    const drop = wrap.querySelector('.act-drop');
+    const rect = wrap.getBoundingClientRect();
+    document.querySelectorAll('.act-wrap.open').forEach(w => { if (w !== wrap) w.classList.remove('open'); });
+    wrap.classList.toggle('open');
+    if (wrap.classList.contains('open')) {
+        drop.style.top  = (rect.bottom + 4) + 'px';
+        drop.style.left = (rect.right - 165) + 'px';
+    }
+}
+function menuKapat() { document.querySelectorAll('.act-wrap.open').forEach(w => w.classList.remove('open')); }
+document.addEventListener('click', menuKapat);
+
+function modalAc() {
+    document.getElementById('fId').value = '';
+    document.getElementById('fPersonel').value = '';
+    document.getElementById('fEgitimAdi').value = '';
+    document.getElementById('fTur').value = '';
+    document.getElementById('fKurum').value = '';
+    document.getElementById('fSonuc').value = 'tamamlandi';
+    document.getElementById('fTarih').value = '';
+    document.getElementById('fGecerlilik').value = '';
+    document.getElementById('fAciklama').value = '';
+    document.getElementById('modalBaslik').textContent = 'Yeni Eğitim Kaydı';
+    document.getElementById('saveBtn').textContent = '💾 Kaydet';
+    document.getElementById('modal').classList.add('open');
+    setTimeout(() => document.getElementById('fPersonel').focus(), 100);
+}
+function modalKapat() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) modalKapat(); });
+
+function duzenle(id) {
+    const r = tumKayitlar.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('fId').value          = r.id;
+    document.getElementById('fPersonel').value    = r.personel_id || '';
+    document.getElementById('fEgitimAdi').value   = r.egitim_adi || '';
+    document.getElementById('fTur').value         = r.egitim_turu || '';
+    document.getElementById('fKurum').value       = r.kurum || '';
+    document.getElementById('fSonuc').value       = r.sonuc || 'tamamlandi';
+    document.getElementById('fTarih').value       = r.tarih ? r.tarih.substring(0,10) : '';
+    document.getElementById('fGecerlilik').value  = r.gecerlilik_tarihi ? r.gecerlilik_tarihi.substring(0,10) : '';
+    document.getElementById('fAciklama').value    = r.aciklama || '';
+    document.getElementById('modalBaslik').textContent = 'Eğitim Kaydını Düzenle';
+    document.getElementById('saveBtn').textContent = '💾 Güncelle';
+    document.getElementById('modal').classList.add('open');
+}
+
+async function kaydet() {
+    const egitim_adi = document.getElementById('fEgitimAdi').value.trim();
+    const personel_id = document.getElementById('fPersonel').value;
+    if (!egitim_adi)   { showToast('Eğitim adı zorunludur!', 'warning'); return; }
+    if (!personel_id)  { showToast('Personel seçimi zorunludur!', 'warning'); return; }
+
+    const id = document.getElementById('fId').value;
+    const payload = {
+        personel_id,
+        egitim_adi,
+        egitim_turu:       document.getElementById('fTur').value || null,
+        kurum:             document.getElementById('fKurum').value.trim() || null,
+        sonuc:             document.getElementById('fSonuc').value,
+        tarih:             document.getElementById('fTarih').value || null,
+        gecerlilik_tarihi: document.getElementById('fGecerlilik').value || null,
+        aciklama:          document.getElementById('fAciklama').value.trim() || null
+    };
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true; btn.textContent = 'Kaydediliyor...';
+    try {
+        const res = await fetch(id ? `/api/egitim/${id}` : '/api/egitim', {
+            method: id ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            showToast(id ? 'Kayıt güncellendi!' : 'Kayıt eklendi!');
+            modalKapat();
+            listele();
+        } else {
+            const err = await res.json();
+            showToast(err.error || 'Kayıt başarısız!', 'error');
+        }
+    } catch(e) { showToast('Bağlantı hatası!', 'error'); }
+    btn.disabled = false;
+    btn.textContent = id ? '💾 Güncelle' : '💾 Kaydet';
+}
+
+async function sil(id) {
+    if (!(await showConfirm('Silme Onayı', 'Bu eğitim kaydı kalıcı olarak silinecek.'))) return;
+    try {
+        const res = await fetch(`/api/egitim/${id}`, { method: 'DELETE' });
+        if (res.ok) { showToast('Kayıt silindi!'); listele(); }
+        else showToast('Silme başarısız!', 'error');
+    } catch(e) { showToast('Bağlantı hatası!', 'error'); }
+}
+
+window.addEventListener('keydown', e => { if (e.key === 'Escape') modalKapat(); });
+
+init();
+</script>
+</body>
+</html>

@@ -204,6 +204,14 @@
                             <div class="modul-adi">📋 Yön. Gözden Geçirme</div>
                             <label class="tog"><input type="checkbox" class="erisim" value="ygg"><span class="tog-slider"></span></label>
                         </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">🛒 Satın Alma</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="satin_alma"><span class="tog-slider"></span></label>
+                        </div>
+                        <div class="modul-satir">
+                            <div class="modul-adi">🎓 Eğitim & Yeterlilik</div>
+                            <label class="tog"><input type="checkbox" class="erisim" value="egitim"><span class="tog-slider"></span></label>
+                        </div>
                     </div>
 
                 </div>
@@ -240,8 +248,8 @@ let tumPersoneller = [];
 
 // Rol presetleri
 const ROL_PRESET = {
-    tam:    ['referans','cevre','talimat','kategoriler','personel','ayarlar','dokuman','uygunsuzluk','denetim','risk','sikayet','tedarikci','yeterlilik','pak','ygg'],
-    kalite: ['dokuman','uygunsuzluk','denetim','risk','sikayet','tedarikci','yeterlilik','pak','ygg'],
+    tam:    ['referans','cevre','talimat','kategoriler','personel','ayarlar','dokuman','uygunsuzluk','denetim','risk','sikayet','tedarikci','satin_alma','yeterlilik','pak','ygg','egitim'],
+    kalite: ['dokuman','uygunsuzluk','denetim','risk','sikayet','tedarikci','satin_alma','yeterlilik','pak','ygg','egitim'],
     teknik: ['referans','cevre','talimat']
 };
 
@@ -305,6 +313,7 @@ function tabloCiz(liste) {
                     <button class="act-btn" onclick="menuToggle(${p.id},event)">İşlemler ▾</button>
                     <div class="act-drop">
                         <div class="act-drop-item" onclick="personelDuzenle(${p.id});menuKapat()">✏️ Düzenle</div>
+                        <div class="act-drop-item" onclick="egitimGor(${p.id});menuKapat()">🎓 Eğitimleri Gör</div>
                         <div class="act-drop-item danger" onclick="personelSil(${p.id});menuKapat()">🗑️ Sil</div>
                     </div>
                 </div>
@@ -399,6 +408,19 @@ async function personelSil(id) {
     const res = await fetch(`/api/personeller/${id}`, { method:'DELETE' });
     if (res.ok) { showToast("🗑️ Silindi!"); personelleriGetir(); }
     else showToast("❌ Silme başarısız!", true);
+}
+
+function egitimGor(personelId) {
+    const url = `egitim-kayitlari.html?personel_id=${personelId}`;
+    if (window.parent && window.parent !== window) {
+        const iframe = window.parent.document.getElementById('ekran');
+        if (iframe) {
+            iframe.src = url;
+            window.parent.document.querySelectorAll('.menu-item').forEach(a => a.classList.remove('active'));
+            const link = window.parent.document.querySelector('a[href="egitim-kayitlari.html"]');
+            if (link) link.classList.add('active');
+        }
+    } else { window.location.href = url; }
 }
 
 function menuToggle(id, e) {
