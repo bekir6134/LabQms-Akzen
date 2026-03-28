@@ -1498,6 +1498,7 @@ app.delete('/api/satin-alma/:id', async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// PDF artık client-side blob olarak üretiliyor (satin-alma.html)
 app.get('/api/satin-alma/:id/pdf', async (req, res) => {
     let browser;
     try {
