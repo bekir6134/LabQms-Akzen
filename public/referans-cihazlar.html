@@ -272,6 +272,13 @@
     </div>
 
     <script>
+// YETKİ KONTROLÜ
+(function(){
+    const _u = JSON.parse(localStorage.getItem('labqms_user')||'{}');
+    const _e = (_u.erisimler||{})['referans'];
+    if(!_e){document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:12px;color:#64748b;font-family:Inter,sans-serif;"><div style="font-size:3rem;">🔒</div><div style="font-size:1.1rem;font-weight:600;">Bu modüle erişim yetkiniz yok.</div></div>';return;}
+    window._erisimMod=_e;
+})();
         async function sayfaYukle() {
             kategoriYukle();
             referansYukle();
@@ -298,7 +305,7 @@
                     <td>${r.envanter_no || '-'}</td>
                     <td>${r.olcme_araligi || '-'}</td>
                     <td>
-                        <div class="act-wrap" id="am-${r.id}">
+                        ${window._erisimMod==='duzenle'?`<div class="act-wrap" id="am-${r.id}">
                             <button class="act-btn" onclick="event.stopPropagation();menuToggle(${r.id},event)">İşlemler ▾</button>
                             <div class="act-drop">
                                 <div class="act-drop-item" onclick="event.stopPropagation();panelAc('KAL',${r.id},'${r.cihaz_adi}');menuKapat()">📅 Kalibrasyon</div>
@@ -307,7 +314,7 @@
                                 <div class="act-drop-item" onclick="event.stopPropagation();cihazDuzenle(${JSON.stringify(r).replace(/"/g,'&quot;')});menuKapat()">✏️ Düzenle</div>
                                 <div class="act-drop-item danger" onclick="event.stopPropagation();cihazSil(${r.id});menuKapat()">🗑️ Sil</div>
                             </div>
-                        </div>
+                        </div>`:''}
                     </td>
                 </tr>
                 <tr id="tarihce-${r.id}" class="history-row">
@@ -562,7 +569,7 @@
         function menuKapat() { document.querySelectorAll('.act-wrap.open').forEach(m => m.classList.remove('open')); }
         document.addEventListener('click', menuKapat);
 
-        window.onload = sayfaYukle;
+        window.onload = async function(){ await sayfaYukle(); if(window._erisimMod==='goruntule'){document.querySelectorAll('.btn-yeni,.btn-yeni-c').forEach(b=>b.style.display='none');} };
 
         // ── EXCEL IMPORT ──────────────────────────────────────────────
         let excelVerisi = [];

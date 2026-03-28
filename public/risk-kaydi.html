@@ -164,6 +164,13 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
 </div>
 
 <script>
+// YETKİ KONTROLÜ
+(function(){
+    const _u = JSON.parse(localStorage.getItem('labqms_user')||'{}');
+    const _e = (_u.erisimler||{})['risk'];
+    if(!_e){document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:12px;color:#64748b;font-family:Inter,sans-serif;"><div style="font-size:3rem;">🔒</div><div style="font-size:1.1rem;font-weight:600;">Bu modüle erişim yetkiniz yok.</div></div>';return;}
+    window._erisimMod=_e;
+})();
 let tumKayitlar=[], aktifFiltre='';
 
 function showToast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.className=err?'show error':'show';setTimeout(()=>t.className='',3200)}
@@ -220,13 +227,13 @@ function renderListe(data){
             <td>${r.sorumlu||'—'}</td>
             <td><span class="badge ${DUR_RENK[durum]}">${DUR_LABEL[durum]}</span></td>
             <td>
-                <div class="act-wrap" id="am-${r.id}">
+                ${window._erisimMod==='duzenle'?`<div class="act-wrap" id="am-${r.id}">
                     <button class="act-btn" onclick="menuToggle(${r.id},event)">İşlemler ▾</button>
                     <div class="act-drop">
                         <div class="act-drop-item" onclick="duzenle(${r.id});menuKapat()">✏️ Düzenle</div>
                         <div class="act-drop-item danger" onclick="sil(${r.id});menuKapat()">🗑️ Sil</div>
                     </div>
-                </div>
+                </div>`:''}
             </td>
         </tr>`;
     }).join('');
@@ -306,7 +313,7 @@ function formTemizle(){
     document.getElementById('saveBtn').textContent='💾 Kaydet';
 }
 
-listele();
+listele().then(()=>{if(window._erisimMod==='goruntule'){document.querySelectorAll('.btn-yeni,.btn-yeni-c').forEach(b=>b.style.display='none');}});
 </script>
 <script src="sort-utils.js"></script>
     <script src="dialog.js"></script>

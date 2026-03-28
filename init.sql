@@ -300,7 +300,7 @@ VALUES (
     'admin',
     'admin123',
     '["olcum", "onay"]',
-    '["referans","cevre","talimat","kategoriler","personel","ayarlar","dokuman","uygunsuzluk","denetim","risk","sikayet","tedarikci","satin_alma","yeterlilik","pak","ygg","egitim"]',
+    '{"referans":"duzenle","cevre":"duzenle","talimat":"duzenle","kategoriler":"duzenle","personel":"duzenle","ayarlar":"duzenle","dokuman":"duzenle","uygunsuzluk":"duzenle","denetim":"duzenle","risk":"duzenle","sikayet":"duzenle","tedarikci":"duzenle","satin_alma":"duzenle","yeterlilik":"duzenle","pak":"duzenle","ygg":"duzenle","egitim":"duzenle"}',
     true
 )
 ON CONFLICT (kullanici_adi) DO NOTHING;

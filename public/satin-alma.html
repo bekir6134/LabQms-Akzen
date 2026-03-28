@@ -266,6 +266,13 @@ textarea{resize:vertical;min-height:60px}
 
 <script src="dialog.js"></script>
 <script>
+// YETKİ KONTROLÜ
+(function(){
+    const _u=JSON.parse(localStorage.getItem('labqms_user')||'{}');
+    const _e=(_u.erisimler||{})['satin_alma'];
+    if(!_e){document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:12px;color:#64748b;font-family:Inter,sans-serif;"><div style="font-size:3rem;">🔒</div><div style="font-size:1.1rem;font-weight:600;">Bu modüle erişim yetkiniz yok.</div></div>';return;}
+    window._erisimMod=_e;
+})();
 let tumKayitlar = [];
 let duzenleId = null;
 let aktifDurum = '';
@@ -382,14 +389,14 @@ function tabloRender(kayitlar) {
             <td>
                 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
                     ${akisButonlari}
-                    <div class="act-wrap" id="aw_${r.id}">
+                    ${window._erisimMod==='duzenle'?`<div class="act-wrap" id="aw_${r.id}">
                         <button class="act-btn" onclick="menuToggle(${r.id},event)">⋯</button>
                         <div class="act-drop">
                             <div class="act-item" onclick="duzenle(${r.id});menuKapat()">✏️ Düzenle</div>
                             <hr>
                             <div class="act-item danger" onclick="sil(${r.id});menuKapat()">🗑️ Sil</div>
                         </div>
-                    </div>
+                    </div>`:''}
                 </div>
             </td>
         </tr>`;
@@ -649,7 +656,7 @@ window.addEventListener('keydown', e => {
     if (e.key === 'Escape') { modalKapat(); durumModalKapat(); }
 });
 
-yukle();
+yukle().then(()=>{if(window._erisimMod==='goruntule'){document.querySelectorAll('.btn-primary').forEach(b=>b.style.display='none');}});
 </script>
 </body>
 </html>

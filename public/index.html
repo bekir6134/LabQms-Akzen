@@ -188,7 +188,35 @@
             }
         }
 
-        window.onload = () => { labAdiniYukle(); topbarKullaniciGoster(); };
+        function sidebarYetkiFiltrele() {
+            const u = JSON.parse(localStorage.getItem('labqms_user') || '{}');
+            const er = u.erisimler || {};
+            const MAP = {
+                'referans-cihazlar.html':'referans','cevre-kosullari.html':'cevre',
+                'talimatlar.html':'talimat','kategoriler.html':'kategoriler',
+                'kalite-dokuman.html':'dokuman','uygunsuzluk.html':'uygunsuzluk',
+                'ic-denetim.html':'denetim','risk-kaydi.html':'risk',
+                'musteri-sikayet.html':'sikayet','ygg.html':'ygg','pak.html':'pak',
+                'dis-tedarikci.html':'tedarikci','satin-alma.html':'satin_alma',
+                'egitim-kayitlari.html':'egitim','yeterlilik-testi.html':'yeterlilik',
+                'personel.html':'personel','ayarlar.html':'ayarlar'
+            };
+            document.querySelectorAll('.menu-item[href]').forEach(item => {
+                const key = MAP[item.getAttribute('href')];
+                if (key && !er[key]) item.style.display = 'none';
+            });
+            document.querySelectorAll('.menu-section').forEach(sec => {
+                let sib = sec.nextElementSibling;
+                let tumGizli = true;
+                while (sib && !sib.classList.contains('menu-section') && !sib.classList.contains('menu-divider')) {
+                    if (sib.classList.contains('menu-item') && sib.style.display !== 'none') { tumGizli = false; break; }
+                    sib = sib.nextElementSibling;
+                }
+                if (tumGizli) { sec.style.display = 'none'; }
+            });
+        }
+
+        window.onload = () => { labAdiniYukle(); topbarKullaniciGoster(); sidebarYetkiFiltrele(); };
     </script>
 </body>
 </html>

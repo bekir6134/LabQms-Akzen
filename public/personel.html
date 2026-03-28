@@ -56,19 +56,19 @@
         .rol-kart .rk-acik { font-size:0.7rem; color:#94a3b8; margin-top:2px; }
         .rol-kart.secili .rk-adi { color:var(--primary); }
 
-        /* ── MODÜL TOGGLE ── */
+        /* ── MODÜL SATIR ── */
         .modul-grup { margin-bottom:10px; }
         .modul-grup-baslik { font-size:0.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:6px; }
-        .modul-satir { display:flex; align-items:center; justify-content:space-between; padding:7px 10px; border-radius:7px; transition:0.15s; }
+        .modul-satir { display:flex; align-items:center; justify-content:space-between; padding:6px 10px; border-radius:7px; transition:0.15s; gap:8px; }
         .modul-satir:hover { background:#f8fafc; }
-        .modul-adi { font-size:0.83rem; font-weight:500; color:#334155; display:flex; align-items:center; gap:7px; }
-        /* iOS toggle */
-        .tog { position:relative; display:inline-block; width:40px; height:22px; flex-shrink:0; }
-        .tog input { opacity:0; width:0; height:0; }
-        .tog-slider { position:absolute; cursor:pointer; inset:0; background:#cbd5e1; border-radius:22px; transition:0.25s; }
-        .tog-slider:before { position:absolute; content:""; height:16px; width:16px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:0.25s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
-        .tog input:checked + .tog-slider { background:var(--primary); }
-        .tog input:checked + .tog-slider:before { transform:translateX(18px); }
+        .modul-adi { font-size:0.83rem; font-weight:500; color:#334155; display:flex; align-items:center; gap:7px; flex:1; min-width:0; }
+        /* Segmented control */
+        .erisim-seg { display:flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; flex-shrink:0; }
+        .seg-btn { flex:1; border:none; padding:5px 7px; font-size:0.7rem; font-weight:600; cursor:pointer; background:#f8fafc; color:#94a3b8; transition:0.15s; white-space:nowrap; line-height:1.2; }
+        .seg-btn:hover { background:#f1f5f9; }
+        .seg-btn.active[data-opt=""] { background:#fee2e2; color:#dc2626; }
+        .seg-btn.active[data-opt="goruntule"] { background:#fef3c7; color:#b45309; }
+        .seg-btn.active[data-opt="duzenle"] { background:#dcfce7; color:#16a34a; }
     </style>
 </head>
 <body>
@@ -136,82 +136,39 @@
 
                     <div class="modul-grup">
                         <div class="modul-grup-baslik">📐 Teknik & Referans</div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">📏 Referans Cihazlar</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="referans"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">🌡️ Çevre Koşulları</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="cevre"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">📜 Kalibrasyon Talimatları</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="talimat"><span class="tog-slider"></span></label>
-                        </div>
-                    </div>
-
-                    <div class="modul-grup">
-                        <div class="modul-grup-baslik">⚙️ Yönetici Paneli</div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">📁 Kategori Yönetimi</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="kategoriler"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">👤 Personel ve Yetkiler</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="personel"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">🔧 Sistem Ayarları</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="ayarlar"><span class="tog-slider"></span></label>
-                        </div>
+                        <div class="modul-satir"><div class="modul-adi">📏 Referans Cihazlar</div><div class="erisim-seg" data-key="referans"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                        <div class="modul-satir"><div class="modul-adi">🌡️ Çevre Koşulları</div><div class="erisim-seg" data-key="cevre"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                        <div class="modul-satir"><div class="modul-adi">📜 Kalibrasyon Talimatları</div><div class="erisim-seg" data-key="talimat"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                        <div class="modul-satir"><div class="modul-adi">📁 Kategori Yönetimi</div><div class="erisim-seg" data-key="kategoriler"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
                     </div>
 
                     <div class="modul-grup">
                         <div class="modul-grup-baslik">🏅 Kalite Sistemi</div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">📂 Doküman Yönetimi</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="dokuman"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">⚠️ Uygunsuzluk & DÖF</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="uygunsuzluk"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">🔍 İç Denetim</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="denetim"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">📊 Risk & Fırsat</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="risk"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">💬 Müşteri Şikayeti</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="sikayet"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">🤝 Dış Tedarikçi</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="tedarikci"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">🧪 Yeterlilik Testi</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="yeterlilik"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">👥 Personel Arası Karşılaştırma</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="pak"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">📋 Yön. Gözden Geçirme</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="ygg"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">🛒 Satın Alma</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="satin_alma"><span class="tog-slider"></span></label>
-                        </div>
-                        <div class="modul-satir">
-                            <div class="modul-adi">🎓 Eğitim & Yeterlilik</div>
-                            <label class="tog"><input type="checkbox" class="erisim" value="egitim"><span class="tog-slider"></span></label>
-                        </div>
+                        <div class="modul-satir"><div class="modul-adi">📂 Doküman Yönetimi</div><div class="erisim-seg" data-key="dokuman"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                        <div class="modul-satir"><div class="modul-adi">⚠️ Uygunsuzluk & DÖF</div><div class="erisim-seg" data-key="uygunsuzluk"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                        <div class="modul-satir"><div class="modul-adi">🔍 İç Denetim</div><div class="erisim-seg" data-key="denetim"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                        <div class="modul-satir"><div class="modul-adi">📊 Risk & Fırsat</div><div class="erisim-seg" data-key="risk"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                        <div class="modul-satir"><div class="modul-adi">💬 Müşteri Şikayeti</div><div class="erisim-seg" data-key="sikayet"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                        <div class="modul-satir"><div class="modul-adi">📋 Yön. Gözden Geçirme</div><div class="erisim-seg" data-key="ygg"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                    </div>
+
+                    <div class="modul-grup">
+                        <div class="modul-grup-baslik">🚚 Tedarik & Satın Alma</div>
+                        <div class="modul-satir"><div class="modul-adi">🤝 Dış Tedarikçi</div><div class="erisim-seg" data-key="tedarikci"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                        <div class="modul-satir"><div class="modul-adi">🛒 Satın Alma</div><div class="erisim-seg" data-key="satin_alma"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                    </div>
+
+                    <div class="modul-grup">
+                        <div class="modul-grup-baslik">🎓 Yeterlilik & Eğitim</div>
+                        <div class="modul-satir"><div class="modul-adi">🎓 Eğitim & Yeterlilik</div><div class="erisim-seg" data-key="egitim"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                        <div class="modul-satir"><div class="modul-adi">🧪 Yeterlilik Testi</div><div class="erisim-seg" data-key="yeterlilik"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                        <div class="modul-satir"><div class="modul-adi">👥 Personel Arası Karşılaştırma</div><div class="erisim-seg" data-key="pak"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                    </div>
+
+                    <div class="modul-grup">
+                        <div class="modul-grup-baslik">⚙️ Sistem</div>
+                        <div class="modul-satir"><div class="modul-adi">👤 Personel ve Yetkiler</div><div class="erisim-seg" data-key="personel"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
+                        <div class="modul-satir"><div class="modul-adi">🔧 Sistem Ayarları</div><div class="erisim-seg" data-key="ayarlar"><button class="seg-btn active" data-opt="">❌ Yok</button><button class="seg-btn" data-opt="goruntule">👁 Görüntüle</button><button class="seg-btn" data-opt="duzenle">✏️ Düzenle</button></div></div>
                     </div>
 
                 </div>
@@ -244,37 +201,62 @@
 </div>
 
 <script>
+// YETKİ KONTROLÜ
+(function(){
+    const _u=JSON.parse(localStorage.getItem('labqms_user')||'{}');
+    const _e=(_u.erisimler||{})['personel'];
+    if(!_e){document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:12px;color:#64748b;font-family:Inter,sans-serif;"><div style="font-size:3rem;">🔒</div><div style="font-size:1.1rem;font-weight:600;">Bu modüle erişim yetkiniz yok.</div></div>';return;}
+    window._erisimMod=_e;
+})();
 let tumPersoneller = [];
 
-// Rol presetleri
+// Rol presetleri (object formatı)
 const ROL_PRESET = {
-    tam:    ['referans','cevre','talimat','kategoriler','personel','ayarlar','dokuman','uygunsuzluk','denetim','risk','sikayet','tedarikci','satin_alma','yeterlilik','pak','ygg','egitim'],
-    kalite: ['dokuman','uygunsuzluk','denetim','risk','sikayet','tedarikci','satin_alma','yeterlilik','pak','ygg','egitim'],
-    teknik: ['referans','cevre','talimat']
+    tam:    {referans:'duzenle',cevre:'duzenle',talimat:'duzenle',kategoriler:'duzenle',personel:'duzenle',ayarlar:'duzenle',dokuman:'duzenle',uygunsuzluk:'duzenle',denetim:'duzenle',risk:'duzenle',sikayet:'duzenle',tedarikci:'duzenle',satin_alma:'duzenle',yeterlilik:'duzenle',pak:'duzenle',ygg:'duzenle',egitim:'duzenle'},
+    kalite: {dokuman:'duzenle',uygunsuzluk:'duzenle',denetim:'duzenle',risk:'duzenle',sikayet:'duzenle',tedarikci:'duzenle',satin_alma:'duzenle',yeterlilik:'duzenle',pak:'duzenle',ygg:'duzenle',egitim:'duzenle'},
+    teknik: {referans:'duzenle',cevre:'duzenle',talimat:'duzenle'}
 };
 
-function rolUygula(rol) {
-    // Kart seçimi
-    document.querySelectorAll('.rol-kart').forEach(k => k.classList.remove('secili'));
-    document.getElementById('rol-' + rol).classList.add('secili');
-    // Toggle'ları ayarla
-    const secili = ROL_PRESET[rol];
-    document.querySelectorAll('.erisim').forEach(cb => {
-        cb.checked = secili.includes(cb.value);
+function erisimSegSec(erisimler) {
+    document.querySelectorAll('.erisim-seg').forEach(seg => {
+        const val = (erisimler || {})[seg.dataset.key] || '';
+        seg.dataset.val = val;
+        seg.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b.dataset.opt === val));
     });
 }
 
-// Toggle değişince aktif rol kartını temizle
-document.addEventListener('change', e => {
-    if (e.target.classList.contains('erisim')) {
-        const seciliDegerler = Array.from(document.querySelectorAll('.erisim:checked')).map(c => c.value).sort().join(',');
-        let eslesen = null;
-        for (const [rol, degerler] of Object.entries(ROL_PRESET)) {
-            if ([...degerler].sort().join(',') === seciliDegerler) { eslesen = rol; break; }
-        }
-        document.querySelectorAll('.rol-kart').forEach(k => k.classList.remove('secili'));
-        if (eslesen) document.getElementById('rol-' + eslesen)?.classList.add('secili');
+function erisimSegOku() {
+    const obj = {};
+    document.querySelectorAll('.erisim-seg').forEach(seg => {
+        const val = seg.dataset.val || '';
+        if (val) obj[seg.dataset.key] = val;
+    });
+    return obj;
+}
+
+function rolUygula(rol) {
+    document.querySelectorAll('.rol-kart').forEach(k => k.classList.remove('secili'));
+    document.getElementById('rol-' + rol).classList.add('secili');
+    erisimSegSec(ROL_PRESET[rol]);
+}
+
+// Segmented buton tıklama
+document.addEventListener('click', e => {
+    const btn = e.target.closest('.seg-btn');
+    if (!btn) return;
+    const seg = btn.closest('.erisim-seg');
+    seg.dataset.val = btn.dataset.opt;
+    seg.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b === btn));
+    // Aktif preset kartını kontrol et
+    const mevcut = erisimSegOku();
+    const mevcutStr = Object.entries(mevcut).sort().map(([k,v])=>k+':'+v).join(',');
+    let eslesen = null;
+    for (const [rol, preset] of Object.entries(ROL_PRESET)) {
+        const presetStr = Object.entries(preset).sort().map(([k,v])=>k+':'+v).join(',');
+        if (presetStr === mevcutStr) { eslesen = rol; break; }
     }
+    document.querySelectorAll('.rol-kart').forEach(k => k.classList.remove('secili'));
+    if (eslesen) document.getElementById('rol-' + eslesen)?.classList.add('secili');
 });
 
 function showToast(msg, isError=false) {
@@ -348,14 +330,15 @@ function personelDuzenle(id) {
     document.getElementById('varsayilan_kutu').style.display = onayCb.checked ? 'block' : 'none';
     document.getElementById("varsayilan_onaylayici").checked = !!p.varsayilan_onaylayici;
 
-    const erisimler = p.erisimler || [];
-    document.querySelectorAll('.erisim').forEach(cb => { cb.checked = erisimler.includes(cb.value); });
+    const erisimler = p.erisimler || {};
+    erisimSegSec(erisimler);
 
     // Eşleşen rol kartını seç
-    const seciliDegerler = [...erisimler].sort().join(',');
+    const mevcutStr = Object.entries(erisimler).sort().map(([k,v])=>k+':'+v).join(',');
     let eslesen = null;
-    for (const [rol, degerler] of Object.entries(ROL_PRESET)) {
-        if ([...degerler].sort().join(',') === seciliDegerler) { eslesen = rol; break; }
+    for (const [rol, preset] of Object.entries(ROL_PRESET)) {
+        const presetStr = Object.entries(preset).sort().map(([k,v])=>k+':'+v).join(',');
+        if (presetStr === mevcutStr) { eslesen = rol; break; }
     }
     document.querySelectorAll('.rol-kart').forEach(k => k.classList.remove('secili'));
     if (eslesen) document.getElementById('rol-' + eslesen)?.classList.add('secili');
@@ -371,6 +354,7 @@ function formSifirla() {
     document.getElementById("submitBtn").style.background = "var(--primary)";
     document.getElementById('varsayilan_kutu').style.display = 'none';
     document.querySelectorAll('.rol-kart').forEach(k => k.classList.remove('secili'));
+    erisimSegSec({});
 }
 
 document.getElementById("personelForm").onsubmit = async (e) => {
@@ -378,7 +362,7 @@ document.getElementById("personelForm").onsubmit = async (e) => {
     const roller = [];
     if (document.getElementById("rol_olcum").checked) roller.push("olcum");
     if (document.getElementById("rol_onay").checked) roller.push("onay");
-    const erisimler = Array.from(document.querySelectorAll('.erisim:checked')).map(cb => cb.value);
+    const erisimler = erisimSegOku();
     const duzenle_id = document.getElementById("duzenle_id").value;
     const payload = {
         ad_soyad: document.getElementById("ad_soyad").value,

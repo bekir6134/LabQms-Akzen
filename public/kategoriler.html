@@ -91,6 +91,13 @@
 </div>
 
 <script>
+// YETKİ KONTROLÜ
+(function(){
+    const _u = JSON.parse(localStorage.getItem('labqms_user')||'{}');
+    const _e = (_u.erisimler||{})['kategoriler'];
+    if(!_e){document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:12px;color:#64748b;font-family:Inter,sans-serif;"><div style="font-size:3rem;">🔒</div><div style="font-size:1.1rem;font-weight:600;">Bu modüle erişim yetkiniz yok.</div></div>';return;}
+    window._erisimMod=_e;
+})();
     function modalAc() {
         document.getElementById("modalBaslik").textContent = "Yeni Kategori";
         document.getElementById("duzenle_id").value = "";
@@ -126,13 +133,14 @@
                 : data.map(k => `
                     <li class="list-item">
                         <span class="kategori-ad">📁 ${k.kategori_adi}</span>
-                        <div class="act-wrap" id="am-${k.id}">
+                        ${window._erisimMod==='duzenle'?`<div class="act-wrap" id="am-${k.id}">
                             <button class="act-btn" onclick="menuToggle(${k.id},event)">İşlemler ▾</button>
                             <div class="act-drop">
                                 <div class="act-drop-item" onclick="duzenle(${k.id},'${k.kategori_adi.replace(/'/g,"\\'")}');menuKapat()">✏️ Düzenle</div>
                                 <div class="act-drop-item danger" onclick="sil(${k.id});menuKapat()">🗑️ Sil</div>
                             </div>
-                        </div>
+                        </div>`:''}
+
                     </li>`).join('');
         } catch (err) { console.error(err); }
         finally { document.getElementById("loading").style.display = "none"; }
@@ -177,7 +185,7 @@
     function menuKapat() { document.querySelectorAll('.act-wrap.open').forEach(m => m.classList.remove('open')); }
     document.addEventListener('click', menuKapat);
 
-    window.onload = listeYukle;
+    window.onload = async function(){ await listeYukle(); if(window._erisimMod==='goruntule'){document.querySelectorAll('.btn-yeni,.btn-yeni-c').forEach(b=>b.style.display='none');} };
 </script>
     <script src="dialog.js"></script>
 </body>

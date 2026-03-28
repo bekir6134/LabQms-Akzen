@@ -305,6 +305,13 @@
 </div>
 
 <script>
+// YETKİ KONTROLÜ
+(function(){
+    const _u=JSON.parse(localStorage.getItem('labqms_user')||'{}');
+    const _e=(_u.erisimler||{})['ayarlar'];
+    if(!_e){document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:12px;color:#64748b;font-family:Inter,sans-serif;"><div style="font-size:3rem;">🔒</div><div style="font-size:1.1rem;font-weight:600;">Bu modüle erişim yetkiniz yok.</div></div>';return;}
+    window._erisimMod=_e;
+})();
     let logoBase64 = { lab: '', turkak: '', muhur: '' };
 
     function showToast(msg, isError=false) {
