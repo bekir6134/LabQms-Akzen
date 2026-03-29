@@ -101,6 +101,7 @@ CREATE TABLE IF NOT EXISTS kalite_dokuman (
     sorumlu VARCHAR(100),
     aciklama TEXT,
     parent_id INTEGER REFERENCES kalite_dokuman(id) ON DELETE CASCADE,
+    dosya_url TEXT,
     olusturma_tarihi TIMESTAMP DEFAULT NOW()
 );
 

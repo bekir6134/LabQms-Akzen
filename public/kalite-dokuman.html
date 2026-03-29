@@ -138,6 +138,7 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
         <div class="card-title">📋 Doküman Listesi</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button onclick="excelModalAc()" style="background:#f0fdf4;color:#166534;border:1px solid #86efac;padding:7px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.83rem">📊 Excel ile Toplu Aktar</button>
+            <button onclick="topluDosyaModalAc()" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;padding:7px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.83rem">📂 Toplu Dosya Yükle</button>
             <select id="turFiltre" onchange="uygulaFiltre()" style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:inherit;background:#fff">
                 <option value="">Tüm Türler</option>
                 <option>Prosedür</option><option>Talimat</option><option>Form</option><option>El Kitabı</option><option>Diğer</option>
@@ -158,7 +159,7 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
     <div style="padding:0 18px 18px">
         <table><thead><tr>
             <th style="width:36px"><input type="checkbox" id="tumunuSecCB" onchange="tumunuSec(this)"></th>
-            <th>Dok. No</th><th>Başlık</th><th>Tür</th><th>Rev.</th><th>Yayın Tarihi</th><th>Revizyon Tarihi</th><th>Durum</th><th>İşlemler</th>
+            <th>Dok. No</th><th>Başlık</th><th>Tür</th><th>Rev.</th><th>Yayın Tarihi</th><th>Revizyon Tarihi</th><th>Durum</th><th>Dosya</th><th>İşlemler</th>
         </tr></thead><tbody id="liste"></tbody></table>
     </div>
 </div>
@@ -218,7 +219,7 @@ async function listele(){
 
 function renderListe(data){
     const tb=document.getElementById('liste');
-    if(!data.length){tb.innerHTML='<tr class="empty-row"><td colspan="9">Kayıt yok.</td></tr>';return}
+    if(!data.length){tb.innerHTML='<tr class="empty-row"><td colspan="10">Kayıt yok.</td></tr>';return}
     tb.innerHTML=data.map(r=>{
         const durum=r.durum||'taslak';
         const tar=r.yayin_tarihi?new Date(r.yayin_tarihi).toLocaleDateString('tr-TR'):'-';
@@ -233,20 +234,23 @@ function renderListe(data){
             <td>${tar}</td>
             <td>${revTar}</td>
             <td><span class="badge ${DUR_RENK[durum]||''}">${DUR_LABEL[durum]||durum}</span></td>
+            <td onclick="event.stopPropagation()">${r.dosya_url
+                ? `<a href="${r.dosya_url}" target="_blank" style="color:var(--primary);font-weight:700;font-size:0.82rem;white-space:nowrap">📎 Görüntüle</a>`
+                : `<span style="color:#cbd5e1;font-size:0.82rem">—</span>`}</td>
             <td onclick="event.stopPropagation()">
-                ${window._erisimMod==='duzenle'?`<div class="act-wrap" id="am-${r.id}">
+                <div class="act-wrap" id="am-${r.id}">
                     <button class="act-btn" onclick="menuToggle(${r.id},event)">İşlemler ▾</button>
                     <div class="act-drop">
-                        <div class="act-drop-item" onclick="revizeModalAc(${r.id});menuKapat()">🔄 Revize Oluştur</div>
-                        <hr>
-                        <div class="act-drop-item" onclick="duzenle(${r.id});menuKapat()">✏️ Düzenle</div>
-                        <div class="act-drop-item danger" onclick="sil(${r.id});menuKapat()">🗑️ Sil</div>
+                        ${window._erisimMod==='duzenle'?`<div class="act-drop-item" onclick="revizeModalAc(${r.id});menuKapat()">🔄 Revize Oluştur</div><hr>`:''}
+                        <div class="act-drop-item" onclick="dosyaYukleModalAc(${r.id});menuKapat()">📎 ${r.dosya_url?'Dosyayı Güncelle':'Dosya Yükle'}</div>
+                        ${r.dosya_url?`<div class="act-drop-item danger" onclick="dosyaKaldir(${r.id});menuKapat()">🗑️ Dosyayı Kaldır</div>`:''}
+                        ${window._erisimMod==='duzenle'?`<hr><div class="act-drop-item" onclick="duzenle(${r.id});menuKapat()">✏️ Düzenle</div><div class="act-drop-item danger" onclick="sil(${r.id});menuKapat()">🗑️ Sil</div>`:''}
                     </div>
-                </div>`:''}
+                </div>
             </td>
         </tr>
         <tr id="acc-${r.id}" style="display:none">
-            <td colspan="9" style="padding:0;background:#f8fafc">
+            <td colspan="10" style="padding:0;background:#f8fafc">
                 <div id="acc-icerik-${r.id}" style="padding:12px 24px 16px"></div>
             </td>
         </tr>`;
@@ -452,6 +456,7 @@ function formTemizle(){
 }
 
 listele().then(()=>{if(window._erisimMod==='goruntule'){document.querySelectorAll('.btn-yeni,.btn-yeni-c').forEach(b=>b.style.display='none');}});
+;
 
 function onayModal(mesaj, tehlikeli=false){
     return new Promise(resolve=>{
@@ -561,6 +566,85 @@ async function excelImport() {
     btn.disabled = false; btn.textContent = '⬆️ Sisteme Aktar';
 }
 
+// ── DOSYA YÜKLEMELERİ ────────────────────────────────────────
+
+function dosyaYukleModalAc(id) {
+    document.getElementById('dosyaModalId').value = id;
+    document.getElementById('dosyaInput').value = '';
+    document.getElementById('dosyaYuklemeBtn').disabled = false;
+    document.getElementById('dosyaYuklemeBtn').textContent = '⬆️ Yükle';
+    document.getElementById('dosyaModal').classList.add('open');
+}
+function dosyaModalKapat() { document.getElementById('dosyaModal').classList.remove('open'); }
+
+async function dosyaYukle() {
+    const id = document.getElementById('dosyaModalId').value;
+    const file = document.getElementById('dosyaInput').files[0];
+    if (!file) return showToast('❌ Dosya seçin!', true);
+    const btn = document.getElementById('dosyaYuklemeBtn');
+    btn.disabled = true; btn.textContent = '⏳ Yükleniyor...';
+    const fd = new FormData();
+    fd.append('dosya', file);
+    const res = await fetch(`/api/kalite-dokuman/${id}/dosya-yukle`, { method: 'POST', body: fd });
+    if (res.ok) { showToast('✅ Dosya yüklendi!'); dosyaModalKapat(); listele(); }
+    else { showToast('❌ Yükleme hatası!', true); btn.disabled = false; btn.textContent = '⬆️ Yükle'; }
+}
+
+async function dosyaKaldir(id) {
+    if (!await onayModal('Dosyayı kalıcı olarak kaldırmak istediğinize emin misiniz?', true)) return;
+    const res = await fetch(`/api/kalite-dokuman/${id}/dosya`, { method: 'DELETE' });
+    if (res.ok) { showToast('🗑️ Dosya kaldırıldı!'); listele(); }
+    else showToast('❌ Kaldırılamadı!', true);
+}
+
+function topluDosyaModalAc() {
+    document.getElementById('topluDosyaInput').value = '';
+    document.getElementById('topluDosyaSonuc').innerHTML = '';
+    document.getElementById('topluDosyaModal').classList.add('open');
+}
+function topluDosyaModalKapat() { document.getElementById('topluDosyaModal').classList.remove('open'); }
+
+async function topluYukle() {
+    const files = document.getElementById('topluDosyaInput').files;
+    if (!files.length) return showToast('❌ Dosya seçin!', true);
+    const btn = document.getElementById('topluYuklemeBtn');
+    btn.disabled = true; btn.textContent = '⏳ Yükleniyor...';
+    const fd = new FormData();
+    for (const f of files) fd.append('dosyalar', f);
+    const res = await fetch('/api/kalite-dokuman/toplu-dosya-yukle', { method: 'POST', body: fd });
+    btn.disabled = false; btn.textContent = '⬆️ Yükle';
+    if (!res.ok) { showToast('❌ Hata oluştu!', true); return; }
+    const { sonuclar } = await res.json();
+    const yuklendi = sonuclar.filter(s => s.durum === 'yuklendi').length;
+    const hata = sonuclar.filter(s => s.durum === 'hata').length;
+    const eslesmeYok = sonuclar.filter(s => s.durum === 'eslesme_yok').length;
+    const renk = hata > 0 ? '#ef4444' : yuklendi > 0 ? '#10B981' : '#d97706';
+    document.getElementById('topluDosyaSonuc').innerHTML = `
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-top:14px">
+            <div style="font-weight:700;font-size:0.9rem;margin-bottom:10px;color:${renk}">
+                ✅ ${yuklendi} yüklendi &nbsp;|&nbsp; ❌ ${hata} hata &nbsp;|&nbsp; ⚠️ ${eslesmeYok} eşleşme yok
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.81rem">
+                <thead><tr style="background:#f1f5f9">
+                    <th style="padding:6px 10px;text-align:left">Dosya Adı</th>
+                    <th style="padding:6px 10px;text-align:left">Eşleşen Doküman</th>
+                    <th style="padding:6px 10px;text-align:left">Durum</th>
+                </tr></thead>
+                <tbody>${sonuclar.map(s => {
+                    const simge = s.durum === 'yuklendi' ? '✅' : s.durum === 'hata' ? '❌' : '⚠️';
+                    return `<tr style="border-bottom:1px solid var(--border)">
+                        <td style="padding:6px 10px">${s.dosyaAdi}</td>
+                        <td style="padding:6px 10px">${s.baslik || '—'}</td>
+                        <td style="padding:6px 10px">${simge} ${s.durum === 'yuklendi' ? 'Yüklendi' : s.durum === 'hata' ? 'Hata: ' + (s.hata||'') : 'Eşleşme yok'}</td>
+                    </tr>`;
+                }).join('')}</tbody>
+            </table>
+            <div style="margin-top:12px;text-align:right">
+                <button onclick="topluDosyaModalKapat();listele()" style="background:var(--primary);color:#fff;border:none;padding:9px 20px;border-radius:8px;font-weight:700;cursor:pointer">✅ Tamam</button>
+            </div>
+        </div>`;
+}
+
 function sablonIndir() {
     const wb = XLSX.utils.book_new();
     const ws_data = [
@@ -573,6 +657,48 @@ function sablonIndir() {
     XLSX.writeFile(wb, 'dokuman_sablon.xlsx');
 }
 </script>
+
+<!-- TEKLİ DOSYA YÜKLEME MODAL -->
+<div id="dosyaModal" class="modal-wrap" onclick="if(event.target===this)dosyaModalKapat()">
+    <div style="background:#fff;border-radius:16px;width:94%;max-width:440px;box-shadow:0 20px 50px rgba(0,0,0,0.25);animation:fadeUp 0.2s">
+        <div style="padding:16px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-weight:700;color:var(--primary)">📎 Dosya Yükle / Güncelle</span>
+            <button onclick="dosyaModalKapat()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b">✕</button>
+        </div>
+        <div style="padding:22px 24px">
+            <input type="hidden" id="dosyaModalId">
+            <label style="display:block;font-size:0.78rem;font-weight:700;color:#64748b;margin-bottom:6px">Dosya Seç (PDF, Excel, Word)</label>
+            <input type="file" id="dosyaInput" accept=".pdf,.xlsx,.xls,.doc,.docx" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem">
+            <p style="font-size:0.75rem;color:#94a3b8;margin-top:6px">Maksimum 30 MB. Mevcut dosya varsa üzerine yazılır.</p>
+        </div>
+        <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px">
+            <button onclick="dosyaModalKapat()" style="background:#f1f5f9;color:#475569;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer">İptal</button>
+            <button id="dosyaYuklemeBtn" onclick="dosyaYukle()" style="background:var(--primary);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:700;cursor:pointer">⬆️ Yükle</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOPLU DOSYA YÜKLEME MODAL -->
+<div id="topluDosyaModal" class="modal-wrap" onclick="if(event.target===this)topluDosyaModalKapat()">
+    <div style="background:#fff;border-radius:16px;width:96%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.25);animation:fadeUp 0.2s">
+        <div style="padding:16px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff">
+            <span style="font-weight:700;color:var(--primary)">📂 Toplu Dosya Yükle</span>
+            <button onclick="topluDosyaModalKapat()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b">✕</button>
+        </div>
+        <div style="padding:22px 24px">
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;font-size:0.82rem;color:#1e40af;margin-bottom:16px">
+                💡 <b>Eşleştirme:</b> Dosya adı (uzantısız) ile doküman başlığı <b>birebir aynı</b> olmalıdır. Büyük/küçük harf farkı gözetilmez.
+            </div>
+            <label style="display:block;font-size:0.78rem;font-weight:700;color:#64748b;margin-bottom:6px">Dosyaları Seç (birden fazla seçilebilir)</label>
+            <input type="file" id="topluDosyaInput" accept=".pdf,.xlsx,.xls,.doc,.docx" multiple style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem">
+            <div id="topluDosyaSonuc"></div>
+        </div>
+        <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:#fff">
+            <button onclick="topluDosyaModalKapat()" style="background:#f1f5f9;color:#475569;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer">Kapat</button>
+            <button id="topluYuklemeBtn" onclick="topluYukle()" style="background:var(--primary);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:700;cursor:pointer">⬆️ Yükle</button>
+        </div>
+    </div>
+</div>
 
 <!-- REVİZE MODAL -->
 <div id="revizeModal" class="modal-wrap">

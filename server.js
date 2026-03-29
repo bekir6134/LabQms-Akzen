@@ -51,11 +51,41 @@ async function r2Yukle(key, buffer) {
     return key;
 }
 
+async function r2YukleMultiType(key, buffer, contentType) {
+    return new Promise((resolve, reject) => {
+        const encodedKey = key.split('/').map(encodeURIComponent).join('/');
+        const opts = aws4.sign({
+            service: 's3', region: 'auto', method: 'PUT',
+            host: R2_HOST,
+            path: `/${R2_BUCKET}/${encodedKey}`,
+            headers: { 'Content-Type': contentType, 'Content-Length': buffer.length },
+            body: buffer
+        }, {
+            accessKeyId: process.env.R2_ACCESS_KEY_ID,
+            secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+        });
+        const req = https.request({ hostname: R2_HOST, path: `/${R2_BUCKET}/${encodedKey}`, method: 'PUT', headers: opts.headers }, res => {
+            const chunks = [];
+            res.on('data', c => chunks.push(c));
+            res.on('end', () => {
+                if (res.statusCode >= 300) reject(new Error(`R2 ${res.statusCode}: ${Buffer.concat(chunks).toString()}`));
+                else resolve(key);
+            });
+        });
+        req.on('error', reject);
+        req.write(buffer);
+        req.end();
+    });
+}
+
 async function r2Indir(key) {
     return await r2Request('GET', key, null);
 }
 const puppeteer = require('puppeteer-core');
 const QRCode    = require('qrcode');
+const multer    = require('multer');
+const path      = require('path');
+const upload    = multer({ storage: multer.memoryStorage(), limits: { fileSize: 30*1024*1024 } });
 
 function chromiumExecPath() {
     if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
@@ -964,6 +994,8 @@ app.listen(PORT, async () => {
     await pool.query(`UPDATE kalite_dokuman SET durum='iptal' WHERE durum='i̇ptal'`).catch(()=>{});
     // Revizyon yapısı için parent_id kolonu ekle
     await pool.query(`ALTER TABLE kalite_dokuman ADD COLUMN IF NOT EXISTS parent_id INTEGER REFERENCES kalite_dokuman(id) ON DELETE CASCADE`).catch(()=>{});
+    // Dosya URL sütunu
+    await pool.query(`ALTER TABLE kalite_dokuman ADD COLUMN IF NOT EXISTS dosya_url TEXT`).catch(()=>{});
     // Uygunsuzluk yeni alanlar
     await pool.query(`ALTER TABLE uygunsuzluk ADD COLUMN IF NOT EXISTS esas_alinan_sart TEXT`).catch(()=>{});
     await pool.query(`ALTER TABLE uygunsuzluk ADD COLUMN IF NOT EXISTS sinif VARCHAR(20)`).catch(()=>{});
@@ -1035,6 +1067,89 @@ app.put('/api/kalite-dokuman/:id', async (req, res) => {
         res.json(r.rows[0]);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
+// Dosya içerik türü tahmini
+function dosyaMimeType(filename) {
+    const ext = path.extname(filename).toLowerCase();
+    const map = {
+        '.pdf': 'application/pdf',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.xls': 'application/vnd.ms-excel',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    };
+    return map[ext] || 'application/octet-stream';
+}
+
+// Tekli dosya yükle
+app.post('/api/kalite-dokuman/:id/dosya-yukle', upload.single('dosya'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'Dosya bulunamadı' });
+        const id = req.params.id;
+        const ext = path.extname(req.file.originalname);
+        const safeName = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+        const key = `dokuman/${id}-${Date.now()}${ext}`;
+        // Mevcut dosyayı R2'den sil (varsa)
+        const mevcut = await pool.query('SELECT dosya_url FROM kalite_dokuman WHERE id=$1', [id]);
+        if (mevcut.rows[0]?.dosya_url) {
+            const eskiKey = mevcut.rows[0].dosya_url.replace(`${process.env.R2_PUBLIC_URL}/`, '');
+            try { await r2Request('DELETE', eskiKey, null); } catch(e) {}
+        }
+        // Yeni dosyayı yükle
+        await r2YukleMultiType(key, req.file.buffer, dosyaMimeType(req.file.originalname));
+        const dosya_url = `${process.env.R2_PUBLIC_URL}/${key}`;
+        await pool.query('UPDATE kalite_dokuman SET dosya_url=$1 WHERE id=$2', [dosya_url, id]);
+        res.json({ dosya_url, dosya_adi: safeName });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Toplu dosya yükle (başlıkla birebir eşleşme)
+app.post('/api/kalite-dokuman/toplu-dosya-yukle', upload.array('dosyalar', 50), async (req, res) => {
+    try {
+        if (!req.files?.length) return res.status(400).json({ error: 'Dosya bulunamadı' });
+        const dokList = await pool.query('SELECT id, baslik, dosya_url FROM kalite_dokuman WHERE parent_id IS NULL');
+        const sonuclar = [];
+        for (const f of req.files) {
+            const safeName = Buffer.from(f.originalname, 'latin1').toString('utf8');
+            const dosyaAdi = path.parse(safeName).name.toLowerCase().trim();
+            const eslesen = dokList.rows.find(d => d.baslik.toLowerCase().trim() === dosyaAdi);
+            if (!eslesen) {
+                sonuclar.push({ dosyaAdi: safeName, baslik: null, id: null, durum: 'eslesme_yok' });
+                continue;
+            }
+            try {
+                // Eski dosyayı sil
+                if (eslesen.dosya_url) {
+                    const eskiKey = eslesen.dosya_url.replace(`${process.env.R2_PUBLIC_URL}/`, '');
+                    try { await r2Request('DELETE', eskiKey, null); } catch(e) {}
+                }
+                const ext = path.extname(safeName);
+                const key = `dokuman/${eslesen.id}-${Date.now()}${ext}`;
+                await r2YukleMultiType(key, f.buffer, dosyaMimeType(safeName));
+                const dosya_url = `${process.env.R2_PUBLIC_URL}/${key}`;
+                await pool.query('UPDATE kalite_dokuman SET dosya_url=$1 WHERE id=$2', [dosya_url, eslesen.id]);
+                sonuclar.push({ dosyaAdi: safeName, baslik: eslesen.baslik, id: eslesen.id, durum: 'yuklendi' });
+            } catch(e) {
+                sonuclar.push({ dosyaAdi: safeName, baslik: eslesen.baslik, id: eslesen.id, durum: 'hata', hata: e.message });
+            }
+        }
+        res.json({ sonuclar });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Dosya kaldır
+app.delete('/api/kalite-dokuman/:id/dosya', async (req, res) => {
+    try {
+        const r = await pool.query('SELECT dosya_url FROM kalite_dokuman WHERE id=$1', [req.params.id]);
+        const url = r.rows[0]?.dosya_url;
+        if (url) {
+            const key = url.replace(`${process.env.R2_PUBLIC_URL}/`, '');
+            try { await r2Request('DELETE', key, null); } catch(e) {}
+        }
+        await pool.query('UPDATE kalite_dokuman SET dosya_url=NULL WHERE id=$1', [req.params.id]);
+        res.json({ success: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/api/kalite-dokuman-toplu', async (req, res) => {
     try {
         const { kayitlar } = req.body;
