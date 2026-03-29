@@ -249,6 +249,8 @@ CREATE TABLE IF NOT EXISTS pak (
     metot VARCHAR(300),
     sonuc VARCHAR(50) DEFAULT 'beklemede',
     aciklama TEXT,
+    en_skoru VARCHAR(100),
+    sonraki_pak_tarihi DATE,
     olusturma_tarihi TIMESTAMP DEFAULT NOW()
 );
 

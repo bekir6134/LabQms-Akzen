@@ -223,7 +223,7 @@
         try {
             const res = await fetch('/api/dashboard');
             const d = await res.json();
-            renderYaklasan(d.yaklasan_aktiviteler || [], d.son_revizyonlar || [], d.yaklasan_lak || []);
+            renderYaklasan(d.yaklasan_aktiviteler || [], d.son_revizyonlar || [], d.yaklasan_lak || [], d.yaklasan_pak || []);
             renderBildirimler(d.yaklasan_aktiviteler || [], d.yaklasan_etkinlikler || []);
         } catch(e) { console.error(e); }
     }
@@ -271,18 +271,19 @@
             <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:1rem;flex-shrink:0;align-self:flex-start;">✕</button>`;
     }
 
-    function renderYaklasan(liste, revizyonlar, yaklasanLak) {
+    function renderYaklasan(liste, revizyonlar, yaklasanLak, yaklasanPak) {
         const el = document.getElementById("yaklasanListesi");
         const rozet = document.getElementById("yaklasanRozet");
 
-        if (!liste.length && !revizyonlar.length && !yaklasanLak.length) {
+        if (!liste.length && !revizyonlar.length && !yaklasanLak.length && !(yaklasanPak||[]).length) {
             el.innerHTML = '<div style="color:#94a3b8;font-size:0.85rem;text-align:center;padding:10px;">Yaklaşan aktivite yok 🎉</div>';
             rozet.style.display = 'none';
             return;
         }
 
-        const gecmis = liste.filter(r => parseInt(r.kalan_gun) < 0).length + yaklasanLak.filter(r => parseInt(r.kalan_gun) < 0).length;
-        const yaklasan = liste.filter(r => parseInt(r.kalan_gun) >= 0).length + yaklasanLak.filter(r => parseInt(r.kalan_gun) >= 0).length;
+        const _pak = yaklasanPak || [];
+        const gecmis = liste.filter(r => parseInt(r.kalan_gun) < 0).length + yaklasanLak.filter(r => parseInt(r.kalan_gun) < 0).length + _pak.filter(r => parseInt(r.kalan_gun) < 0).length;
+        const yaklasan = liste.filter(r => parseInt(r.kalan_gun) >= 0).length + yaklasanLak.filter(r => parseInt(r.kalan_gun) >= 0).length + _pak.filter(r => parseInt(r.kalan_gun) >= 0).length;
 
         // Rozet
         rozet.style.display = 'inline-block';
@@ -319,6 +320,21 @@
             </div>`;
         }).join('');
 
+        const pakHtml = _pak.map(r => {
+            const gun = parseInt(r.kalan_gun);
+            const tarih = new Date(r.sonraki_pak_tarihi).toLocaleDateString('tr-TR');
+            const cls = gun < 0 ? 'gun-red' : gun <= 30 ? 'gun-red' : 'gun-orange';
+            const gunText = gun < 0 ? `${Math.abs(gun)} gün geçti!` : gun === 0 ? 'Bugün!' : `${gun} gün kaldı`;
+            return `<div class="yakl-item">
+                <span style="font-size:1.1rem;">👥</span>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:600;font-size:0.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.konu} — Sonraki PAK</div>
+                    <div style="color:#94a3b8;font-size:0.75rem;">${tarih}</div>
+                </div>
+                <span class="gun-badge ${cls}">${gunText}</span>
+            </div>`;
+        }).join('');
+
         const lakHtml = yaklasanLak.map(r => {
             const gun = parseInt(r.kalan_gun);
             const tarih = new Date(r.sonraki_lak_tarihi).toLocaleDateString('tr-TR');
@@ -348,7 +364,7 @@
                 </div>
                 <span class="gun-badge ${cls}">${gunText}</span>
             </div>`;
-        }).join('') + lakHtml + revHtml;
+        }).join('') + pakHtml + lakHtml + revHtml;
     }
 
     // ── TAKVİM ──

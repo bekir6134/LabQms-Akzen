@@ -494,7 +494,7 @@ app.post('/api/ayarlar', async (req, res) => {
 // --- DASHBOARD İSTATİSTİKLERİ ---
 app.get('/api/dashboard', async (req, res) => {
     try {
-        const [referanslar, takvimleri, revizyonlar, laklar] = await Promise.all([
+        const [referanslar, takvimleri, revizyonlar, laklar, paklar] = await Promise.all([
             // Referans cihazlar: KALİBRASYON için 30 gün, ARA_KONTROL için 30 gün eşiği
             pool.query(`
                 SELECT rc.cihaz_adi, rc.seri_no, rt.sonraki_kal_tarihi, rt.islem_tipi,
@@ -530,13 +530,22 @@ app.get('/api/dashboard', async (req, res) => {
                 FROM yeterlilik_testi
                 WHERE sonraki_lak_tarihi IS NOT NULL
                   AND sonraki_lak_tarihi <= CURRENT_DATE + INTERVAL '60 days'
-                ORDER BY sonraki_lak_tarihi ASC`)
+                ORDER BY sonraki_lak_tarihi ASC`),
+            // PAK: 30 gün içinde yaklaşan veya geçmiş sonraki PAK tarihleri
+            pool.query(`
+                SELECT id, konu, sonraki_pak_tarihi,
+                    (sonraki_pak_tarihi - CURRENT_DATE) AS kalan_gun
+                FROM pak
+                WHERE sonraki_pak_tarihi IS NOT NULL
+                  AND sonraki_pak_tarihi <= CURRENT_DATE + INTERVAL '30 days'
+                ORDER BY sonraki_pak_tarihi ASC`)
         ]);
         res.json({
             yaklasan_aktiviteler: referanslar.rows,
             yaklasan_etkinlikler: takvimleri.rows,
             son_revizyonlar: revizyonlar.rows,
-            yaklasan_lak: laklar.rows
+            yaklasan_lak: laklar.rows,
+            yaklasan_pak: paklar.rows
         });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -1374,21 +1383,21 @@ app.get('/api/pak', async (req, res) => {
 });
 app.post('/api/pak', async (req, res) => {
     try {
-        const { konu, karsilastirma_tarihi, katilimcilar, metot, sonuc, aciklama } = req.body;
+        const { konu, karsilastirma_tarihi, katilimcilar, metot, sonuc, aciklama, en_skoru, sonraki_pak_tarihi } = req.body;
         const r = await pool.query(
-            `INSERT INTO pak (konu, karsilastirma_tarihi, katilimcilar, metot, sonuc, aciklama)
-             VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-            [konu, karsilastirma_tarihi||null, katilimcilar, metot, sonuc||'beklemede', aciklama]
+            `INSERT INTO pak (konu, karsilastirma_tarihi, katilimcilar, metot, sonuc, aciklama, en_skoru, sonraki_pak_tarihi)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+            [konu, karsilastirma_tarihi||null, katilimcilar, metot, sonuc||'beklemede', aciklama, en_skoru||null, sonraki_pak_tarihi||null]
         );
         res.json(r.rows[0]);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 app.put('/api/pak/:id', async (req, res) => {
     try {
-        const { konu, karsilastirma_tarihi, katilimcilar, metot, sonuc, aciklama } = req.body;
+        const { konu, karsilastirma_tarihi, katilimcilar, metot, sonuc, aciklama, en_skoru, sonraki_pak_tarihi } = req.body;
         const r = await pool.query(
-            `UPDATE pak SET konu=$1, karsilastirma_tarihi=$2, katilimcilar=$3, metot=$4, sonuc=$5, aciklama=$6 WHERE id=$7 RETURNING *`,
-            [konu, karsilastirma_tarihi||null, katilimcilar, metot, sonuc, aciklama, req.params.id]
+            `UPDATE pak SET konu=$1, karsilastirma_tarihi=$2, katilimcilar=$3, metot=$4, sonuc=$5, aciklama=$6, en_skoru=$7, sonraki_pak_tarihi=$8 WHERE id=$9 RETURNING *`,
+            [konu, karsilastirma_tarihi||null, katilimcilar, metot, sonuc, aciklama, en_skoru||null, sonraki_pak_tarihi||null, req.params.id]
         );
         res.json(r.rows[0]);
     } catch(e) { res.status(500).json({ error: e.message }); }

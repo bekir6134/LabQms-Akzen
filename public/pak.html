@@ -93,6 +93,10 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
                     </select>
                 </div>
             </div>
+            <div class="fg fg2">
+                <div><label>En Skoru</label><input type="text" id="en_skoru" placeholder="Ör: 1.2"></div>
+                <div><label>Bir Sonraki PAK Tarihi</label><input type="date" id="sonraki_pak_tarihi"></div>
+            </div>
             <div class="fg">
                 <div class="full"><label>Katılan Personel</label><textarea id="katilimcilar" placeholder="Personel adları, görevleri..."></textarea></div>
                 <div class="full"><label>Açıklama / Bulgular</label><textarea id="aciklama" placeholder="Karşılaştırma bulguları ve değerlendirme notları..."></textarea></div>
@@ -118,7 +122,7 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
     <div class="kanban" id="kanban"></div>
     <div style="padding:0 18px 18px">
         <table><thead><tr>
-            <th>Karşılaştırma Konusu</th><th>Katılan Personel</th><th>Tarih</th><th>Metot</th><th>Sonuç</th><th>İşlemler</th>
+            <th>Karşılaştırma Konusu</th><th>Katılan Personel</th><th>Tarih</th><th>Metot</th><th>En Skoru</th><th>Sonraki PAK</th><th>Sonuç</th><th>İşlemler</th>
         </tr></thead><tbody id="liste"></tbody></table>
     </div>
 </div>
@@ -176,15 +180,20 @@ async function listele(){
 
 function renderListe(data){
     const tb=document.getElementById('liste');
-    if(!data.length){tb.innerHTML='<tr class="empty-row"><td colspan="6">Kayıt yok.</td></tr>';return}
+    if(!data.length){tb.innerHTML='<tr class="empty-row"><td colspan="8">Kayıt yok.</td></tr>';return}
     tb.innerHTML=data.map(r=>{
         const sonuc=r.sonuc||'beklemede';
         const tar=r.karsilastirma_tarihi?new Date(r.karsilastirma_tarihi).toLocaleDateString('tr-TR'):'-';
+        const pakTar=r.sonraki_pak_tarihi?new Date(r.sonraki_pak_tarihi).toLocaleDateString('tr-TR'):'-';
+        const pakGun=r.sonraki_pak_tarihi?Math.floor((new Date(r.sonraki_pak_tarihi)-new Date())/86400000):null;
+        const pakStyle=pakGun===null?'':(pakGun<0?'color:#dc2626;font-weight:700':pakGun<=30?'color:#dc2626;font-weight:600':'');
         return `<tr>
             <td style="font-weight:600">${r.konu||'—'}</td>
             <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.katilimcilar||'—'}</td>
             <td>${tar}</td>
             <td>${r.metot||'—'}</td>
+            <td style="font-weight:700;color:var(--primary)">${r.en_skoru||'—'}</td>
+            <td style="${pakStyle}">${pakTar}${pakGun!==null&&pakGun<=30?` <small>(${pakGun<0?'Geçti':pakGun+'g'})</small>`:''}</td>
             <td><span class="badge ${SON_RENK[sonuc]}">${SON_LABEL[sonuc]}</span></td>
             <td>
                 ${window._erisimMod==='duzenle'?`<div class="act-wrap" id="am-${r.id}">
@@ -222,6 +231,8 @@ async function kaydet(){
         katilimcilar:document.getElementById('katilimcilar').value.trim(),
         metot:document.getElementById('metot').value.trim(),
         sonuc:document.getElementById('sonuc').value,
+        en_skoru:document.getElementById('en_skoru').value.trim()||null,
+        sonraki_pak_tarihi:document.getElementById('sonraki_pak_tarihi').value||null,
         aciklama:document.getElementById('aciklama').value.trim()
     };
     const btn=document.getElementById('saveBtn');btn.disabled=true;btn.textContent='Kaydediliyor...';
@@ -240,6 +251,8 @@ function duzenle(id){
     document.getElementById('katilimcilar').value=r.katilimcilar||'';
     document.getElementById('metot').value=r.metot||'';
     document.getElementById('sonuc').value=r.sonuc||'beklemede';
+    document.getElementById('en_skoru').value=r.en_skoru||'';
+    document.getElementById('sonraki_pak_tarihi').value=r.sonraki_pak_tarihi?r.sonraki_pak_tarihi.substring(0,10):'';
     document.getElementById('aciklama').value=r.aciklama||'';
     document.getElementById('modalBaslik').textContent='PAK Kaydı Düzenle';
     document.getElementById('saveBtn').textContent='💾 Güncelle';
@@ -253,10 +266,17 @@ async function sil(id){
 }
 
 function formTemizle(){
-    ['duzenle_id','konu','karsilastirma_tarihi','katilimcilar','metot','aciklama'].forEach(id=>document.getElementById(id).value='');
+    ['duzenle_id','konu','karsilastirma_tarihi','katilimcilar','metot','en_skoru','sonraki_pak_tarihi','aciklama'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('sonuc').value='beklemede';
     document.getElementById('saveBtn').textContent='💾 Kaydet';
 }
+
+document.getElementById('karsilastirma_tarihi').addEventListener('change',function(){
+    if(!this.value)return;
+    const d=new Date(this.value);
+    d.setMonth(d.getMonth()+11);
+    document.getElementById('sonraki_pak_tarihi').value=d.toISOString().slice(0,10);
+});
 
 listele().then(()=>{if(window._erisimMod==='goruntule'){document.querySelectorAll('.btn-yeni,.btn-yeni-c').forEach(b=>b.style.display='none');}});
 </script>
