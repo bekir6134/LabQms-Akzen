@@ -84,7 +84,6 @@ async function r2Indir(key) {
 const puppeteer = require('puppeteer-core');
 const QRCode    = require('qrcode');
 const multer    = require('multer');
-const path      = require('path');
 const upload    = multer({ storage: multer.memoryStorage(), limits: { fileSize: 30*1024*1024 } });
 
 function chromiumExecPath() {
