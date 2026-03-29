@@ -220,6 +220,9 @@ CREATE TABLE IF NOT EXISTS yeterlilik_testi (
     parametreler TEXT,
     sonuc VARCHAR(30) DEFAULT 'beklemede',
     z_skoru VARCHAR(50),
+    olcum_skoru_tipi VARCHAR(10) DEFAULT 'z',
+    sonuc_rapor_tarihi DATE,
+    sonraki_lak_tarihi DATE,
     aciklama TEXT,
     olusturma_tarihi TIMESTAMP DEFAULT NOW()
 );

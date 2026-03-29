@@ -84,7 +84,16 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
             </div>
             <div class="fg fg3">
                 <div><label>Katılım Tarihi</label><input type="date" id="katilim_tarihi"></div>
-                <div><label>z-Skoru / Sonuç Değeri</label><input type="text" id="z_skoru" placeholder="Ör: -0.8"></div>
+                <div>
+                    <label>Ölçüm Skoru</label>
+                    <div style="display:flex;gap:6px">
+                        <select id="olcum_skoru_tipi" style="width:72px;flex-shrink:0">
+                            <option value="z">z</option>
+                            <option value="En">En</option>
+                        </select>
+                        <input type="text" id="z_skoru" placeholder="Ör: -0.8" style="flex:1">
+                    </div>
+                </div>
                 <div>
                     <label>Sonuç</label>
                     <select id="sonuc">
@@ -93,6 +102,16 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
                         <option value="kabul_edilebilir">Kabul Edilebilir</option>
                         <option value="basarisiz">Başarısız</option>
                     </select>
+                </div>
+            </div>
+            <div class="fg fg2">
+                <div>
+                    <label>Sonuç Rapor Tarihi</label>
+                    <input type="date" id="sonuc_rapor_tarihi">
+                </div>
+                <div>
+                    <label>Bir Sonraki LAK Katılım Tarihi</label>
+                    <input type="date" id="sonraki_lak_tarihi">
                 </div>
             </div>
             <div class="fg">
@@ -120,7 +139,7 @@ td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:0.85rem;ver
     <div class="kanban" id="kanban"></div>
     <div style="padding:0 18px 18px">
         <table><thead><tr>
-            <th>Program Adı</th><th>Organizatör</th><th>Katılım Tarihi</th><th>Parametreler</th><th>z-Skoru</th><th>Sonuç</th><th>İşlemler</th>
+            <th>Program Adı</th><th>Organizatör</th><th>Katılım Tarihi</th><th>Parametreler</th><th>Ölçüm Skoru</th><th>Sonuç Rapor Tarihi</th><th>Sonraki LAK</th><th>Sonuç</th><th>İşlemler</th>
         </tr></thead><tbody id="liste"></tbody></table>
     </div>
 </div>
@@ -172,16 +191,23 @@ async function listele(){
 
 function renderListe(data){
     const tb=document.getElementById('liste');
-    if(!data.length){tb.innerHTML='<tr class="empty-row"><td colspan="7">Kayıt yok.</td></tr>';return}
+    if(!data.length){tb.innerHTML='<tr class="empty-row"><td colspan="9">Kayıt yok.</td></tr>';return}
     tb.innerHTML=data.map(r=>{
         const sonuc=r.sonuc||'beklemede';
         const tar=r.katilim_tarihi?new Date(r.katilim_tarihi).toLocaleDateString('tr-TR'):'-';
+        const raporTar=r.sonuc_rapor_tarihi?new Date(r.sonuc_rapor_tarihi).toLocaleDateString('tr-TR'):'-';
+        const lakTar=r.sonraki_lak_tarihi?new Date(r.sonraki_lak_tarihi).toLocaleDateString('tr-TR'):'-';
+        const olcumStr=r.z_skoru?`${r.olcum_skoru_tipi||'z'}: ${r.z_skoru}`:'—';
+        const lakGun=r.sonraki_lak_tarihi?Math.floor((new Date(r.sonraki_lak_tarihi)-new Date())/(1000*60*60*24)):null;
+        const lakStyle=lakGun===null?'':(lakGun<0?'color:#dc2626;font-weight:700':lakGun<=30?'color:#dc2626;font-weight:600':lakGun<=60?'color:#d97706;font-weight:600':'');
         return `<tr>
             <td style="font-weight:600">${r.program_adi||'—'}</td>
             <td>${r.organizator||'—'}</td>
             <td>${tar}</td>
             <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.parametreler||'—'}</td>
-            <td style="font-weight:700;color:var(--primary)">${r.z_skoru||'—'}</td>
+            <td style="font-weight:700;color:var(--primary)">${olcumStr}</td>
+            <td>${raporTar}</td>
+            <td style="${lakStyle}">${lakTar}${lakGun!==null&&lakGun<=60?` <small>(${lakGun<0?'Geçti':lakGun+'g'})</small>`:''}</td>
             <td><span class="badge ${SON_RENK[sonuc]}">${SON_LABEL[sonuc]}</span></td>
             <td>
                 ${window._erisimMod==='duzenle'?`<div class="act-wrap" id="am-${r.id}">
@@ -219,6 +245,9 @@ async function kaydet(){
         parametreler:document.getElementById('parametreler').value.trim(),
         sonuc:document.getElementById('sonuc').value,
         z_skoru:document.getElementById('z_skoru').value.trim(),
+        olcum_skoru_tipi:document.getElementById('olcum_skoru_tipi').value,
+        sonuc_rapor_tarihi:document.getElementById('sonuc_rapor_tarihi').value||null,
+        sonraki_lak_tarihi:document.getElementById('sonraki_lak_tarihi').value||null,
         aciklama:document.getElementById('aciklama').value.trim()
     };
     
@@ -239,6 +268,9 @@ function duzenle(id){
     document.getElementById('parametreler').value=r.parametreler||'';
     document.getElementById('sonuc').value=r.sonuc||'beklemede';
     document.getElementById('z_skoru').value=r.z_skoru||'';
+    document.getElementById('olcum_skoru_tipi').value=r.olcum_skoru_tipi||'z';
+    document.getElementById('sonuc_rapor_tarihi').value=r.sonuc_rapor_tarihi?r.sonuc_rapor_tarihi.substring(0,10):'';
+    document.getElementById('sonraki_lak_tarihi').value=r.sonraki_lak_tarihi?r.sonraki_lak_tarihi.substring(0,10):'';
     document.getElementById('aciklama').value=r.aciklama||'';
     document.getElementById('modalBaslik').textContent='PT/LAP Kaydı Düzenle';
     document.getElementById('saveBtn').textContent='💾 Güncelle';
@@ -252,10 +284,18 @@ async function sil(id){
 }
 
 function formTemizle(){
-    ['duzenle_id','program_adi','organizator','katilim_tarihi','parametreler','z_skoru','aciklama'].forEach(id=>document.getElementById(id).value='');
+    ['duzenle_id','program_adi','organizator','katilim_tarihi','parametreler','z_skoru','sonuc_rapor_tarihi','sonraki_lak_tarihi','aciklama'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('sonuc').value='beklemede';
+    document.getElementById('olcum_skoru_tipi').value='z';
     document.getElementById('saveBtn').textContent='💾 Kaydet';
 }
+
+document.getElementById('sonuc_rapor_tarihi').addEventListener('change',function(){
+    if(!this.value)return;
+    const d=new Date(this.value);
+    d.setFullYear(d.getFullYear()+3);
+    document.getElementById('sonraki_lak_tarihi').value=d.toISOString().slice(0,10);
+});
 
 listele().then(()=>{if(window._erisimMod==='goruntule'){document.querySelectorAll('.btn-yeni').forEach(b=>b.style.display='none');}});
 </script>

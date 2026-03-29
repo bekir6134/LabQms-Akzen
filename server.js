@@ -494,7 +494,7 @@ app.post('/api/ayarlar', async (req, res) => {
 // --- DASHBOARD İSTATİSTİKLERİ ---
 app.get('/api/dashboard', async (req, res) => {
     try {
-        const [referanslar, takvimleri, revizyonlar] = await Promise.all([
+        const [referanslar, takvimleri, revizyonlar, laklar] = await Promise.all([
             // Referans cihazlar: KALİBRASYON için 30 gün, ARA_KONTROL için 30 gün eşiği
             pool.query(`
                 SELECT rc.cihaz_adi, rc.seri_no, rt.sonraki_kal_tarihi, rt.islem_tipi,
@@ -522,12 +522,21 @@ app.get('/api/dashboard', async (req, res) => {
                 AND p.gecerlilik_tarihi >= CURRENT_DATE - INTERVAL '7 days'
                 AND EXISTS (SELECT 1 FROM kalite_dokuman c WHERE c.parent_id = p.id)
                 ORDER BY p.gecerlilik_tarihi DESC
-                LIMIT 10`)
+                LIMIT 10`),
+            // Yeterlilik testi: 60 gün içinde yaklaşan veya geçmiş LAK tarihleri
+            pool.query(`
+                SELECT id, program_adi, organizator, sonraki_lak_tarihi,
+                    (sonraki_lak_tarihi - CURRENT_DATE) AS kalan_gun
+                FROM yeterlilik_testi
+                WHERE sonraki_lak_tarihi IS NOT NULL
+                  AND sonraki_lak_tarihi <= CURRENT_DATE + INTERVAL '60 days'
+                ORDER BY sonraki_lak_tarihi ASC`)
         ]);
         res.json({
             yaklasan_aktiviteler: referanslar.rows,
             yaklasan_etkinlikler: takvimleri.rows,
-            son_revizyonlar: revizyonlar.rows
+            son_revizyonlar: revizyonlar.rows,
+            yaklasan_lak: laklar.rows
         });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -1326,21 +1335,25 @@ app.get('/api/yeterlilik-testi', async (req, res) => {
 });
 app.post('/api/yeterlilik-testi', async (req, res) => {
     try {
-        const { program_adi, organizator, katilim_tarihi, parametreler, sonuc, z_skoru, aciklama } = req.body;
+        const { program_adi, organizator, katilim_tarihi, parametreler, sonuc, z_skoru,
+                olcum_skoru_tipi, sonuc_rapor_tarihi, sonraki_lak_tarihi, aciklama } = req.body;
         const r = await pool.query(
-            `INSERT INTO yeterlilik_testi (program_adi,organizator,katilim_tarihi,parametreler,sonuc,z_skoru,aciklama)
-             VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-            [program_adi, organizator, katilim_tarihi||null, parametreler, sonuc||'beklemede', z_skoru, aciklama]
+            `INSERT INTO yeterlilik_testi (program_adi,organizator,katilim_tarihi,parametreler,sonuc,z_skoru,olcum_skoru_tipi,sonuc_rapor_tarihi,sonraki_lak_tarihi,aciklama)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+            [program_adi, organizator, katilim_tarihi||null, parametreler, sonuc||'beklemede',
+             z_skoru, olcum_skoru_tipi||'z', sonuc_rapor_tarihi||null, sonraki_lak_tarihi||null, aciklama]
         );
         res.json(r.rows[0]);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 app.put('/api/yeterlilik-testi/:id', async (req, res) => {
     try {
-        const { program_adi, organizator, katilim_tarihi, parametreler, sonuc, z_skoru, aciklama } = req.body;
+        const { program_adi, organizator, katilim_tarihi, parametreler, sonuc, z_skoru,
+                olcum_skoru_tipi, sonuc_rapor_tarihi, sonraki_lak_tarihi, aciklama } = req.body;
         const r = await pool.query(
-            `UPDATE yeterlilik_testi SET program_adi=$1,organizator=$2,katilim_tarihi=$3,parametreler=$4,sonuc=$5,z_skoru=$6,aciklama=$7 WHERE id=$8 RETURNING *`,
-            [program_adi, organizator, katilim_tarihi||null, parametreler, sonuc, z_skoru, aciklama, req.params.id]
+            `UPDATE yeterlilik_testi SET program_adi=$1,organizator=$2,katilim_tarihi=$3,parametreler=$4,sonuc=$5,z_skoru=$6,olcum_skoru_tipi=$7,sonuc_rapor_tarihi=$8,sonraki_lak_tarihi=$9,aciklama=$10 WHERE id=$11 RETURNING *`,
+            [program_adi, organizator, katilim_tarihi||null, parametreler, sonuc, z_skoru,
+             olcum_skoru_tipi||'z', sonuc_rapor_tarihi||null, sonraki_lak_tarihi||null, aciklama, req.params.id]
         );
         res.json(r.rows[0]);
     } catch(e) { res.status(500).json({ error: e.message }); }
